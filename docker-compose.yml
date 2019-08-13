@@ -4,7 +4,6 @@ services:
         image: "tokland/dhis2-core:2.30"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
-
         volumes:
             - ./config/DHIS2_home/dhis.conf:/DHIS2_home/dhis.conf
             - ./config/server.xml:/usr/local/tomcat/conf/server.xml

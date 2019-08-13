@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from . import utils
+import utils
 
 DESCRIPTION = "Start a container"
 
@@ -17,7 +17,10 @@ def setup(parser):
 def run(args):
     image_name = args.image
     logging.info("Start image: {}".format(image_name))
-    port = utils.get_available_port(image_name)
+    result = utils.get_available_port(image_name)
+    if result["status"] == "running":
+        raise utils.D2DockerError("Container already runnning for image {}".format(result["image"]))
+    port = result["port"]
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name)

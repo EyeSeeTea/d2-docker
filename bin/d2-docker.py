@@ -3,10 +3,10 @@ import sys
 import argparse
 import logging
 
-from commands import start, logs, stop
-from commands.utils import D2DockerError
+from commands import start, logs, stop, commit
+from utils import D2DockerError
 
-COMMAND_MODULES = [start, logs, stop]
+COMMAND_MODULES = [start, logs, stop, commit]
 
 
 def get_parser():

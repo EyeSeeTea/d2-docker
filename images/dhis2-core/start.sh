@@ -1,17 +1,17 @@
 #!/bin/bash
+#
+# Wait for the postgres database to be UP before running tomcat.
+#
 set -e -u
 
-run() {
-    local host="db"
-    local psql_port="5432"
-    
+run() { local host=$1 psql_port=$2
     echo "Waiting for postgres ${host}:${psql_port}"
     while ! nc -z $host $psql_port; do
-        sleep 0.1
+        sleep 1
     done
     
-    echo "Start catalina"
+    echo "Start Tomcat catalina"
     catalina.sh run
 }
 
-run
+run "db" "5432"

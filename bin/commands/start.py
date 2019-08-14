@@ -17,10 +17,10 @@ def setup(parser):
 def run(args):
     image_name = args.image
     logging.info("Start image: {}".format(image_name))
-    result = utils.get_available_port(image_name)
+    result = utils.get_image_status(image_name)
     if result["status"] == "running":
         raise utils.D2DockerError("Container already runnning for image {}".format(result["image"]))
-    port = result["port"]
+    port = utils.get_free_port()
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name)

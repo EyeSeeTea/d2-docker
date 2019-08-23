@@ -10,7 +10,7 @@ class D2DockerError(Exception):
     pass
 
 
-def run(command_parts, check=True, env=None, **kwargs):
+def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
     logging.debug("Run: {}".format(cmd))
@@ -18,7 +18,9 @@ def run(command_parts, check=True, env=None, **kwargs):
     if env:
         logging.debug("Env: {}".format(env))
     try:
-        return subprocess.run(command_parts, check=check, env=env, **kwargs)
+        return subprocess.run(
+            command_parts, check=check, env=env, capture_output=capture_output, **kwargs
+        )
     except subprocess.CalledProcessError as exc:
         raise D2DockerError("Command failed with code {}: {}".format(exc.returncode, cmd))
 

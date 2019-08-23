@@ -1,6 +1,6 @@
 ## Usage
 
-### Start a container
+### Start a DHIS2 instance
 
 Start a new container from a _dhis2-db_ image:
 
@@ -8,11 +8,11 @@ Start a new container from a _dhis2-db_ image:
 $ bin/d2-docker start eyeseetea/dhis2-db:2.30-sierra
 ```
 
-This will start 3 containers (dhis2-core, postgres and nginx). Now you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time (but not the same image more than once).
+This will start 3 containers (dhis2-core, postgres and nginx). Now you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once.
 
 Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to start containers in the background.
 
-### Show logs for a container
+### Show logs for running containers
 
 Check logs of a running container:
 
@@ -22,12 +22,60 @@ $ bin/d2-docker logs eyeseetea/dhis2-db:2.30-sierra
 
 _If only one d2-docker container is active, you can omit the image name._
 
-### Stop a container
+### Commit & push an existing DHIS2 instance
 
-Stop a running container:
+This will create a new _dhis2-db_ image from the current data (SQL dump and apps) in d2-docker containers:
+
+```
+$ bin/d2-docker commit eyeseetea/dhis2-db:2.30-sierra
+```
+
+Now you can upload images to hub.docker using the command _push_:
+
+```
+$ bin/d2-docker push eyeseetea/dhis2-db:2.30-sierra
+```
+
+_If only one d2-docker container is active, you can omit the image name._
+
+### Stop a DHIS2 instance
+
+Stop running containers:
 
 ```
 $ bin/d2-docker stop eyeseetea/dhis2-db:2.30-sierra
 ```
 
 _If only one d2-docker container is active, you can omit the image name._
+
+### Export a DHIS2 instance to a file
+
+You can export all the images needed by d2-docker to a single file.
+
+Note that you must commit any changes first, since this will export images, not containers.
+
+```
+$ bin/d2-docker export -i eyeseetea/dhis2-db:2.30-sierra dhis2-sierra.tgz
+```
+
+Now you can send distribute this file, which may be used by commands _import_ and _start_
+
+_If only one d2-docker container is active, you can omit the image name._
+
+### Import a DHIS2 instance from an exported file
+
+Use the output file from command _export_ to create all d2-docker images required:
+
+```
+$ bin/d2-docker import dhis2-sierra.tgz
+```
+
+### Start DSHI2 instance from an exported file
+
+You can use the same _start_ command, passing the file instead of the image name. `d2-docker` will then import the images of the file and automatically start the DHIS2 instance it contains.
+
+```
+$ bin/d2-docker start dhis2-sierra.tgz
+```
+
+On the first run, the images have been created, you can either run this command or the standard `start DHIS2_DB_IMAGE_NAME`.

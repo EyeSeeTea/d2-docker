@@ -80,4 +80,3 @@ def export_database(image_name, db_path):
         # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
         cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
         utils.run_docker_compose(cmd, image_name, stdout=db_file)
-

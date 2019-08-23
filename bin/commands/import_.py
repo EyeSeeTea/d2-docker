@@ -18,4 +18,3 @@ def run(args):
 def load_images_file(input_file):
     logging.info("Load images from file: {}".format(input_file))
     return utils.run(["docker", "load", "-i", input_file], capture_output=True)
-

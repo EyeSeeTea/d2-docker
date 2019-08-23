@@ -45,7 +45,7 @@ def get_running_image_name():
         return image_names[0]
     else:
         raise D2DockerError(
-            "{} d2-docker images running, specify an image name".format(len(images_names))
+            "{} d2-docker images running, specify an image name".format(len(image_names))
         )
 
 

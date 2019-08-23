@@ -3,10 +3,10 @@ import sys
 import argparse
 import logging
 
-from commands import start, logs, stop, commit, push
 from utils import D2DockerError
+from commands import start, logs, stop, commit, push, export, import_
 
-COMMAND_MODULES = [start, logs, stop, commit, push]
+COMMAND_MODULES = [start, logs, stop, commit, push, export, import_]
 
 
 def get_parser():
@@ -15,7 +15,7 @@ def get_parser():
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")
 
     for command_module in COMMAND_MODULES:
-        name = command_module.__name__.split(".")[-1]
+        name = getattr(command_module, "NAME", None) or command_module.__name__.split(".")[-1]
         subparser = subparsers.add_parser(name, help=command_module.DESCRIPTION)
         command_module.setup(subparser)
         subparser.set_defaults(func=command_module.run)

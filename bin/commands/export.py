@@ -1,0 +1,38 @@
+import gzip
+import logging
+import os
+import re
+
+import utils
+
+DESCRIPTION = "Export d2-docker images to a single file"
+
+
+def setup(parser):
+    parser.add_argument("-i", "--image", metavar="IMAGE", type=str, help="Docker dhis2-db image")
+    parser.add_argument("output_file", metavar="PATH", type=str, help="Output tar.gz file")
+
+
+def run(args):
+    image_name = args.image or utils.get_running_image_name()
+    result = utils.run_docker_compose(["config"], image_name, capture_output=True)
+    yaml_contents = result.stdout.decode("utf-8")
+
+    # Use regexp instead of using a third-party YAML parser to ease deployment on Windows.
+    image_names = re.findall(r"image: (\S+)$", yaml_contents, re.MULTILINE)
+    logging.info("Export images: {}".format(", ".join(image_names)))
+    tar_file = args.output_file + ".tar"
+    utils.run(["docker", "save", *image_names, "-o", tar_file])
+    compress_tar(tar_file, args.output_file)
+
+
+def compress_tar(input_path, output_path):
+    gzip_file(input_path, output_path)
+    os.remove(input_path)
+    logging.info("Compressed output file: {}".format(output_path))
+
+
+def gzip_file(input_path, output_path):
+    with open(input_path, "rb") as fd_in:
+        with gzip.open(output_path, "wb") as fd_out:
+            fd_out.writelines(fd_in)

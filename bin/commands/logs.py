@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 import utils
@@ -8,9 +7,7 @@ DESCRIPTION = "Show docker logs"
 
 def setup(parser):
     parser.add_argument("image", metavar="IMAGE", type=str, nargs="?", help="Hub docker image")
-    parser.add_argument(
-        "detach", action="store_true", help="Detach and run container on background"
-    )
+    parser.add_argument("-d", "--detach", action="store_true", help="Run container on background")
 
 
 def run(args):

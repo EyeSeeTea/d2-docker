@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import shutil
@@ -39,14 +38,6 @@ def run(args):
         utils.run_docker_compose(["stop"], image_name)
 
 
-def copy_files(src_dir, dest_dir):
-    src_files = os.listdir(src_dir)
-    for file_name in src_files:
-        full_file_name = os.path.join(src_dir, file_name)
-        if os.path.isfile(full_file_name):
-            shutil.copy(full_file_name, dest_dir)
-
-
 def get_docker_directory(dhis2_db_docker_directory):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     default_dir = os.path.join(script_dir, "../..", "images/dhis2-db")
@@ -60,14 +51,20 @@ def get_docker_directory(dhis2_db_docker_directory):
 
 def build_image(image_name, docker_dir):
     result = utils.get_image_status(image_name)
-    print(result)
-    aa
+    if result["status"] != "running":
+        raise utils.D2DockerError("Container must be running to build image")
+    db_container_name = result["containers"]["db"]
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        logging.info("Create temporal directory: {}".format(temp_dir))
+    with tempfile.TemporaryDirectory() as temp_dir0:
+        logging.info("Create temporal directory: {}".format(temp_dir0))
+        temp_dir = os.path.join(temp_dir0, "contents")
 
-        logging.info("Copy docker files: {}".format(docker_dir))
-        copy_files(docker_dir, temp_dir)
+        logging.info("Copy base docker files: {}".format(docker_dir))
+        shutil.copytree(docker_dir, temp_dir)
+
+        logging.info("Copy Dhis2 apps")
+        source = "{}:/data/apps/".format(db_container_name)
+        utils.run(["docker", "cp", source, temp_dir])
 
         db_path = os.path.join(temp_dir, "db.sql.gz")
         export_database(image_name, db_path)
@@ -83,3 +80,4 @@ def export_database(image_name, db_path):
         # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
         cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
         utils.run_docker_compose(cmd, image_name, stdout=db_file)
+

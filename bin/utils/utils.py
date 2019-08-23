@@ -14,6 +14,7 @@ def run(command_parts, check=True, env=None, **kwargs):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
     logging.debug("Run: {}".format(cmd))
+
     if env:
         logging.debug("Env: {}".format(env))
     try:
@@ -45,8 +46,6 @@ def get_running_image_name():
             "{} d2-docker images running, specify an image name".format(len(images_names))
         )
 
-        # https://stackoverflow.com/questions/2470971/fast-way-to-test-if-a-port-is-in-use-using-python
-
 
 def get_free_port(start=8080, end=65535):
     for port in range(start, end):
@@ -66,17 +65,20 @@ def get_image_status(image_name, first_port=8080):
     output_lines = result.stdout.decode("utf-8").splitlines()
     port_re = r"0\.0\.0\.0:(\d+)->"
 
-    matching_entries = [
-        line
-        for line in output_lines
-        if line.startswith(project_name + "_") and re.search(port_re, line)
-    ]
+    containers = {}
+    port = None
 
-    if matching_entries:
-        entry = matching_entries[0].split()
-        container = entry[0]
-        port = re.match(port_re, entry[1]).group(1)
-        return {"status": "running", "container": container, "port": int(port)}
+    for line in output_lines:
+        parts = line.split(None, 1)
+        container_name, ports = parts
+        if container_name.startswith(project_name + "_"):
+            service = container_name[len(project_name) + 1 :].split("_", 1)[0]
+            containers[service] = container_name
+            if service == "gateway":
+                port = re.match(port_re, ports).group(1)
+
+    if containers and port:
+        return {"status": "running", "containers": containers, "port": int(port)}
     else:
         return {"status": "stopped"}
 
@@ -101,4 +103,4 @@ def run_docker_compose(args, image_name=None, port=None, **kwargs):
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
-    run(["docker-compose", "-p", project_name] + args, env=env, **kwargs)
+    return run(["docker-compose", "-p", project_name] + args, env=env, **kwargs)

@@ -12,7 +12,10 @@ DHIS2_DB_IMAGE_RE = "/dhis2-db:"
 
 def setup(parser):
     parser.add_argument(
-        "image_or_file", metavar="IMAGE_OR_FILE", type=str, help="Docker image or images file"
+        "image_or_file",
+        metavar="IMAGE_OR_EXPORT_FILE",
+        type=str,
+        help="Docker image or images file",
     )
     parser.add_argument(
         "-d", "--detach", action="store_true", help="Run container on the background"
@@ -45,8 +48,9 @@ def import_from_file(images_path):
 def start(args, image_name):
     logging.info("Start image: {}".format(image_name))
     result = utils.get_image_status(image_name)
-    if result["status"] == "running":
-        raise utils.D2DockerError("Container already runnning for image {}".format(result["image"]))
+    if result["state"] == "running":
+        msg = "Container already runnning for image {}".format(result["containers"]["db"])
+        raise utils.D2DockerError(msg)
     port = utils.get_free_port()
 
     if args.pull:

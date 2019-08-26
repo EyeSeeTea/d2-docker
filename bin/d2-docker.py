@@ -4,14 +4,19 @@ import argparse
 import logging
 
 from utils import D2DockerError
-from commands import start, logs, stop, commit, push, export, import_
+from commands import start, logs, stop, commit, push, copy, export, import_
 
-COMMAND_MODULES = [start, logs, stop, commit, push, export, import_]
+COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_]
 
 
 def get_parser():
     parser = argparse.ArgumentParser(prog="d2-docker")
-    # parser.add_argument('--foo', action='store_true', help='foo help')
+    parser.add_argument(
+        "--dhis2-db-docker-directory",
+        metavar="DIRECTORY",
+        type=str,
+        help="Directory container dhis2-db docker source",
+    )
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")
 
     for command_module in COMMAND_MODULES:

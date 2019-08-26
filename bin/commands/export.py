@@ -10,7 +10,7 @@ DESCRIPTION = "Export d2-docker images to a single file"
 
 def setup(parser):
     parser.add_argument("-i", "--image", metavar="IMAGE", type=str, help="Docker dhis2-db image")
-    parser.add_argument("output_file", metavar="PATH", type=str, help="Output tar.gz file")
+    parser.add_argument("output_file", metavar="TGZ_PATH", type=str, help="Output tar.gz file")
 
 
 def run(args):

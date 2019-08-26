@@ -70,7 +70,7 @@ Use the output file from command _export_ to create all d2-docker images require
 $ bin/d2-docker import dhis2-sierra.tgz
 ```
 
-### Start DSHI2 instance from an exported file
+### Start DHIS2 instance from an exported file
 
 You can use the same _start_ command, passing the file instead of the image name. `d2-docker` will then import the images of the file and automatically start the DHIS2 instance it contains.
 

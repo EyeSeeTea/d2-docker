@@ -2,6 +2,7 @@ import subprocess
 import logging
 import re
 import socket
+from contextlib import contextmanager
 
 PROJECT_NAME_PREFIX = "d2-docker"
 
@@ -80,9 +81,9 @@ def get_image_status(image_name, first_port=8080):
                 port = re.match(port_re, ports).group(1)
 
     if containers and port:
-        return {"status": "running", "containers": containers, "port": int(port)}
+        return {"state": "running", "containers": containers, "port": int(port)}
     else:
-        return {"status": "stopped"}
+        return {"state": "stopped"}
 
 
 def get_project_name(image_name):
@@ -106,3 +107,8 @@ def run_docker_compose(args, image_name=None, port=None, **kwargs):
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
     return run(["docker-compose", "-p", project_name] + args, env=env, **kwargs)
+
+
+@contextmanager
+def noop(image_name):
+    yield {}

@@ -31,7 +31,10 @@ services:
             - "${DHIS2_CORE_PORT:-8080}:80"
         volumes:
             - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./config/50x.html:/usr/share/nginx/html/50x.html:ro
             - /var/run/docker.sock:/tmp/docker.sock:ro
+        depends_on:
+            - "core"
     data:
         image: "${DHIS2_DATA_IMAGE}"
         environment:

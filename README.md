@@ -79,3 +79,26 @@ $ bin/d2-docker start dhis2-sierra.tgz
 ```
 
 On the first run, the images have been created, you can either run this command or the standard `start DHIS2_DB_IMAGE_NAME`.
+
+### Copy Docker images to/from local directories
+
+You can use a Docker image or a data directory (db + apps) as source, that will create a new Docker image _eyeseetea/dhis2-db:2.30-sierra2_ and a `sierra-data/` directory:
+
+```
+$ bin/d2-docker copy eyeseetea/dhis2-db:2.30-sierra eyeseetea/dhis2-db:2.30-sierra2 sierra-data
+[...]
+$ docker image ls | grep 2.30-sierra2
+tokland/dhis2-db      2.30-sierra2         930aced0d915        1 minutes ago      106MB
+$ ls sierra-data/
+apps  db.sql.gz
+```
+
+Alternatively, you can use a data directory (db + apps) as source and create Docker images from it:
+
+```
+$ bin/d2-docker copy sierra-data eyeseetea/dhis2-db:2.30-sierra3 eyeseetea/dhis2-db:2.30-sierra4
+[...]
+$ docker image ls | grep "2.30-sierra\(3\|4\)"
+tokland/dhis2-db      2.30-sierra3         930aced0d915        1 minutes ago      106MB
+tokland/dhis2-db      2.30-sierra4         930aced0d915        1 minutes ago      106MB
+```

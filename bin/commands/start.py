@@ -58,9 +58,9 @@ def start(args, image_name):
 
     utils.run_docker_compose(["down", "--volumes"], image_name)
 
-    up_args = ["--force-recreate"] + (["--detach"] if args.detach else [])
+    up_args = ["--force-recreate", *(["--detach"] if args.detach else [])]
     try:
-        utils.run_docker_compose(["up"] + up_args, image_name, port=port)
+        utils.run_docker_compose(["up", *up_args], image_name, port=port)
     except KeyboardInterrupt:
         logging.info("Control+C pressed, stopping containers")
         utils.run_docker_compose(["stop"], image_name)

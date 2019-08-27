@@ -130,7 +130,7 @@ def run_docker_compose(args, image_name=None, port=None, **kwargs):
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
-    return run(["docker-compose", "-p", project_name] + args, env=env, **kwargs)
+    return run(["docker-compose", "-p", project_name, *args], env=env, **kwargs)
 
 
 def get_item_type(name):
@@ -164,23 +164,27 @@ def get_docker_directory(dhis2_db_docker_directory=None):
 
 @contextmanager
 def running_container(image_name):
+    """
+    Return a context manager to use with a with statament, making sure a container for image
+    is running and the container ends in the same state it has before.
+    """
     status1 = get_image_status(image_name)
     logging.debug("Status for {}: {}".format(image_name, status1))
+    container_is_running_on_start = status1["state"] == "running"
 
-    if not status1["state"] == "running":
-        logging.info("Start container")
+    if not container_is_running_on_start:
+        logging.info("Container not running for image, start it: {}".format(image_name))
         run_docker_compose(["up", "--detach"], image_name, port=get_free_port())
 
     try:
         status2 = get_image_status(image_name)
         logging.debug("Status for {}: {}".format(image_name, status2))
         yield status2
-    except Exception as exc:
-        raise exc
     finally:
-        status3 = get_image_status(image_name)
-        if status3["state"] == "running":
-            logging.info("Stop container")
+        if container_is_running_on_start:
+            logging.info("Container was running on start, keep it running: {}".format(image_name))
+        else:
+            logging.info("Container was not running on start, stop it: {}".format(image_name))
             run_docker_compose(["stop"], image_name)
 
 
@@ -240,3 +244,13 @@ def export_database(image_name, db_path):
 def load_images_file(input_file):
     """Load docker images from local file."""
     return run(["docker", "load", "-i", input_file], capture_output=True)
+
+
+def push_image(image_name):
+    """Push Docker image to the repository."""
+    return run(["docker", "push", image_name])
+
+
+def save_images(image_names, output_file_path):
+    """Save list of Docker images into a local file."""
+    run(["docker", "save", *image_names, "-o", output_file_path])

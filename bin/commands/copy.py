@@ -36,8 +36,7 @@ def copy(source, destinations, docker_dir):
             if source_type == "docker-image" and dest_type == "docker-image":
                 utils.build_image_from_source(docker_dir, source, dest)
             elif source_type == "docker-image" and dest_type == "folder":
-                container_name = status["containers"]["db"]
-                utils.export_data(source, container_name, dest)
+                utils.export_data(source, status["containers"]["db"], dest)
             elif source_type == "folder" and dest_type == "docker-image":
                 utils.build_image_from_directory(docker_dir, source, dest)
             elif source_type == "folder" and dest_type == "folder":

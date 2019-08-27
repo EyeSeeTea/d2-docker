@@ -22,7 +22,7 @@ def run(args):
     image_names = re.findall(r"image: (\S+)$", yaml_contents, re.MULTILINE)
     logging.info("Export images: {}".format(", ".join(image_names)))
     tar_file = args.output_file + ".tar"
-    utils.run(["docker", "save", *image_names, "-o", tar_file])
+    utils.save_images(image_names, tar_file)
     compress_tar(tar_file, args.output_file)
 
 

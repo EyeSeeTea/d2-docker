@@ -12,4 +12,4 @@ def setup(parser):
 def run(args):
     image_name = args.image or utils.get_running_image_name()
     logging.info("Push image: {}".format(image_name))
-    utils.run(["docker", "push", image_name])
+    utils.push_image(image_name)

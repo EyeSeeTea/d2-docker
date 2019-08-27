@@ -7,6 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
         <script src="main.js"></script>
+
         <style>
             .parent {
                 position: absolute;
@@ -80,26 +81,27 @@
 
         <script>
             function getDhis2InstanceState() {
-                const port = window.location.port;
-                return fetch("http://localhost:" + port)
+                return fetch("http://localhost:" + window.location.port)
                     .then(res => !(res.status >= 500 && res.status <= 599))
                     .catch(_err => false);
             }
 
-            window.setInterval(() => {
+            function reloadIfDhis2InstanceIsActive() {
                 getDhis2InstanceState().then(isActive => {
                     if (isActive) {
                         window.location.reload();
                     }
                 });
-            }, 2000);
+            }
+
+            window.setInterval(reloadIfDhis2InstanceIsActive, 2000);
         </script>
     </head>
 
     <body>
         <div class="parent">
             <div class="message">
-                D2-docker setup in process, please wait...
+                Dhis2 instance is being started, please wait...
                 <div class="spinner">
                     <div class="rect1"></div>
                     <div class="rect2"></div>

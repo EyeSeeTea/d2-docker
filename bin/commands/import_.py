@@ -12,9 +12,5 @@ def setup(parser):
 
 def run(args):
     input_file = args.input_file
-    load_images_file(input_file)
-
-
-def load_images_file(input_file):
     logging.info("Load images from file: {}".format(input_file))
-    return utils.run(["docker", "load", "-i", input_file], capture_output=True)
+    utils.load_images_file(input_file)

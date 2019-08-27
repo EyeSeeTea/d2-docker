@@ -1,8 +1,11 @@
 import subprocess
 import logging
 import re
+import os
 import socket
+import tempfile
 from contextlib import contextmanager
+from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2-docker"
 
@@ -11,19 +14,46 @@ class D2DockerError(Exception):
     pass
 
 
+def mkdir_p(path):
+    """Create directory. Do nothing if it exists."""
+    os.makedirs(path, exist_ok=True)
+
+
+def copytree(source, dest):
+    """Copy full tree path from source to dest, create dest if it does not exists."""
+    dir_util.copy_tree(source, dest)
+
+
 def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
-    logging.debug("Run: {}".format(cmd))
 
     if env:
-        logging.debug("Env: {}".format(env))
+        env_vars = ("{}={}".format(k, v) for (k, v) in env.items())
+        logging.debug("Environment: {}".format(" ".join(env_vars)))
+
     try:
+        logging.debug("Run: {}".format(cmd))
         return subprocess.run(
             command_parts, check=check, env=env, capture_output=capture_output, **kwargs
         )
     except subprocess.CalledProcessError as exc:
         raise D2DockerError("Command failed with code {}: {}".format(exc.returncode, cmd))
+
+
+def get_free_port(start=8080, end=65535):
+    for port in range(start, end):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            port_is_open = sock.connect_ex(("localhost", port)) == 0
+            if not port_is_open:
+                return port
+    raise D2DockerError("No free open available")
+
+
+@contextmanager
+def noop(image_name):
+    """Do nothing with-statament context."""
+    yield {}
 
 
 def get_running_image_name():
@@ -48,15 +78,6 @@ def get_running_image_name():
         raise D2DockerError(
             "{} d2-docker images running, specify an image name".format(len(image_names))
         )
-
-
-def get_free_port(start=8080, end=65535):
-    for port in range(start, end):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            port_is_open = sock.connect_ex(("localhost", port)) == 0
-            if not port_is_open:
-                return port
-    raise D2DockerError("No free open available")
 
 
 def get_image_status(image_name, first_port=8080):
@@ -90,10 +111,13 @@ def get_project_name(image_name):
     """
     Return the project name prefix from an image name.
 
-    The final containers created will be: PROJECT_NAME_{SERVICE}_1.
+    Example: eyeseetea/dhis2-db:2.30-ento -> eyeseetea-2-30-ento
+
+    The final containers created have names: PROJECT_NAME_{SERVICE}_1.
     """
-    clean_image_name = re.sub(r"[^\w]", "_", image_name)
-    return "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name)
+    clean_image_name1 = image_name.replace("/dhis2-db", "")
+    clean_image_name2 = re.sub(r"[^\w]", "_", clean_image_name1)
+    return "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name2)
 
 
 def run_docker_compose(args, image_name=None, port=None, **kwargs):
@@ -109,6 +133,110 @@ def run_docker_compose(args, image_name=None, port=None, **kwargs):
     return run(["docker-compose", "-p", project_name] + args, env=env, **kwargs)
 
 
+def get_item_type(name):
+    """
+    Return "docker-image" if name matches the pattern 'ORG/dhis2-db:TAG',
+    otherwise assume it's a folder.
+    """
+    namespace_split = name.split("/")
+    if len(namespace_split) != 2:
+        return "folder"
+    else:
+        name_tag_split = namespace_split[1].split(":")
+        if len(name_tag_split) == 2 and name_tag_split[0] == "dhis2-db":
+            return "docker-image"
+        else:
+            return "folder"
+
+
+def get_docker_directory(dhis2_db_docker_directory=None):
+    """Return docker directory for dhis2-db."""
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    default_dir = os.path.join(script_dir, "../..", "images/dhis2-db")
+    docker_dir = dhis2_db_docker_directory or os.path.realpath(default_dir)
+
+    if not os.path.isdir(docker_dir):
+        raise D2DockerError("Docker directory not found: {}".format(docker_dir))
+    else:
+        logging.info("Docker directory: {}".format(docker_dir))
+        return docker_dir
+
+
 @contextmanager
-def noop(image_name):
-    yield {}
+def running_container(image_name):
+    status1 = get_image_status(image_name)
+    logging.debug("Status for {}: {}".format(image_name, status1))
+
+    if not status1["state"] == "running":
+        logging.info("Start container")
+        run_docker_compose(["up", "--detach"], image_name, port=get_free_port())
+
+    try:
+        status2 = get_image_status(image_name)
+        logging.debug("Status for {}: {}".format(image_name, status2))
+        yield status2
+    except Exception as exc:
+        raise exc
+    finally:
+        status3 = get_image_status(image_name)
+        if status3["state"] == "running":
+            logging.info("Stop container")
+            run_docker_compose(["stop"], image_name)
+
+
+def build_image_from_source(docker_dir, source_image_name, dest_image_name):
+    """Build a docker image using another one as template."""
+    status = get_image_status(source_image_name)
+    if status["state"] != "running":
+        raise D2DockerError("Container must be running to build image")
+    db_container_name = status["containers"]["db"]
+
+    with tempfile.TemporaryDirectory() as temp_dir_root:
+        logging.info("Create temporal directory: {}".format(temp_dir_root))
+        temp_dir = os.path.join(temp_dir_root, "contents")
+
+        logging.info("Copy base docker files: {}".format(docker_dir))
+        copytree(docker_dir, temp_dir)
+        export_data(source_image_name, db_container_name, temp_dir)
+        run(["docker", "build", temp_dir, "--tag", dest_image_name])
+
+
+def build_image_from_directory(docker_dir, data_dir, dest_image_name):
+    """Build docker image from data (db + apps) directory."""
+    with tempfile.TemporaryDirectory() as temp_dir_root:
+        logging.info("Create temporal directory: {}".format(temp_dir_root))
+        temp_dir = os.path.join(temp_dir_root, "contents")
+
+        logging.info("Copy base docker files: {}".format(docker_dir))
+        copytree(docker_dir, temp_dir)
+
+        logging.info("Copy data: {} -> {}".format(data_dir, temp_dir))
+        copytree(data_dir, temp_dir)
+        run(["docker", "build", temp_dir, "--tag", dest_image_name])
+
+
+def export_data(image_name, db_container_name, destination):
+    """Export data (db + apps) from a running Docker container to a destination directory."""
+    logging.info("Copy Dhis2 apps")
+    source = "{}:/data/apps/".format(db_container_name)
+    mkdir_p(destination)
+    run(["docker", "cp", source, destination])
+
+    db_path = os.path.join(destination, "db.sql.gz")
+    export_database(image_name, db_path)
+
+
+def export_database(image_name, db_path):
+    """Export Dhis2 database into a gzipped file."""
+    logging.info("Dump DB: {}".format(db_path))
+
+    with open(db_path, "wb") as db_file:
+        pg_dump = "pg_dump -U dhis dhis2 | gzip"
+        # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
+        cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
+        run_docker_compose(cmd, image_name, stdout=db_file)
+
+
+def load_images_file(input_file):
+    """Load docker images from local file."""
+    return run(["docker", "load", "-i", input_file], capture_output=True)

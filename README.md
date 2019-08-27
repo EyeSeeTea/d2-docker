@@ -102,3 +102,13 @@ $ docker image ls | grep "2.30-sierra\(3\|4\)"
 tokland/dhis2-db      2.30-sierra3         930aced0d915        1 minutes ago      106MB
 tokland/dhis2-db      2.30-sierra4         930aced0d915        1 minutes ago      106MB
 ```
+
+### List all local Docker images for d2-docker
+
+Lists _dhis2-db_ images present in the local repository:
+
+```
+$ docker image ls | grep dhis2-db
+tokland/dhis2-db      2.30-sierra          24c0f8ab01e3        25 minutes ago      83.5MB
+tokland/dhis2-db      2.30-sierra2         930aced0d915        About an hour ago   106MB
+```

@@ -4,9 +4,9 @@ import argparse
 import logging
 
 from utils import D2DockerError
-from commands import start, logs, stop, commit, push, copy, export, import_
+from commands import start, logs, stop, commit, push, copy, export, import_, list_
 
-COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_]
+COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_]
 
 
 def get_parser():

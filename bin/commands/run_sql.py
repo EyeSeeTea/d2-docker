@@ -13,8 +13,8 @@ def run(args):
     image_name = args.image or utils.get_running_image_name()
     sql_file = args.sql_file
     utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
-
-    with utils.running_container(image_name):
-        psql = "psql -U dhis dhis2"
-        cmd = ["exec", "-T", "db", "bash", "-c", psql]
-        utils.run_docker_compose(cmd, image_name, stdin=open(sql_file))
+    cmd = ["exec", "-T", "db", "psql", "-U", "dhis", "dhis2"]
+    result = utils.run_docker_compose(cmd, image_name, stdin=open(sql_file), raise_on_error=False)
+    if result.returncode != 0:
+        utils.logger.error("Could not execute the SQL file, is the container running?")
+        return 1

@@ -12,7 +12,7 @@ PROJECT_NAME_PREFIX = "d2-docker"
 
 def get_logger():
     logger = logging.getLogger("root")
-    formatter = logging.Formatter("[%(levelname)s] %(message)s")
+    formatter = logging.Formatter("[d2-docker:%(levelname)s] %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -36,7 +36,7 @@ def copytree(source, dest):
     dir_util.copy_tree(source, dest)
 
 
-def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
+def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kwargs):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
 
@@ -47,7 +47,7 @@ def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
     try:
         logger.debug("Run: {}".format(cmd))
         return subprocess.run(
-            command_parts, check=check, env=env, capture_output=capture_output, **kwargs
+            command_parts, check=raise_on_error, env=env, capture_output=capture_output, **kwargs
         )
     except subprocess.CalledProcessError as exc:
         raise D2DockerError("Command failed with code {}: {}".format(exc.returncode, cmd))

@@ -44,7 +44,7 @@ def main(argv):
         return 1
     else:
         try:
-            args.func(args)
+            return args.func(args)
         except utils.D2DockerError as exc:
             print(str(exc), file=sys.stderr)
             return 2

@@ -1,5 +1,3 @@
-import logging
-
 import utils
 
 NAME = "import"
@@ -12,5 +10,5 @@ def setup(parser):
 
 def run(args):
     input_file = args.input_file
-    logging.info("Load images from file: {}".format(input_file))
+    utils.logger.info("Load images from file: {}".format(input_file))
     utils.load_images_file(input_file)

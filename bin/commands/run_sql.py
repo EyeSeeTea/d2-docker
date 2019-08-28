@@ -1,5 +1,3 @@
-import logging
-
 import utils
 
 DESCRIPTION = "Run SQL for a  d2-docker image and commit the result"
@@ -14,7 +12,7 @@ def setup(parser):
 def run(args):
     image_name = args.image or utils.get_running_image_name()
     sql_file = args.sql_file
-    logging.info("Run SQL file {} for image {}".format(sql_file, image_name))
+    utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
 
     with utils.running_container(image_name):
         psql = "psql -U dhis dhis2"

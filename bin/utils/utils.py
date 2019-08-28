@@ -9,7 +9,17 @@ from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2-docker"
 
-logger = logging.getLogger("root")
+
+def get_logger():
+    logger = logging.getLogger("root")
+    formatter = logging.Formatter("[%(levelname)s] %(message)s")
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+
+logger = get_logger()
 
 
 class D2DockerError(Exception):
@@ -32,7 +42,7 @@ def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
 
     if env:
         env_vars = ("{}={}".format(k, v) for (k, v) in env.items())
-        logging.debug("Environment: {}".format(" ".join(env_vars)))
+        logger.debug("Environment: {}".format(" ".join(env_vars)))
 
     try:
         logger.debug("Run: {}".format(cmd))
@@ -74,7 +84,7 @@ def get_running_image_name():
     if len(image_names) == 0:
         raise D2DockerError("There are no d2-docker images running, specify image name")
     elif len(image_names) == 1:
-        logging.info("Running image: {}".format(image_names[0]))
+        logger.info("Running image: {}".format(image_names[0]))
         return image_names[0]
     else:
         raise D2DockerError(
@@ -185,7 +195,7 @@ def get_docker_directory(dhis2_db_docker_directory=None):
     if not os.path.isdir(docker_dir):
         raise D2DockerError("Docker directory not found: {}".format(docker_dir))
     else:
-        logging.info("Docker directory: {}".format(docker_dir))
+        logger.info("Docker directory: {}".format(docker_dir))
         return docker_dir
 
 
@@ -196,22 +206,22 @@ def running_container(image_name):
     is running and the container ends in the same state it has before.
     """
     status1 = get_image_status(image_name)
-    logging.debug("Status for {}: {}".format(image_name, status1))
+    logger.debug("Status for {}: {}".format(image_name, status1))
     container_is_running_on_start = status1["state"] == "running"
 
     if not container_is_running_on_start:
-        logging.info("Container not running for image, start it: {}".format(image_name))
+        logger.info("Container not running for image, start it: {}".format(image_name))
         run_docker_compose(["up", "--detach"], image_name, port=get_free_port())
 
     try:
         status2 = get_image_status(image_name)
-        logging.debug("Status for {}: {}".format(image_name, status2))
+        logger.debug("Status for {}: {}".format(image_name, status2))
         yield status2
     finally:
         if container_is_running_on_start:
-            logging.info("Container was running on start, keep it running: {}".format(image_name))
+            logger.info("Container was running on start, keep it running: {}".format(image_name))
         else:
-            logging.info("Container was not running on start, stop it: {}".format(image_name))
+            logger.info("Container was not running on start, stop it: {}".format(image_name))
             run_docker_compose(["stop"], image_name)
 
 
@@ -223,10 +233,10 @@ def build_image_from_source(docker_dir, source_image_name, dest_image_name):
     db_container_name = status["containers"]["db"]
 
     with tempfile.TemporaryDirectory() as temp_dir_root:
-        logging.info("Create temporal directory: {}".format(temp_dir_root))
+        logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
 
-        logging.info("Copy base docker files: {}".format(docker_dir))
+        logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
         export_data(source_image_name, db_container_name, temp_dir)
         run(["docker", "build", temp_dir, "--tag", dest_image_name])
@@ -235,20 +245,20 @@ def build_image_from_source(docker_dir, source_image_name, dest_image_name):
 def build_image_from_directory(docker_dir, data_dir, dest_image_name):
     """Build docker image from data (db + apps) directory."""
     with tempfile.TemporaryDirectory() as temp_dir_root:
-        logging.info("Create temporal directory: {}".format(temp_dir_root))
+        logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
 
-        logging.info("Copy base docker files: {}".format(docker_dir))
+        logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
 
-        logging.info("Copy data: {} -> {}".format(data_dir, temp_dir))
+        logger.info("Copy data: {} -> {}".format(data_dir, temp_dir))
         copytree(data_dir, temp_dir)
         run(["docker", "build", temp_dir, "--tag", dest_image_name])
 
 
 def export_data(image_name, db_container_name, destination):
     """Export data (db + apps) from a running Docker container to a destination directory."""
-    logging.info("Copy Dhis2 apps")
+    logger.info("Copy Dhis2 apps")
     source = "{}:/data/apps/".format(db_container_name)
     mkdir_p(destination)
     run(["docker", "cp", source, destination])
@@ -259,7 +269,7 @@ def export_data(image_name, db_container_name, destination):
 
 def export_database(image_name, db_path):
     """Export Dhis2 database into a gzipped file."""
-    logging.info("Dump DB: {}".format(db_path))
+    logger.info("Dump DB: {}".format(db_path))
 
     with open(db_path, "wb") as db_file:
         pg_dump = "pg_dump -U dhis dhis2 | gzip"

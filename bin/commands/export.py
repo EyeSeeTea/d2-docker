@@ -1,5 +1,4 @@
 import gzip
-import logging
 import os
 import re
 
@@ -20,7 +19,7 @@ def run(args):
 
     # Use regexp instead of using a third-party YAML parser to ease deployment on Windows.
     image_names = re.findall(r"image: (\S+)$", yaml_contents, re.MULTILINE)
-    logging.info("Export images: {}".format(", ".join(image_names)))
+    utils.logger.info("Export images: {}".format(", ".join(image_names)))
     tar_file = args.output_file + ".tar"
     utils.save_images(image_names, tar_file)
     compress_tar(tar_file, args.output_file)
@@ -29,7 +28,7 @@ def run(args):
 def compress_tar(input_path, output_path):
     gzip_file(input_path, output_path)
     os.remove(input_path)
-    logging.info("Compressed output file: {}".format(output_path))
+    utils.logger.info("Compressed output file: {}".format(output_path))
 
 
 def gzip_file(input_path, output_path):

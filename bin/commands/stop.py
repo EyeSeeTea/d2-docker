@@ -1,5 +1,3 @@
-import logging
-
 import utils
 
 DESCRIPTION = "Stop docker containers"
@@ -11,5 +9,5 @@ def setup(parser):
 
 def run(args):
     image_name = args.image or utils.get_running_image_name()
-    logging.info("Stop container for image: {}".format(image_name))
+    utils.logger.info("Stop container for image: {}".format(image_name))
     utils.run_docker_compose(["stop"], image_name)

@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 
@@ -46,7 +45,7 @@ def import_from_file(images_path):
 
 
 def start(args, image_name):
-    logging.info("Start image: {}".format(image_name))
+    utils.logger.info("Start image: {}".format(image_name))
     result = utils.get_image_status(image_name)
     if result["state"] == "running":
         msg = "Container already runnning for image {}".format(result["containers"]["db"])
@@ -62,8 +61,8 @@ def start(args, image_name):
     try:
         utils.run_docker_compose(["up", *up_args], image_name, port=port)
     except KeyboardInterrupt:
-        logging.info("Control+C pressed, stopping containers")
+        utils.logger.info("Control+C pressed, stopping containers")
         utils.run_docker_compose(["stop"], image_name)
 
     if args.detach:
-        logging.info("Detaching... run d2-docker logs to see logs")
+        utils.logger.info("Detaching... run d2-docker logs to see logs")

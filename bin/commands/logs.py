@@ -1,5 +1,3 @@
-import logging
-
 import utils
 
 DESCRIPTION = "Show docker logs"
@@ -12,5 +10,5 @@ def setup(parser):
 
 def run(args):
     image_name = args.image or utils.get_running_image_name()
-    logging.info("Show logs: {}".format(image_name))
+    utils.logger.info("Show logs: {}".format(image_name))
     utils.run_docker_compose(["logs", "-f"], image_name)

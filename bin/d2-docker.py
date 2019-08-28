@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import argparse
-import logging
 
 import utils
 from commands import start, logs, stop, commit, push, copy, export, import_, list_, run_sql
@@ -36,7 +35,6 @@ def get_parser():
 
 
 def main(argv):
-    logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s] %(message)s")
     parser = get_parser()
     args = parser.parse_args(argv)
     utils.logger.setLevel(args.log_level)

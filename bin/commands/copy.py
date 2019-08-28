@@ -1,5 +1,3 @@
-import logging
-
 import utils
 
 DESCRIPTION = "Copy databases from/to docker containers"
@@ -23,15 +21,16 @@ def run(args):
 
 
 def copy(source, destinations, docker_dir):
+    logger = utils.logger
     source_type = utils.get_item_type(source)
-    logging.debug("Source {} has type: {}".format(source, source_type))
+    logger.debug("Source {} has type: {}".format(source, source_type))
     block_function = utils.running_container if source_type == "docker-image" else utils.noop
 
     with block_function(source) as status:
         for dest in destinations:
             dest_type = utils.get_item_type(dest)
-            logging.debug("Destination {} has type: {}".format(dest, dest_type))
-            logging.info("Copying: {}:{} -> {}:{}".format(source_type, source, dest_type, dest))
+            logger.debug("Destination {} has type: {}".format(dest, dest_type))
+            logger.info("Copying: {}:{} -> {}:{}".format(source_type, source, dest_type, dest))
 
             if source_type == "docker-image" and dest_type == "docker-image":
                 utils.build_image_from_source(docker_dir, source, dest)

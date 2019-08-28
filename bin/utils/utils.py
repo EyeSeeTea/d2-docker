@@ -9,6 +9,8 @@ from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2-docker"
 
+logger = logging.getLogger("root")
+
 
 class D2DockerError(Exception):
     pass
@@ -33,7 +35,7 @@ def run(command_parts, check=True, env=None, capture_output=False, **kwargs):
         logging.debug("Environment: {}".format(" ".join(env_vars)))
 
     try:
-        logging.debug("Run: {}".format(cmd))
+        logger.debug("Run: {}".format(cmd))
         return subprocess.run(
             command_parts, check=check, env=env, capture_output=capture_output, **kwargs
         )
@@ -81,13 +83,31 @@ def get_running_image_name():
 
 
 def get_image_status(image_name, first_port=8080):
-    """Return a Result(status=True, value=value) available port for an image.
-    If it's already running, return Result(status=False, error=error)."""
+    """
+    If the container for the image is not running, return:
+
+        {
+            "state": "stopped"
+        }
+
+    If it's running, return:
+
+        {
+            "state": "running",
+            "containers": {
+                "core": CONTAINER_CORE,
+                "gateway": CONTAINER_GATEWAY,
+                "db": CONTAINER_DB,
+            },
+            "port": PORT,
+        }
+    Return a Result(status=True, value=value) available port for an image.
+    If it's already running, return Result(status=False, error=error).
+    """
     final_image_name = image_name or get_running_image_name()
     project_name = get_project_name(final_image_name)
     result = run(["docker", "ps", "--format={{.Names}} {{.Ports}}"], capture_output=True)
     output_lines = result.stdout.decode("utf-8").splitlines()
-    port_re = r"0\.0\.0\.0:(\d+)->"
 
     containers = {}
     port = None
@@ -99,12 +119,19 @@ def get_image_status(image_name, first_port=8080):
             service = container_name[len(project_name) + 1 :].split("_", 1)[0]
             containers[service] = container_name
             if service == "gateway":
-                port = re.match(port_re, ports).group(1)
+                port = get_port_from_docker_ports(ports)
 
     if containers and port:
-        return {"state": "running", "containers": containers, "port": int(port)}
+        return {"state": "running", "containers": containers, "port": port}
     else:
         return {"state": "stopped"}
+
+
+def get_port_from_docker_ports(info):
+    port_re = r"0\.0\.0\.0:(\d+)->"
+    match = re.match(port_re, info)
+    port = int(match.group(1)) if match else None
+    return port
 
 
 def get_project_name(image_name):

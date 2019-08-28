@@ -3,10 +3,10 @@ import sys
 import argparse
 import logging
 
-from utils import D2DockerError
-from commands import start, logs, stop, commit, push, copy, export, import_, list_
+import utils
+from commands import start, logs, stop, commit, push, copy, export, import_, list_, run_sql
 
-COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_]
+COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_, run_sql]
 
 
 def get_parser():
@@ -16,6 +16,13 @@ def get_parser():
         metavar="DIRECTORY",
         type=str,
         help="Directory container dhis2-db docker source",
+    )
+    parser.add_argument(
+        "--log-level",
+        metavar="NOTSET | DEBUG | INFO | WARNING | ERROR | CRITICAL",
+        default="INFO",
+        type=str,
+        help="Run command with the given log level",
     )
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")
 
@@ -32,13 +39,15 @@ def main(argv):
     logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s] %(message)s")
     parser = get_parser()
     args = parser.parse_args(argv)
+    utils.logger.setLevel(args.log_level)
+
     if not getattr(args, "func", None):
         parser.print_usage()
         return 1
     else:
         try:
             args.func(args)
-        except D2DockerError as exc:
+        except utils.D2DockerError as exc:
             print(str(exc), file=sys.stderr)
             return 2
 

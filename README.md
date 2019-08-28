@@ -24,7 +24,7 @@ _If only one d2-docker container is active, you can omit the image name._
 
 ### Commit & push an existing DHIS2 instance
 
-This will create a new _dhis2-db_ image from the current data (SQL dump and apps) in d2-docker containers:
+This will create a new _dhis2-db_ image from the current data (SQL dump and apps) in running d2-docker containers:
 
 ```
 $ bin/d2-docker commit eyeseetea/dhis2-db:2.30-sierra
@@ -88,7 +88,7 @@ You can use a Docker image or a data directory (db + apps) as source, that will 
 $ bin/d2-docker copy eyeseetea/dhis2-db:2.30-sierra eyeseetea/dhis2-db:2.30-sierra2 sierra-data
 [...]
 $ docker image ls | grep 2.30-sierra2
-tokland/dhis2-db      2.30-sierra2         930aced0d915        1 minutes ago      106MB
+eyeseetea/dhis2-db      2.30-sierra2         930aced0d915        1 minutes ago      106MB
 $ ls sierra-data/
 apps  db.sql.gz
 ```
@@ -99,16 +99,26 @@ Alternatively, you can use a data directory (db + apps) as source and create Doc
 $ bin/d2-docker copy sierra-data eyeseetea/dhis2-db:2.30-sierra3 eyeseetea/dhis2-db:2.30-sierra4
 [...]
 $ docker image ls | grep "2.30-sierra\(3\|4\)"
-tokland/dhis2-db      2.30-sierra3         930aced0d915        1 minutes ago      106MB
-tokland/dhis2-db      2.30-sierra4         930aced0d915        1 minutes ago      106MB
+eyeseetea/dhis2-db      2.30-sierra3         930aced0d915        1 minutes ago      106MB
+eyeseetea/dhis2-db      2.30-sierra4         930aced0d915        1 minutes ago      106MB
 ```
 
 ### List all local Docker images for d2-docker
 
-Lists _dhis2-db_ images present in the local repository:
+Lists _dhis2-db_ images present in the local repository and the container status:
 
 ```
-$ docker image ls | grep dhis2-db
-tokland/dhis2-db      2.30-sierra          24c0f8ab01e3        25 minutes ago      83.5MB
-tokland/dhis2-db      2.30-sierra2         930aced0d915        About an hour ago   106MB
+$ bin/d2-docker.py list
+eyeseetea/dhis2-db:2.30-sierra RUNNING[port=8080]
+eyeseetea/dhis2-db:2.30-vietnam STOPPED
+```
+
+### Run SQL file in container
+
+```
+$ echo "update dashboard set name = 'Antenatal Care Name' where uid = 'nghVC4wtyzi'" > set-name.sql
+
+$ bin/d2-docker.py run-sql -i eyeseetea/dhis2-db:2.30-sierra set-name.sql
+[d2-docker:INFO] Run SQL file set-name.sql for image eyeseetea/dhis2-db:2.30-sierra
+UPDATE 1
 ```

@@ -195,7 +195,7 @@ def get_docker_directory(dhis2_db_docker_directory=None):
     if not os.path.isdir(docker_dir):
         raise D2DockerError("Docker directory not found: {}".format(docker_dir))
     else:
-        logger.info("Docker directory: {}".format(docker_dir))
+        logger.debug("Docker directory: {}".format(docker_dir))
         return docker_dir
 
 

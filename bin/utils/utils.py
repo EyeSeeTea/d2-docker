@@ -84,7 +84,7 @@ def get_running_image_name():
     if len(image_names) == 0:
         raise D2DockerError("There are no d2-docker images running, specify image name")
     elif len(image_names) == 1:
-        logger.info("Running image: {}".format(image_names[0]))
+        logger.info("Image is running: {}".format(image_names[0]))
         return image_names[0]
     else:
         raise D2DockerError(
@@ -144,15 +144,18 @@ def get_port_from_docker_ports(info):
     return port
 
 
+DHIS2_DATA_IMAGE = "dhis2-data"
+
+
 def get_project_name(image_name):
     """
     Return the project name prefix from an image name.
 
-    Example: eyeseetea/dhis2-db:2.30-ento -> eyeseetea-2-30-ento
+    Example: eyeseetea/dhis2-data:2.30-ento -> eyeseetea-2-30-ento
 
     The final containers created have names: PROJECT_NAME_{SERVICE}_1.
     """
-    clean_image_name1 = image_name.replace("/dhis2-db", "")
+    clean_image_name1 = image_name.replace("/" + DHIS2_DATA_IMAGE, "")
     clean_image_name2 = re.sub(r"[^\w]", "_", clean_image_name1)
     return "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name2)
 
@@ -172,7 +175,7 @@ def run_docker_compose(args, image_name=None, port=None, **kwargs):
 
 def get_item_type(name):
     """
-    Return "docker-image" if name matches the pattern 'ORG/dhis2-db:TAG',
+    Return "docker-image" if name matches the pattern 'ORG/{DHIS2_DATA_IMAGE}:TAG',
     otherwise assume it's a folder.
     """
     namespace_split = name.split("/")
@@ -180,17 +183,17 @@ def get_item_type(name):
         return "folder"
     else:
         name_tag_split = namespace_split[1].split(":")
-        if len(name_tag_split) == 2 and name_tag_split[0] == "dhis2-db":
+        if len(name_tag_split) == 2 and name_tag_split[0] == DHIS2_DATA_IMAGE:
             return "docker-image"
         else:
             return "folder"
 
 
-def get_docker_directory(dhis2_db_docker_directory=None):
-    """Return docker directory for dhis2-db."""
+def get_docker_directory(dhis2_data_docker_directory=None):
+    """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    default_dir = os.path.join(script_dir, "../..", "images/dhis2-db")
-    docker_dir = dhis2_db_docker_directory or os.path.realpath(default_dir)
+    default_dir = os.path.join(script_dir, "../..", "images", DHIS2_DATA_IMAGE)
+    docker_dir = dhis2_data_docker_directory or os.path.realpath(default_dir)
 
     if not os.path.isdir(docker_dir):
         raise D2DockerError("Docker directory not found: {}".format(docker_dir))

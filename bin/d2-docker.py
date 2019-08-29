@@ -11,10 +11,10 @@ COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_
 def get_parser():
     parser = argparse.ArgumentParser(prog="d2-docker")
     parser.add_argument(
-        "--dhis2-db-docker-directory",
+        "--dhis2-data-docker-directory",
         metavar="DIRECTORY",
         type=str,
-        help="Directory container dhis2-db docker source",
+        help="Directory containing dhis2-data docker source code",
     )
     parser.add_argument(
         "--log-level",

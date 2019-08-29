@@ -1,10 +1,12 @@
 import utils
 
-DESCRIPTION = "Push dhis2-db docker image"
+DESCRIPTION = "Push dhis2-data docker image"
 
 
 def setup(parser):
-    parser.add_argument("image", metavar="IMAGE", type=str, nargs="?", help="Docker dhis2-db image")
+    parser.add_argument(
+        "image", metavar="IMAGE", type=str, nargs="?", help="Docker dhis2-data image"
+    )
 
 
 def run(args):

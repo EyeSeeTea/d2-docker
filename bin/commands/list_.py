@@ -2,7 +2,6 @@ import utils
 
 DESCRIPTION = "List d2-docker data images"
 NAME = "list"
-PATTERN = "dhis2-db"
 
 
 def setup(parser):
@@ -10,7 +9,7 @@ def setup(parser):
 
 
 def run(args):
-    utils.logger.info("Listing docker images with pattern: {}".format(PATTERN))
+    utils.logger.info("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
     running_containers = get_running_containers()
     images_info = get_images_info(running_containers)
     print("\n".join(sorted(images_info)))
@@ -24,7 +23,7 @@ def get_images_info(running_containers):
     for repo, tag in lines_parts:
         image_name = (repo + ":" + tag) if repo != "<none>" and tag != "<none>" else None
 
-        if image_name and PATTERN in repo:
+        if image_name and utils.DHIS2_DATA_IMAGE in repo:
             project_name = utils.get_project_name(image_name)
             service_core = project_name + "_gateway_1"
             port = running_containers.get(service_core, None)

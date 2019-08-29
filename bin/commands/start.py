@@ -3,8 +3,7 @@ import re
 
 import utils
 
-DESCRIPTION = "Start a container from an existing dhis2-db Docker image or from an exported file"
-DHIS2_DB_IMAGE_RE = "/dhis2-db:"
+DESCRIPTION = "Start a container from an existing dhis2-data Docker image or from an exported file"
 
 
 def setup(parser):
@@ -31,16 +30,17 @@ def run(args):
 
 
 def import_from_file(images_path):
+    dhis2_data_image_re = "/{}:".format(utils.DHIS2_DATA_IMAGE)
     result = utils.load_images_file(images_path)
     lines = result.stdout.decode("utf-8").splitlines()
     lines_splitted = [line.split() for line in lines]
-    dhis2_db_images = [
-        parts[-1] for parts in lines_splitted if parts and re.search(DHIS2_DB_IMAGE_RE, parts[-1])
+    dhis2_data_images = [
+        parts[-1] for parts in lines_splitted if parts and re.search(dhis2_data_image_re, parts[-1])
     ]
-    if dhis2_db_images:
-        return dhis2_db_images[0]
+    if dhis2_data_images:
+        return dhis2_data_images[0]
     else:
-        msg = "Cannot find dhis2-db image (pattern={})".format(DHIS2_DB_IMAGE_RE)
+        msg = "Cannot find dhis2-data image (pattern={})".format(dhis2_data_image_re)
         raise utils.D2DockerError(msg)
 
 

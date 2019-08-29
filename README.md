@@ -122,3 +122,35 @@ $ bin/d2-docker.py run-sql -i eyeseetea/dhis2-data:2.30-sierra set-name.sql
 [d2-docker:INFO] Run SQL file set-name.sql for image eyeseetea/dhis2-data:2.30-sierra
 UPDATE 1
 ```
+
+## Docker instances
+
+In addition to the dhis2-data images, `d2-docker` needs some base generic images to work:
+
+-   [eyeseetea/postgis:10-alpine](https://cloud.docker.com/repository/docker/eyeseetea/postgis)
+-   [eyeseetea/dhis2-core:2.30](https://cloud.docker.com/repository/docker/eyeseetea/dhis2-core)
+-   [jwilder/nginx-proxy:alpine](https://cloud.docker.com/repository/docker/jwilder/nginx-proxy)
+
+The folder `images/` contains the source code for the Docker images. If you ever need to modify those images, build them and push to the hub repository:
+
+```
+$ cd images/dhis2-core
+$ cp /path/to/dhis.war .
+$ docker build . --tag="eyeseetea/dhis2-core:2.30"
+$ docker push eyeseetea/dhis2-core:2.30
+```
+
+```
+$ cd images/postgis
+$ docker build . --tag="eyeseetea/postgis:10-alpine"
+$ docker push "eyeseetea/postgis:10-alpine"
+```
+
+This folder also contains the source code for `dhis2-data`, which is used internally by the scripts to create new images (in a commit, for example). You may also need to modify the base image and push the new one:
+
+```
+$ cd images/dhis2-data
+$ cp /path/to/some-dhis2-db.sql.gz db.sql.gz
+$ docker build . --tag="eyeseetea/dhis2-data:2.30"
+$ docker push "eyeseetea/dhis2-data:2.30"
+```

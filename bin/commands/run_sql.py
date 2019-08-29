@@ -18,4 +18,3 @@ def run(args):
     if result.returncode != 0:
         utils.logger.error("Could not execute the SQL file, is the container running?")
         return 1
-

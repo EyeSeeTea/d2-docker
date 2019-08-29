@@ -39,6 +39,9 @@ def copytree(source, dest):
 def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kwargs):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
+    if capture_output:  # Option not available for python <= 3.6, emulate
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["stderr"] = subprocess.PIPE
 
     if env:
         env_vars = ("{}={}".format(k, v) for (k, v) in env.items())
@@ -46,9 +49,7 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
 
     try:
         logger.debug("Run: {}".format(cmd))
-        return subprocess.run(
-            command_parts, check=raise_on_error, env=env, capture_output=capture_output, **kwargs
-        )
+        return subprocess.run(command_parts, check=raise_on_error, env=env, **kwargs)
     except subprocess.CalledProcessError as exc:
         raise D2DockerError("Command failed with code {}: {}".format(exc.returncode, cmd))
 

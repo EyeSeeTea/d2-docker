@@ -1,3 +1,9 @@
+## Requirements
+
+-   Python >= 3.5
+-   Docker >= 18
+-   Docker compose >= 1.24
+
 ## Usage
 
 ### Start a DHIS2 instance
@@ -115,6 +121,8 @@ eyeseetea/dhis2-data:2.30-cambodia STOPPED
 ```
 
 ### Run SQL file in container
+
+Run SQL in a running Dhis2 instance. Note that some changes won't be visible depending on the cache policies of the instance.
 
 ```
 $ echo "update dashboard set name = 'Antenatal Care Name' where uid = 'nghVC4wtyzi'" > set-name.sql

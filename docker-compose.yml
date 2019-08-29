@@ -16,6 +16,8 @@ services:
     db:
         image: "eyeseetea/postgis:10-alpine"
         command: "postgres -c max_locks_per_transaction=100"
+        labels:
+            - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - pgdata:/var/lib/postgresql/data
             - data:/data
@@ -27,6 +29,8 @@ services:
             - "data"
     gateway:
         image: "jwilder/nginx-proxy:alpine"
+        labels:
+            - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         ports:
             - "${DHIS2_CORE_PORT:-8080}:80"
         volumes:

@@ -75,20 +75,25 @@ def get_running_image_name():
         capture_output=True,
     )
     output_lines = result.stdout.decode("utf-8").splitlines()
-    image_names = [
-        line_parts[1]
-        for line_parts in [line.split() for line in output_lines]
-        if len(line_parts) == 2 and line_parts[0].startswith(PROJECT_NAME_PREFIX)
-    ]
+    image_names = set(
+        [
+            line_parts[1]
+            for line_parts in [line.split() for line in output_lines]
+            if len(line_parts) == 2 and line_parts[0].startswith(PROJECT_NAME_PREFIX)
+        ]
+    )
 
     if len(image_names) == 0:
         raise D2DockerError("There are no d2-docker images running, specify image name")
     elif len(image_names) == 1:
-        logger.info("Image is running: {}".format(image_names[0]))
-        return image_names[0]
+        image_name = list(image_names)[0]
+        logger.info("Image is running: {}".format(image_name))
+        return image_name
     else:
         raise D2DockerError(
-            "{} d2-docker images running, specify an image name".format(len(image_names))
+            "Multiple d2-docker images running, specify an image name: {}".format(
+                ", ".join(image_names)
+            )
         )
 
 

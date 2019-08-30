@@ -81,7 +81,7 @@
 
         <script>
             function getDhis2InstanceState() {
-                return fetch("http://localhost:" + window.location.port)
+                return fetch(window.location.source)
                     .then(res => !(res.status >= 500 && res.status <= 599))
                     .catch(_err => false);
             }

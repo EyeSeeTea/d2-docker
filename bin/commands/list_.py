@@ -12,7 +12,8 @@ def run(args):
     utils.logger.info("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
     running_containers = get_running_containers()
     images_info = get_images_info(running_containers)
-    print("\n".join(sorted(images_info)))
+    sorted_values = sorted(images_info, key=lambda val: val["port"] or 1e9)
+    print("\n".join(val["text"] for val in sorted_values))
 
 
 def get_images_info(running_containers):
@@ -31,7 +32,7 @@ def get_images_info(running_containers):
         if utils.DHIS2_DATA_IMAGE in repo:
             port = running_containers.get(image_name, None)
             state = "RUNNING[port={}]".format(port) if port else "STOPPED"
-            value = "{} {}".format(image_name, state)
+            value = {"port": port, "text": "{} {}".format(image_name, state)}
             data_image_names.append(value)
 
     return data_image_names

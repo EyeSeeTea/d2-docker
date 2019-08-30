@@ -7,7 +7,7 @@ import tempfile
 from contextlib import contextmanager
 from distutils import dir_util
 
-PROJECT_NAME_PREFIX = "d2-docker"
+PROJECT_NAME_PREFIX = "d2docker"
 
 
 def get_logger():
@@ -161,18 +161,46 @@ def get_project_name(image_name):
 
     The final containers created have names: PROJECT_NAME_{SERVICE}_1.
     """
-    clean_image_name1 = image_name.replace("/" + DHIS2_DATA_IMAGE, "")
-    clean_image_name2 = re.sub(r"[^\w]", "_", clean_image_name1)
-    return "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name2)
+    clean_image_name = image_name.replace("/" + DHIS2_DATA_IMAGE, "")
+    name_with_prefix = "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name)
+    return re.sub(r"[^\w]", "", name_with_prefix)
 
 
-def run_docker_compose(args, image_name=None, port=None, **kwargs):
-    """Run a docker-compose command for an image (if empty, auto-detect it)."""
-    final_image_name = image_name or get_running_image_name()
+def get_core_image_name(data_image_name):
+    """Return core image name from the data image.
+
+    Example: eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
+    """
+    sp1 = data_image_name.split("/", 1)
+    if len(sp1) != 2:
+        raise D2DockerError("Invalid data image name: {}".format(data_image_name))
+    namespace, name_with_tag = sp1
+    sp2 = name_with_tag.split(":", 1)
+    if len(sp2) != 2:
+        raise D2DockerError("Invalid data image name: {}".format(data_image_name))
+    name, tag = sp2
+    sp3 = tag.split("-", 1)
+
+    return "{}/dhis2-core:{}".format(namespace, sp3[0])
+
+
+def run_docker_compose(args, data_image=None, core_image=None, port=None, **kwargs):
+    """
+    Run a docker-compose command for a given image.
+
+    If empty, check if there is one empty, and which port it's running listening to.
+
+    The DHIS2_CORE_IMAGE is inferred from the data repo, if not specified.
+    """
+    final_image_name = data_image or get_running_image_name()
     project_name = get_project_name(final_image_name)
+    core_image_name = core_image or get_core_image_name(data_image)
+
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
+        ("DHIS2_CORE_CONTEXT_PATH", ""),
+        ("DHIS2_CORE_IMAGE", core_image_name),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
@@ -209,29 +237,31 @@ def get_docker_directory(dhis2_data_docker_directory=None):
 
 
 @contextmanager
-def running_container(image_name):
+def running_container(data_image, core_image=None):
     """
     Return a context manager to use with a with statament, making sure a container for image
     is running and the container ends in the same state it has before.
     """
-    status1 = get_image_status(image_name)
-    logger.debug("Status for {}: {}".format(image_name, status1))
+    status1 = get_image_status(data_image)
+    logger.debug("Status for {}: {}".format(data_image, status1))
     container_is_running_on_start = status1["state"] == "running"
 
     if not container_is_running_on_start:
-        logger.info("Container not running for image, start it: {}".format(image_name))
-        run_docker_compose(["up", "--detach"], image_name, port=get_free_port())
+        logger.info("Container not running for image, start it: {}".format(data_image))
+        run_docker_compose(
+            ["up", "--detach"], data_image, core_image=core_image, port=get_free_port()
+        )
 
     try:
-        status2 = get_image_status(image_name)
-        logger.debug("Status for {}: {}".format(image_name, status2))
+        status2 = get_image_status(data_image)
+        logger.debug("Status for {}: {}".format(data_image, status2))
         yield status2
     finally:
         if container_is_running_on_start:
-            logger.info("Container was running on start, keep it running: {}".format(image_name))
+            logger.info("Container was running on start, keep it running: {}".format(data_image))
         else:
-            logger.info("Container was not running on start, stop it: {}".format(image_name))
-            run_docker_compose(["stop"], image_name)
+            logger.info("Container was not running on start, stop it: {}".format(data_image))
+            run_docker_compose(["stop"], data_image)
 
 
 def build_image_from_source(docker_dir, source_image_name, dest_image_name):
@@ -300,3 +330,13 @@ def push_image(image_name):
 def save_images(image_names, output_file_path):
     """Save list of Docker images into a local file."""
     run(["docker", "save", *image_names, "-o", output_file_path])
+
+
+def add_image_arg(parser):
+    parser.add_argument("-i", "--image", metavar="IMAGE", type=str, help="Docker dhis2-data image")
+
+
+def add_core_image_arg(parser):
+    parser.add_argument(
+        "-c", "--core-image", type=str, metavar="DOCKER_CORE_IMAGE", help="Docker dhis2-core image"
+    )

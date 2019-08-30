@@ -1,7 +1,7 @@
 version: "3"
 services:
     core:
-        image: "eyeseetea/dhis2-core:2.30"
+        image: "${DHIS2_CORE_IMAGE}"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
@@ -10,7 +10,7 @@ services:
             - home:/DHIS2_home
             - data:/DHIS2_home/files/
         environment:
-            CATALINA_OPTS: "-Dcontext.path='${DHIS2_CORE_CONTEXT_PATH:-}'"
+            CATALINA_OPTS: "-Dcontext.path='${DHIS2_CORE_CONTEXT_PATH}'"
         depends_on:
             - "db"
     db:

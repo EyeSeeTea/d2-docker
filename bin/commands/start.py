@@ -13,10 +13,12 @@ def setup(parser):
         type=str,
         help="Docker image or images file",
     )
+    utils.add_core_image_arg(parser)
     parser.add_argument(
         "-d", "--detach", action="store_true", help="Run container on the background"
     )
-    parser.add_argument("-p", "--pull", action="store_true", help="Force a pull from docker hub")
+    parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
+    parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
 
 
 def run(args):
@@ -50,19 +52,21 @@ def start(args, image_name):
     if result["state"] == "running":
         msg = "Container already runnning for image {}".format(result["containers"]["db"])
         raise utils.D2DockerError(msg)
-    port = utils.get_free_port()
+    port = args.port or utils.get_free_port()
+    utils.logger.info("Port: {}".format(port))
+    core_image = args.core_image
 
     if args.pull:
-        utils.run_docker_compose(["pull"], image_name)
+        utils.run_docker_compose(["pull"], image_name, core_image=core_image)
 
-    utils.run_docker_compose(["down", "--volumes"], image_name)
+    utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
 
     up_args = ["--force-recreate", *(["--detach"] if args.detach else [])]
     try:
-        utils.run_docker_compose(["up", *up_args], image_name, port=port)
+        utils.run_docker_compose(["up", *up_args], image_name, port=port, core_image=core_image)
     except KeyboardInterrupt:
         utils.logger.info("Control+C pressed, stopping containers")
-        utils.run_docker_compose(["stop"], image_name)
+        utils.run_docker_compose(["stop"], image_name, core_image=core_image)
 
     if args.detach:
         utils.logger.info("Detaching... run d2-docker logs to see logs")

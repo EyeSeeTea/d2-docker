@@ -8,13 +8,15 @@ DESCRIPTION = "Export d2-docker images to a single file"
 
 
 def setup(parser):
-    parser.add_argument("-i", "--image", metavar="IMAGE", type=str, help="Docker dhis2-data image")
+    utils.add_image_arg(parser)
+    utils.add_core_image_arg(parser)
     parser.add_argument("output_file", metavar="TGZ_PATH", type=str, help="Output tar.gz file")
 
 
 def run(args):
     image_name = args.image or utils.get_running_image_name()
-    result = utils.run_docker_compose(["config"], image_name, capture_output=True)
+    core = args.core_image
+    result = utils.run_docker_compose(["config"], image_name, core_image=core, capture_output=True)
     yaml_contents = result.stdout.decode("utf-8")
 
     # Use regexp instead of using a third-party YAML parser to ease deployment on Windows.

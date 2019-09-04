@@ -21,6 +21,7 @@ Notes:
 -   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
 -   Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to start containers in the background.
 -   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
+-   Use option `--run-sql` to run SQL (.sql or .sql.gz) files after the DB has been initialized.
 
 ### Show logs for running containers
 

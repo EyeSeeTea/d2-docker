@@ -8,19 +8,16 @@ DESCRIPTION = "Start a container from an existing dhis2-data Docker image or fro
 
 def setup(parser):
     parser.add_argument(
-        "image_or_file",
-        metavar="IMAGE_OR_EXPORT_FILE",
-        type=str,
-        help="Docker image or images file",
+        "image_or_file", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
     )
     utils.add_core_image_arg(parser)
     parser.add_argument(
-        "-d", "--detach", action="store_true", help="Run container on the background"
+        "-d", "--detach", action="store_true", help="Run containers on the background"
     )
     parser.add_argument(
-        "-k", "--keep-containers", action="store_true", help="Don't override existing containers"
+        "-k", "--keep-containers", action="store_true", help="Keep existing containers"
     )
-
+    parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
 
@@ -62,6 +59,8 @@ def start(args, image_name):
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name, core_image=core_image)
+    if args.keep_containers and args.run_sql:
+        raise utils.D2DockerError("--run-sql cannot be used with --keep-containers")
 
     if not args.keep_containers:
         utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
@@ -79,6 +78,7 @@ def start(args, image_name):
             port=port,
             core_image=core_image,
             load_from_data=not args.keep_containers,
+            post_sql_dir=args.run_sql,
         )
     except KeyboardInterrupt:
         utils.logger.info("Control+C pressed, stopping containers")

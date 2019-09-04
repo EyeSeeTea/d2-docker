@@ -185,7 +185,13 @@ def get_core_image_name(data_image_name):
 
 
 def run_docker_compose(
-    args, data_image=None, core_image=None, port=None, load_from_data=True, **kwargs
+    args,
+    data_image=None,
+    core_image=None,
+    port=None,
+    load_from_data=True,
+    post_sql_dir=None,
+    **kwargs
 ):
     """
     Run a docker-compose command for a given image.
@@ -198,12 +204,16 @@ def run_docker_compose(
     project_name = get_project_name(final_image_name)
     core_image_name = core_image or get_core_image_name(data_image)
 
+    if post_sql_dir and not os.path.isdir(post_sql_dir) and os.path.isabs(post_sql_dir):
+        raise D2DockerError("post_sql_dir should be a relative directory: {}".format(post_sql_dir))
+
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
         ("DHIS2_CORE_CONTEXT_PATH", ""),
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
+        ("POST_SQL_DIR", "./{}".format(post_sql_dir or ".post-sql")),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 

@@ -21,6 +21,7 @@ services:
         volumes:
             - pgdata:/var/lib/postgresql/data
             - data:/data
+            - "${POST_SQL_DIR}:/data/post-sql"
         environment:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis

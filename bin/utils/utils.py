@@ -191,7 +191,8 @@ def run_docker_compose(
     port=None,
     load_from_data=True,
     post_sql_dir=None,
-    **kwargs
+    scripts_dir=None,
+    **kwargs,
 ):
     """
     Run a docker-compose command for a given image.
@@ -204,8 +205,8 @@ def run_docker_compose(
     project_name = get_project_name(final_image_name)
     core_image_name = core_image or get_core_image_name(data_image)
 
-    if post_sql_dir and not os.path.isdir(post_sql_dir) and os.path.isabs(post_sql_dir):
-        raise D2DockerError("post_sql_dir should be a relative directory: {}".format(post_sql_dir))
+    check_directory_for_docker_volume(post_sql_dir)
+    check_directory_for_docker_volume(scripts_dir)
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
@@ -213,11 +214,18 @@ def run_docker_compose(
         ("DHIS2_CORE_CONTEXT_PATH", ""),
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
+        # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", "./{}".format(post_sql_dir or ".post-sql")),
+        ("SCRIPTS_DIR", "./{}".format(scripts_dir or ".scripts")),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
     return run(["docker-compose", "-p", project_name, *args], env=env, **kwargs)
+
+
+def check_directory_for_docker_volume(directory):
+    if directory and not os.path.isdir(directory) and os.path.isabs(directory):
+        raise D2DockerError("Should be a relative directory: {}".format(directory))
 
 
 def get_item_type(name):

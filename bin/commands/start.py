@@ -18,6 +18,11 @@ def setup(parser):
         "-k", "--keep-containers", action="store_true", help="Keep existing containers"
     )
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
+    parser.add_argument(
+        "--run-scripts",
+        metavar="DIRECTORY",
+        help="Run shell scripts in directory (default: PRE tomcat; if filename starts with 'post': POST tomcat)",
+    )
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
 
@@ -79,6 +84,7 @@ def start(args, image_name):
             core_image=core_image,
             load_from_data=not args.keep_containers,
             post_sql_dir=args.run_sql,
+            scripts_dir=args.run_scripts,
         )
     except KeyboardInterrupt:
         utils.logger.info("Control+C pressed, stopping containers")

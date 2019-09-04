@@ -9,6 +9,7 @@ services:
             - ./config/server.xml:/usr/local/tomcat/conf/server.xml
             - home:/DHIS2_home
             - data:/DHIS2_home/files/
+            - "${SCRIPTS_DIR}:/DHIS2_home/scripts"
         environment:
             CATALINA_OPTS: "-Dcontext.path='${DHIS2_CORE_CONTEXT_PATH}'"
         depends_on:

@@ -22,13 +22,14 @@ Notes:
 -   Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to start containers in the background.
 -   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
 -   Use option `--run-sql` to run SQL (.sql or .sql.gz) files after the DB has been initialized.
+-   Use option `--run-scripts` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080`, regardless of the public port that the instance is exposed to. Of course, this endpoint is only available only on post-scripts.
 
 ### Show logs for running containers
 
 Check logs of a running container:
 
 ```
-$ bin/d2-docker logs eyeseetea/dhis2-data:2.30-sierra
+$ bin/d2-docker logs -f eyeseetea/dhis2-data:2.30-sierra
 ```
 
 _If only one d2-docker container is active, you can omit the image name._

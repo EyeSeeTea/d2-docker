@@ -17,6 +17,10 @@ def setup(parser):
     parser.add_argument(
         "-d", "--detach", action="store_true", help="Run container on the background"
     )
+    parser.add_argument(
+        "-k", "--keep-containers", action="store_true", help="Don't override existing containers"
+    )
+
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
 
@@ -59,11 +63,23 @@ def start(args, image_name):
     if args.pull:
         utils.run_docker_compose(["pull"], image_name, core_image=core_image)
 
-    utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
+    if not args.keep_containers:
+        utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
 
-    up_args = ["--force-recreate", *(["--detach"] if args.detach else [])]
+    up_args = [
+        "--no-recreate" if args.keep_containers else "--force-recreate",
+        "-d" if args.detach else None,
+    ]
+    up_args_clean = filter(bool, up_args)
+
     try:
-        utils.run_docker_compose(["up", *up_args], image_name, port=port, core_image=core_image)
+        utils.run_docker_compose(
+            ["up", *up_args_clean],
+            image_name,
+            port=port,
+            core_image=core_image,
+            load_from_data=not args.keep_containers,
+        )
     except KeyboardInterrupt:
         utils.logger.info("Control+C pressed, stopping containers")
         utils.run_docker_compose(["stop"], image_name, core_image=core_image)

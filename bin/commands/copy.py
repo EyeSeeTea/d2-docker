@@ -24,9 +24,9 @@ def copy(source, destinations, docker_dir):
     logger = utils.logger
     source_type = utils.get_item_type(source)
     logger.debug("Source {} has type: {}".format(source, source_type))
-    block_function = utils.running_container if source_type == "docker-image" else utils.noop
+    block_function = utils.containers_running if source_type == "docker-image" else utils.noop
 
-    with block_function(source) as status:
+    with block_function(source, load_from_data=False) as status:
         for dest in destinations:
             dest_type = utils.get_item_type(dest)
             logger.debug("Destination {} has type: {}".format(dest, dest_type))

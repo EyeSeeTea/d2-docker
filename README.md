@@ -2,7 +2,7 @@
 
 -   Python >= 3.5 (with python3-distutils)
 -   Docker >= 18
--   Docker compose >= 1.24
+-   Docker compose >= 1.17
 
 ## Usage
 
@@ -16,11 +16,11 @@ $ bin/d2-docker start eyeseetea/dhis2-data:2.30-sierra
 
 Notes:
 
--   A d2-docker instnace is composed of 4 containers: dhis2-data, dhis2-core, postgres-postgis and nginx. dhis2-data
-    will be only used on boot-up and won't be kept in memory.
--   By default, the image dhis2-core from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, pass the option `--core-image eyeseetea/dhis2-core:2.30-custom`.
+-   A d2-docker instance is composed of 4 containers: `dhis2-data` (db + apps), `dhis2-core` (tomcat + war), `postgis` (postgres with postgis support) and `nginx`.
+-   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, pass the option `--core-image eyeseetea/dhis2-core:2.30-custom`.
 -   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
 -   Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to start containers in the background.
+-   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
 
 ### Show logs for running containers
 

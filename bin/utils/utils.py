@@ -64,9 +64,9 @@ def get_free_port(start=8080, end=65535):
 
 
 @contextmanager
-def noop(image_name):
+def noop(*args, **kwargs):
     """Do nothing with-statament context."""
-    yield {}
+    yield None
 
 
 def get_running_image_name():
@@ -184,7 +184,9 @@ def get_core_image_name(data_image_name):
     return "{}/dhis2-core:{}".format(namespace, sp3[0])
 
 
-def run_docker_compose(args, data_image=None, core_image=None, port=None, **kwargs):
+def run_docker_compose(
+    args, data_image=None, core_image=None, port=None, load_from_data=True, **kwargs
+):
     """
     Run a docker-compose command for a given image.
 
@@ -201,6 +203,7 @@ def run_docker_compose(args, data_image=None, core_image=None, port=None, **kwar
         ("DHIS2_CORE_PORT", str(port)) if port else None,
         ("DHIS2_CORE_CONTEXT_PATH", ""),
         ("DHIS2_CORE_IMAGE", core_image_name),
+        ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
@@ -237,24 +240,24 @@ def get_docker_directory(dhis2_data_docker_directory=None):
 
 
 @contextmanager
-def running_container(data_image, core_image=None):
+def containers_running(data_image, core_image=None, load_from_data=True):
     """
     Return a context manager to use with a with statament, making sure a container for image
     is running and the container ends in the same state it has before.
     """
     status1 = get_image_status(data_image)
-    logger.debug("Status for {}: {}".format(data_image, status1))
+    logger.debug("Status[pre] for {}: {}".format(data_image, status1))
     container_is_running_on_start = status1["state"] == "running"
 
     if not container_is_running_on_start:
         logger.info("Container not running for image, start it: {}".format(data_image))
         run_docker_compose(
-            ["up", "--detach"], data_image, core_image=core_image, port=get_free_port()
+            ["up", "-d"], data_image, core_image=core_image, load_from_data=load_from_data
         )
 
     try:
         status2 = get_image_status(data_image)
-        logger.debug("Status for {}: {}".format(data_image, status2))
+        logger.debug("Status[post] for {}: {}".format(data_image, status2))
         yield status2
     finally:
         if container_is_running_on_start:

@@ -25,6 +25,7 @@ services:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
+            LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
         depends_on:
             - "data"
     gateway:

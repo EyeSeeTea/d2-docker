@@ -1,7 +1,8 @@
 FROM alpine
 
 RUN mkdir /data/
-COPY db.sql.gz /data/
+RUN mkdir /data/db
+COPY db.sql.gz /data/db/00-base.db.sql.gz
 COPY run.sh /usr/local/bin/
 
 COPY apps/ /data/apps

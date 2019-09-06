@@ -1,10 +1,26 @@
-FROM tomcat:8.5.34-jre8-alpine
+FROM tomcat:8.5.34-jre8-alpine as serve
 
-RUN apk add --update curl && rm -rf /var/cache/apk/*
-
-RUN rm -rf /usr/local/tomcat/webapps/*
-COPY ./dhis.war /usr/local/tomcat/webapps/ROOT.war
-COPY ./start.sh /usr/local/bin/
 ENV DHIS2_HOME=/DHIS2_home
 
-CMD ["sh", "/usr/local/bin/start.sh"]
+COPY docker-entrypoint.sh /usr/local/bin/
+
+RUN rm -rf /usr/local/tomcat/webapps/* && \
+    mkdir /usr/local/tomcat/webapps/ROOT && \
+    chmod +rx /usr/local/bin/docker-entrypoint.sh && \
+    mkdir $DHIS2_HOME && \
+    addgroup -S tomcat && \
+    addgroup root tomcat && \
+    adduser -S -D -G tomcat tomcat
+
+RUN apk add --update --no-cache \
+        bash  \
+        su-exec \
+        curl
+
+COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+CMD ["catalina.sh", "run"]
+
+

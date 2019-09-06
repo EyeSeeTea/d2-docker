@@ -5,7 +5,6 @@ NAME = "run-sql"
 
 
 def setup(parser):
-    parser.add_argument("-i", "--image", metavar="IMAGE", help="Docker dhis2-data image")
     parser.add_argument(
         "sql_file",
         metavar="SQL_FILE",
@@ -15,14 +14,14 @@ def setup(parser):
 
 
 def run(args):
-    image_name = args.image or utils.get_running_image_name()
+    image_name = utils.get_running_image_name()
     sql_file = args.sql_file
     if sql_file:
         utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
 
     status = utils.get_image_status(image_name)
-    if status["state"] != "running":
-        utils.logger.error("Container is not running")
+    if status["state"] != "running2":
+        raise utils.D2DockerError("Container must be running to build image: {}".format(image_name))
 
     db_container = status["containers"]["db"]
     psql_cmd = ["psql", "-U", "dhis", "dhis2"]

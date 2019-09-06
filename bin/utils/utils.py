@@ -4,7 +4,6 @@ import re
 import os
 import socket
 import tempfile
-from contextlib import contextmanager
 from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2docker"
@@ -51,7 +50,8 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
         logger.debug("Run: {}".format(cmd))
         return subprocess.run(command_parts, check=raise_on_error, env=env, **kwargs)
     except subprocess.CalledProcessError as exc:
-        raise D2DockerError("Command failed with code {}: {}".format(exc.returncode, cmd))
+        msg = "Command {} failed with code {}: {}"
+        raise D2DockerError(msg.format(cmd, exc.returncode, exc.stderr))
 
 
 def get_free_port(start=8080, end=65535):
@@ -61,12 +61,6 @@ def get_free_port(start=8080, end=65535):
             if not port_is_open:
                 return port
     raise D2DockerError("No free open available")
-
-
-@contextmanager
-def noop(*args, **kwargs):
-    """Do nothing with-statament context."""
-    yield None
 
 
 def get_running_image_name():
@@ -85,7 +79,7 @@ def get_running_image_name():
     )
 
     if len(image_names) == 0:
-        raise D2DockerError("There are no d2-docker images running, specify image name")
+        raise D2DockerError("There are no d2-docker images running")
     elif len(image_names) == 1:
         image_name = list(image_names)[0]
         logger.info("Image is running: {}".format(image_name))
@@ -257,40 +251,11 @@ def get_docker_directory(dhis2_data_docker_directory=None):
         return docker_dir
 
 
-@contextmanager
-def containers_running(data_image, core_image=None, load_from_data=True):
-    """
-    Return a context manager to use with a with statament, making sure a container for image
-    is running and the container ends in the same state it has before.
-    """
-    status1 = get_image_status(data_image)
-    logger.debug("Status[pre] for {}: {}".format(data_image, status1))
-    container_is_running_on_start = status1["state"] == "running"
-
-    if not container_is_running_on_start:
-        logger.info("Container not running for image, start it: {}".format(data_image))
-        run_docker_compose(
-            ["up", "-d"], data_image, core_image=core_image, load_from_data=load_from_data
-        )
-
-    try:
-        status2 = get_image_status(data_image)
-        logger.debug("Status[post] for {}: {}".format(data_image, status2))
-        yield status2
-    finally:
-        if container_is_running_on_start:
-            logger.info("Container was running on start, keep it running: {}".format(data_image))
-        else:
-            logger.info("Container was not running on start, stop it: {}".format(data_image))
-            run_docker_compose(["stop"], data_image)
-
-
-def build_image_from_source(docker_dir, source_image_name, dest_image_name):
-    """Build a docker image using another one as template."""
-    status = get_image_status(source_image_name)
+def build_image_from_source(docker_dir, source_image, dest_image):
+    """Build a docker image from source local directory."""
+    status = get_image_status(source_image)
     if status["state"] != "running":
         raise D2DockerError("Container must be running to build image")
-    db_container_name = status["containers"]["db"]
 
     with tempfile.TemporaryDirectory() as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
@@ -298,8 +263,20 @@ def build_image_from_source(docker_dir, source_image_name, dest_image_name):
 
         logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
-        export_data(source_image_name, db_container_name, temp_dir)
-        run(["docker", "build", temp_dir, "--tag", dest_image_name])
+        export_data_from_running_containers(source_image, status["containers"], temp_dir)
+        run(["docker", "build", temp_dir, "--tag", dest_image])
+
+
+def copy_image(docker_dir, source_image, dest_image):
+    """Build a docker image using another one as template."""
+    with tempfile.TemporaryDirectory() as temp_dir_root:
+        logger.info("Create temporal directory: {}".format(temp_dir_root))
+        temp_dir = os.path.join(temp_dir_root, "contents")
+
+        logger.info("Copy base docker files: {}".format(docker_dir))
+        copytree(docker_dir, temp_dir)
+        export_data_from_image(source_image, temp_dir)
+        run(["docker", "build", temp_dir, "--tag", dest_image])
 
 
 def build_image_from_directory(docker_dir, data_dir, dest_image_name):
@@ -316,12 +293,24 @@ def build_image_from_directory(docker_dir, data_dir, dest_image_name):
         run(["docker", "build", temp_dir, "--tag", dest_image_name])
 
 
-def export_data(image_name, db_container_name, destination):
+def export_data_from_image(source_image, dest_path):
+    result = run(["docker", "create", source_image], capture_output=True)
+    container_id = result.stdout.decode("utf8").splitlines()[0]
+    mkdir_p(dest_path)
+    try:
+        db_dest_path = os.path.join(dest_path, "db.sql.gz")
+        run(["docker", "cp", container_id + ":" + "/data/db/00-base.db.sql.gz", db_dest_path])
+        run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
+    finally:
+        run(["docker", "rm", "-v", container_id])
+
+
+def export_data_from_running_containers(image_name, containers, destination):
     """Export data (db + apps) from a running Docker container to a destination directory."""
     logger.info("Copy Dhis2 apps")
-    source = "{}:/data/apps/".format(db_container_name)
+    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
     mkdir_p(destination)
-    run(["docker", "cp", source, destination])
+    run(["docker", "cp", apps_source, destination])
 
     db_path = os.path.join(destination, "db.sql.gz")
     export_database(image_name, db_path)
@@ -330,6 +319,7 @@ def export_data(image_name, db_container_name, destination):
 def export_database(image_name, db_path):
     """Export Dhis2 database into a gzipped file."""
     logger.info("Dump DB: {}".format(db_path))
+    mkdir_p(os.path.dirname(db_path))
 
     with open(db_path, "wb") as db_file:
         pg_dump = "pg_dump -U dhis dhis2 | gzip"

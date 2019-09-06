@@ -16,13 +16,13 @@ $ bin/d2-docker start eyeseetea/dhis2-data:2.30-sierra
 
 Notes:
 
--   A d2-docker instance is composed of 4 containers: `dhis2-data` (db + apps), `dhis2-core` (tomcat + war), `postgis` (postgres with postgis support) and `nginx`.
+-   A d2-docker instance is composed of 4 containers: `dhis2-data` (database + apps), `dhis2-core` (tomcat + dhis.war), `postgis` (postgres with postgis support) and `nginx` (web server).
 -   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, pass the option `--core-image eyeseetea/dhis2-core:2.30-custom`.
 -   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
--   Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to start containers in the background.
+-   Use option `--pull` to overwrite the local images with the images in the hub. Use option ``--detach` to run containers in the background.
 -   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
--   Use option `--run-sql` to run SQL (.sql or .sql.gz) files after the DB has been initialized.
--   Use option `--run-scripts` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080`, regardless of the public port that the instance is exposed to. Of course, this endpoint is only available only on post-scripts.
+-   Use option `--run-sql=DIRECTORY` to run SQL files (.sql or .sql.gz) after the DB has been initialized.
+-   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080`, regardless of the public port that the instance is exposed to. Of course, this endpoint is only available for post-scripts.
 
 ### Show logs for running containers
 
@@ -36,10 +36,16 @@ _If only one d2-docker container is active, you can omit the image name._
 
 ### Commit & push an image
 
-This will create a new _dhis2-data_ image from the current data (SQL dump and apps) in running d2-docker containers:
+This will update the image from the current container (SQL dump and apps):
 
 ```
-$ bin/d2-docker commit eyeseetea/dhis2-data:2.30-sierra
+$ bin/d2-docker commit
+```
+
+You can also create a new _dhis2-data_ image from the running d2-docker containers:
+
+```
+$ bin/d2-docker commit eyeseetea/dhis2-data:2.30-sierra-new
 ```
 
 Now you can upload images to hub.docker using the command _push_:
@@ -47,8 +53,6 @@ Now you can upload images to hub.docker using the command _push_:
 ```
 $ bin/d2-docker push eyeseetea/dhis2-data:2.30-sierra
 ```
-
-_If only one d2-docker container is active, you can omit the image name._
 
 ### Stop a DHIS2 container instance
 
@@ -142,23 +146,17 @@ UPDATE 1
 
 In addition to the _dhis2-data_ image, `d2-docker` needs those base images to work:
 
--   [eyeseetea/postgis:10-alpine](https://hub.docker.com/r/eyeseetea/eyeseetea/postgis)
--   [eyeseetea/dhis2-core:2.30](https://hub.docker.com/r/eyeseetea/dhis2-core)
+-   [mdillon/postgis:10-alpine](https://hub.docker.com/r/mdillon/postgis/)
 -   [jwilder/nginx-proxy:alpine](https://hub.docker.com/r/jwilder/nginx-proxy)
+-   [eyeseetea/dhis2-core:2.30](https://hub.docker.com/r/eyeseetea/dhis2-core)
 
-The folder `images/` contains the source code for those Docker images. Should you ever need to modify those base images, build them and push to the hub repository:
+The folder `images/` contains the source code for our custom Docker images. Should you ever need to modify those base images, build them and push to the hub repository:
 
 ```
 $ cd images/dhis2-core
-$ cp /path/to/dhis.war .
+$ cp /path/to/new/dhis.war .
 $ docker build . --tag="eyeseetea/dhis2-core:2.30"
 $ docker push eyeseetea/dhis2-core:2.30
-```
-
-```
-$ cd images/postgis
-$ docker build . --tag="eyeseetea/postgis:10-alpine"
-$ docker push "eyeseetea/postgis:10-alpine"
 ```
 
 This folder also contains the source code for `dhis2-data` docker image, which is used internally by the scripts to create new images (in a commit, for example). You may also need to modify base images and push them:
@@ -169,3 +167,5 @@ $ cp /path/to/dhis2-db-for-vietnam.sql.gz db.sql.gz
 $ docker build . --tag="eyeseetea/dhis2-data:2.30-vietnam"
 $ docker push "eyeseetea/dhis2-data:2.30-vietnam"
 ```
+
+However, you tipically create new `dhis2-data` images by using the the `d2-docker copy` command.

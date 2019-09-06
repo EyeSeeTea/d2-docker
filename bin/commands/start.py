@@ -48,7 +48,7 @@ def import_from_file(images_path):
     if dhis2_data_images:
         return dhis2_data_images[0]
     else:
-        msg = "Cannot find dhis2-data image (pattern={})".format(dhis2_data_image_re)
+        msg = "Cannot find dhis2 data image (pattern={})".format(dhis2_data_image_re)
         raise utils.D2DockerError(msg)
 
 

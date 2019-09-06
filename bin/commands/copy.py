@@ -24,21 +24,19 @@ def copy(source, destinations, docker_dir):
     logger = utils.logger
     source_type = utils.get_item_type(source)
     logger.debug("Source {} has type: {}".format(source, source_type))
-    block_function = utils.containers_running if source_type == "docker-image" else utils.noop
 
-    with block_function(source, load_from_data=False) as status:
-        for dest in destinations:
-            dest_type = utils.get_item_type(dest)
-            logger.debug("Destination {} has type: {}".format(dest, dest_type))
-            logger.info("Copying: {}:{} -> {}:{}".format(source_type, source, dest_type, dest))
+    for dest in destinations:
+        dest_type = utils.get_item_type(dest)
+        logger.debug("Destination {} has type: {}".format(dest, dest_type))
+        logger.info("Copying: {}:{} -> {}:{}".format(source_type, source, dest_type, dest))
 
-            if source_type == "docker-image" and dest_type == "docker-image":
-                utils.build_image_from_source(docker_dir, source, dest)
-            elif source_type == "docker-image" and dest_type == "folder":
-                utils.export_data(source, status["containers"]["db"], dest)
-            elif source_type == "folder" and dest_type == "docker-image":
-                utils.build_image_from_directory(docker_dir, source, dest)
-            elif source_type == "folder" and dest_type == "folder":
-                utils.copytree(source, dest)
-            else:
-                raise utils.D2DockerError("Not implemented")
+        if source_type == "docker-image" and dest_type == "docker-image":
+            utils.copy_image(docker_dir, source, dest)
+        elif source_type == "docker-image" and dest_type == "folder":
+            utils.export_data_from_image(source, dest)
+        elif source_type == "folder" and dest_type == "docker-image":
+            utils.build_image_from_directory(docker_dir, source, dest)
+        elif source_type == "folder" and dest_type == "folder":
+            utils.copytree(source, dest)
+        else:
+            raise utils.D2DockerError("Not implemented")

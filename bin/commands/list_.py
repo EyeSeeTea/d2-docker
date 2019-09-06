@@ -9,7 +9,7 @@ def setup(parser):
 
 
 def run(args):
-    utils.logger.info("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
+    utils.logger.debug("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
     running_containers = get_running_containers()
     images_info = get_images_info(running_containers)
     sorted_values = sorted(images_info, key=lambda val: val["port"] or 1e9)

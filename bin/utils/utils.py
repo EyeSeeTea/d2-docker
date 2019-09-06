@@ -85,11 +85,8 @@ def get_running_image_name():
         logger.info("Image is running: {}".format(image_name))
         return image_name
     else:
-        raise D2DockerError(
-            "Multiple d2-docker images running, specify an image name: {}".format(
-                ", ".join(image_names)
-            )
-        )
+        names = "\n".join("  " + s for s in image_names)
+        raise D2DockerError("Multiple d2-docker images running, specify one:\n{}".format(names))
 
 
 def get_image_status(image_name, first_port=8080):

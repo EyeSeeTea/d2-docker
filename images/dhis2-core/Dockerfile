@@ -1,4 +1,4 @@
-FROM tomcat:8.5.34-jre8-alpine as serve
+FROM tomcat:8.5.34-jre8-alpine
 
 ENV DHIS2_HOME=/DHIS2_home
 
@@ -12,15 +12,10 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup root tomcat && \
     adduser -S -D -G tomcat tomcat
 
-RUN apk add --update --no-cache \
-        bash  \
-        su-exec \
-        curl
+RUN apk add --update --no-cache bash su-exec
 
 COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["catalina.sh", "run"]
-
-

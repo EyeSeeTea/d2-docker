@@ -5,15 +5,16 @@ services:
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
-            - ./config/DHIS2_home/dhis.conf:/DHIS2_home/dhis.conf
-            - ./config/server.xml:/usr/local/tomcat/conf/server.xml
             - home:/DHIS2_home
-            - ./config/dhis2-core-start.sh:/usr/local/bin/dhis2-core-start.sh
-            - data:/DHIS2_home/data
-            - "${SCRIPTS_DIR}:/DHIS2_home/scripts"
+            - data:/config/data
+            - ./config:/config
+            - "${SCRIPTS_DIR}:/config/scripts"
+            - "${POST_SQL_DIR}:/config/data/db/post"
         environment:
             CATALINA_OPTS: "-Dcontext.path="
-        command: sh /usr/local/bin/dhis2-core-start.sh
+            LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
+        entrypoint: sh /config/dhis2-core-entrypoint.sh
+        command: sh /config/dhis2-core-start.sh
         depends_on:
             - "db"
     db:
@@ -22,16 +23,11 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - pgdata:/var/lib/postgresql/data
-            - data:/data
-            - "${POST_SQL_DIR}:/data/db/post"
-            - ./config/db-init.sh:/docker-entrypoint-initdb.d/z-initdb.sh
         environment:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
         command: "postgres -c max_locks_per_transaction=100"
-        depends_on:
-            - "data"
     gateway:
         image: "jwilder/nginx-proxy:alpine"
         labels:

@@ -61,28 +61,25 @@ def start(args, image_name):
     port = args.port or utils.get_free_port()
     utils.logger.info("Port: {}".format(port))
     core_image = args.core_image
+    override_containers = not args.keep_containers
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name, core_image=core_image)
-    if args.keep_containers and args.run_sql:
-        raise utils.D2DockerError("--run-sql cannot be used with --keep-containers")
 
-    if not args.keep_containers:
+    if override_containers:
         utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
 
-    up_args = [
-        "--no-recreate" if args.keep_containers else "--force-recreate",
-        "-d" if args.detach else None,
-    ]
-    up_args_clean = filter(bool, up_args)
+    up_args = filter(
+        bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
+    )
 
     try:
         utils.run_docker_compose(
-            ["up", *up_args_clean],
+            ["up", *up_args],
             image_name,
             port=port,
             core_image=core_image,
-            load_from_data=not args.keep_containers,
+            load_from_data=override_containers,
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
         )

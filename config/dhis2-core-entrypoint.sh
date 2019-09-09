@@ -20,7 +20,7 @@ install_packages() {
 
 if [ "$(id -u)" = "0" ]; then
     # Custom
-    install_packages curl $PACKAGES
+    install_packages $PACKAGES
     
     if [ -f $WARFILE ]; then
         # Custom: mkdir + add -q to avoid noise in the console

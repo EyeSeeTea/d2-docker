@@ -20,7 +20,7 @@ def run(args):
         utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
 
     status = utils.get_image_status(image_name)
-    if status["state"] != "running2":
+    if status["state"] != "running":
         raise utils.D2DockerError("Container must be running to build image: {}".format(image_name))
 
     db_container = status["containers"]["db"]

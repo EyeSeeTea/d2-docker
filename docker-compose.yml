@@ -12,6 +12,7 @@ services:
             - "${POST_SQL_DIR}:/config/data/db/post"
         environment:
             CATALINA_OPTS: "-Dcontext.path="
+            JAVA_OPTS: "-Xmx7500m -Xms4000m"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
         entrypoint: sh /config/dhis2-core-entrypoint.sh
         command: sh /config/dhis2-core-start.sh

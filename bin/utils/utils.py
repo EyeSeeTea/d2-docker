@@ -202,7 +202,6 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
-        ("DHIS2_CORE_CONTEXT_PATH", ""),
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section

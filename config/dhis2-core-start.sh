@@ -95,7 +95,7 @@ run() { local host=$1 psql_port=$2
     run_pre_scripts || true
     start_tomcat &
     wait_for_tomcat
-    run_post_scripts  || true
+    run_post_scripts || true
     debug "DHIS2 instance ready"
     wait
 }

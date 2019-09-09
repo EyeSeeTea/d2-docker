@@ -12,5 +12,5 @@ def setup(parser):
 def run(args):
     image_name = args.image or utils.get_running_image_name()
     utils.logger.info("Show logs: {}".format(image_name))
-    args = ["logs", "-f" if args.follow else None, args.service]
+    args = ["logs", "-t", "-f" if args.follow else None, args.service]
     utils.run_docker_compose(filter(bool, args), image_name)

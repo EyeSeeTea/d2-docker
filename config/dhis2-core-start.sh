@@ -59,7 +59,7 @@ copy_apps() {
     debug "Copy Dhis2 apps"
     mkdir -p "$dest_apps_path/apps"
     if test -e "$source_apps_path"; then
-        cp -av "$source_apps_path" "$dest_apps_path"
+        cp -Rv "$source_apps_path" "$dest_apps_path"
     fi
 }
 

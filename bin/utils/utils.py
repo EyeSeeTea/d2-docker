@@ -7,6 +7,7 @@ import tempfile
 from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2docker"
+IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 
 
 def get_logger():
@@ -66,7 +67,13 @@ def get_free_port(start=8080, end=65535):
 def get_running_image_name():
     """Return the name of the single running d2-docker image. Otherwise, raise an error."""
     result = run(
-        ["docker", "ps", '--format={{.Names}} {{.Label "com.eyeseetea.image-name"}}'],
+        [
+            "docker",
+            "ps",
+            "--filter",
+            "label=" + IMAGE_NAME_LABEL,
+            '--format={{.Names}} {{.Label "com.eyeseetea.image-name"}}',
+        ],
         capture_output=True,
     )
     output_lines = result.stdout.decode("utf-8").splitlines()
@@ -113,7 +120,10 @@ def get_image_status(image_name, first_port=8080):
     """
     final_image_name = image_name or get_running_image_name()
     project_name = get_project_name(final_image_name)
-    result = run(["docker", "ps", "--format={{.Names}} {{.Ports}}"], capture_output=True)
+    result = run(
+        ["docker", "ps", "--filter", "label=" + IMAGE_NAME_LABEL, "--format={{.Names}} {{.Ports}}"],
+        capture_output=True,
+    )
     output_lines = result.stdout.decode("utf-8").splitlines()
 
     containers = {}
@@ -121,6 +131,8 @@ def get_image_status(image_name, first_port=8080):
 
     for line in output_lines:
         parts = line.split(None, 1)
+        if len(parts) != 2:
+            continue
         container_name, ports = parts
         if container_name.startswith(project_name + "_"):
             service = container_name[len(project_name) + 1 :].split("_", 1)[0]

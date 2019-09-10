@@ -22,11 +22,14 @@ def get_images_info(running_containers):
     result_image = utils.run(cmd_image, capture_output=True)
     lines_parts = [line.split() for line in result_image.stdout.decode("utf-8").splitlines()]
     data_image_names = []
+    void_tag = "<none>"
 
     for entry in lines_parts:
         if len(entry) != 2:
             continue
         repo, tag = entry
+        if void_tag in repo or void_tag in tag:
+            continue
         image_name = repo + ":" + tag
 
         if utils.DHIS2_DATA_IMAGE in repo:
@@ -49,6 +52,6 @@ def get_running_containers():
             continue
         image_name, ports = entry
         port = utils.get_port_from_docker_ports(ports)
-        if ":<none>" not in image_name and port:
+        if port:
             running_containers[image_name] = port
     return running_containers

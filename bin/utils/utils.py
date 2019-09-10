@@ -90,6 +90,13 @@ def get_running_image_name():
         raise D2DockerError("Multiple d2-docker images running, specify one:\n{}".format(names))
 
 
+def run_docker_ps(args):
+    """Run docker ps filtered by app label and return output lines."""
+    cmd = ["docker", "ps", "--filter", "label=" + IMAGE_NAME_LABEL, *args]
+    result = run(cmd, capture_output=True)
+    return result.stdout.decode("utf-8").splitlines()
+
+
 def get_image_status(image_name, first_port=8080):
     """
     If the container for the image is not running, return:
@@ -114,11 +121,7 @@ def get_image_status(image_name, first_port=8080):
     """
     final_image_name = image_name or get_running_image_name()
     project_name = get_project_name(final_image_name)
-    result = run(
-        ["docker", "ps", "--filter", "label=" + IMAGE_NAME_LABEL, "--format={{.Names}} {{.Ports}}"],
-        capture_output=True,
-    )
-    output_lines = result.stdout.decode("utf-8").splitlines()
+    output_lines = run_docker_ps(["--format={{.Names}} {{.Ports}}"])
 
     containers = {}
     port = None

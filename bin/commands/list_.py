@@ -40,9 +40,8 @@ def get_images_info(running_containers):
 
 def get_running_containers():
     """Return dictionary of {DATA_IMAGE_NAME: PORT} of active d2-docker instances."""
-    cmd_ps = ["docker", "ps", '--format={{.Label "com.eyeseetea.image-name"}} {{.Ports}}']
-    result_ps = utils.run(cmd_ps, capture_output=True)
-    lines_parts_ps = [line.split(None, 1) for line in result_ps.stdout.decode("utf-8").splitlines()]
+    lines = utils.run_docker_ps(['--format={{.Label "com.eyeseetea.image-name"}} {{.Ports}}'])
+    lines_parts_ps = [line.split(None, 1) for line in lines]
 
     running_containers = {}
     for entry in lines_parts_ps:
@@ -50,6 +49,6 @@ def get_running_containers():
             continue
         image_name, ports = entry
         port = utils.get_port_from_docker_ports(ports)
-        if port:
+        if ":<none>" not in image_name and port:
             running_containers[image_name] = port
     return running_containers

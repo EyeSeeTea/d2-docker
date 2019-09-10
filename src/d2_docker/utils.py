@@ -7,6 +7,7 @@ import tempfile
 from distutils import dir_util
 
 PROJECT_NAME_PREFIX = "d2-docker"
+DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 
 
@@ -17,9 +18,6 @@ def get_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
-
-
-logger = get_logger()
 
 
 class D2DockerError(Exception):
@@ -150,9 +148,6 @@ def get_port_from_docker_ports(info):
     return port
 
 
-DHIS2_DATA_IMAGE = "dhis2-data"
-
-
 def get_project_name(image_name):
     """
     Return the project name prefix from an image name.
@@ -207,6 +202,7 @@ def run_docker_compose(
 
     check_directory_for_docker_volume(post_sql_dir)
     check_directory_for_docker_volume(scripts_dir)
+    abspath = os.path.abspath
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
@@ -214,8 +210,8 @@ def run_docker_compose(
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section
-        ("POST_SQL_DIR", "./{}".format(post_sql_dir or ".post-sql")),
-        ("SCRIPTS_DIR", "./{}".format(scripts_dir or ".scripts")),
+        ("POST_SQL_DIR", abspath(post_sql_dir) if post_sql_dir else "./.post-sql"),
+        ("SCRIPTS_DIR", abspath(scripts_dir) if scripts_dir else "./.scripts"),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
@@ -357,3 +353,6 @@ def add_core_image_arg(parser):
     parser.add_argument(
         "-c", "--core-image", type=str, metavar="DOCKER_CORE_IMAGE", help="Docker dhis2-core image"
     )
+
+
+logger = get_logger()

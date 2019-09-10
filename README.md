@@ -173,3 +173,19 @@ $ docker push "eyeseetea/dhis2-data:2.30-vietnam"
 ```
 
 However, you tipically create new `dhis2-data` images by using the the `d2-docker copy` command.
+
+## Clean-up
+
+Docker infrastructure (images, networks, containers, volumes) take up a lot of space. Some command to clean-up:
+
+Remove all stopped containers:
+
+```
+$ docker container prune
+```
+
+Delete all stopped containers, networks, volumes, images and cache. **Note:** Any `dhis2-data` image not pushed to the repository, will be also deleted (as it's not kept as an active container):
+
+```
+$ docker system prune -a --volumes
+```

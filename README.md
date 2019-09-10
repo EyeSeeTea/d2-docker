@@ -178,13 +178,25 @@ However, you tipically create new `dhis2-data` images by using the the `d2-docke
 
 Docker infrastructure (images, networks, containers, volumes) take up a lot of space. Some command to clean-up:
 
+Remove all local volumes not used by at least one container:
+
+```
+$ docker container prune
+```
+
 Remove all stopped containers:
 
 ```
 $ docker container prune
 ```
 
-Delete all stopped containers, networks, volumes, images and cache. **Note:** Any `dhis2-data` image not pushed to the repository, will be also deleted (as it's not kept as an active container):
+Remove all dangling images (the temporal images that have `<none>` on its name/tag):
+
+```
+$ docker image prune
+```
+
+**WARNING:: Dangerous operation**: Delete all stopped containers, networks, volumes, images and cache. Note, that any `dhis2-data` image not pushed to the repository, will be also deleted (as it's not kept as an active container):
 
 ```
 $ docker system prune -a --volumes

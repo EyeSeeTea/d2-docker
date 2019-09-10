@@ -219,7 +219,8 @@ def run_docker_compose(
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
-    return run(["docker-compose", "-p", project_name, *args], env=env, **kwargs)
+    yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
+    return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
 
 
 def check_directory_for_docker_volume(directory):
@@ -246,7 +247,7 @@ def get_item_type(name):
 def get_docker_directory(dhis2_data_docker_directory=None):
     """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    default_dir = os.path.join(script_dir, "../..", "images", DHIS2_DATA_IMAGE)
+    default_dir = os.path.join(script_dir, "images", DHIS2_DATA_IMAGE)
     docker_dir = dhis2_data_docker_directory or os.path.realpath(default_dir)
 
     if not os.path.isdir(docker_dir):

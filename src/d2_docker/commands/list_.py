@@ -1,4 +1,4 @@
-import utils
+from d2_docker import utils
 
 DESCRIPTION = "List d2-docker data images"
 NAME = "list"

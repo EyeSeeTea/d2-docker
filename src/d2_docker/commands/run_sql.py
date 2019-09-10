@@ -1,4 +1,4 @@
-import utils
+from d2_docker import utils
 
 DESCRIPTION = "Run SQL in running d2-docker container"
 NAME = "run-sql"

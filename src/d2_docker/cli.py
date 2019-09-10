@@ -2,8 +2,19 @@
 import sys
 import argparse
 
-import utils
-from commands import start, logs, stop, commit, push, copy, export, import_, list_, run_sql
+from d2_docker import utils
+from d2_docker.commands import (
+    start,
+    logs,
+    stop,
+    commit,
+    push,
+    copy,
+    export,
+    import_,
+    list_,
+    run_sql,
+)
 
 COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_, run_sql]
 
@@ -13,7 +24,6 @@ def get_parser():
     parser.add_argument(
         "--dhis2-data-docker-directory",
         metavar="DIRECTORY",
-        type=str,
         help="Directory containing dhis2-data docker source code",
     )
     parser.add_argument(
@@ -21,7 +31,6 @@ def get_parser():
         "--log-level",
         metavar="NOTSET | DEBUG | INFO | WARNING | ERROR | CRITICAL",
         default="DEBUG",
-        type=str,
         help="Run command with the given log level",
     )
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")
@@ -35,9 +44,9 @@ def get_parser():
     return parser
 
 
-def main(argv):
+def main():
     parser = get_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     utils.logger.setLevel(args.log_level)
 
     if not getattr(args, "func", None):
@@ -52,4 +61,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

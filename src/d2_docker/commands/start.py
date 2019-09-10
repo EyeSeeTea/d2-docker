@@ -1,7 +1,7 @@
 import os
 import re
 
-import utils
+from d2_docker import utils
 
 DESCRIPTION = "Start a container from an existing dhis2-data Docker image or from an exported file"
 

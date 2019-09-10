@@ -1,4 +1,4 @@
-import utils
+from d2_docker import utils
 
 DESCRIPTION = "Copy databases from/to docker containers"
 

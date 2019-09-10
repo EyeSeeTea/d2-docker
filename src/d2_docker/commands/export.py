@@ -2,7 +2,7 @@ import gzip
 import os
 import re
 
-import utils
+from d2_docker import utils
 
 DESCRIPTION = "Export d2-docker images to a single file"
 

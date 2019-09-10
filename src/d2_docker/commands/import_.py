@@ -1,4 +1,4 @@
-import utils
+from d2_docker import utils
 
 NAME = "import"
 DESCRIPTION = "Import d2-docker images from file"

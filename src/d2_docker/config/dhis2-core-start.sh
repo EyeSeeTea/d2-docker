@@ -14,7 +14,8 @@ set -e -u -o pipefail
 export PGPASSWORD="dhis"
 
 dhis2_url="http://localhost:8080"
-psql_cmd="psql -h db -v ON_ERROR_STOP=0 --quiet -U dhis dhis2"
+psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
+pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
 scripts_dir="/config/scripts"
 root_db_path="/config/data/db"
@@ -35,6 +36,7 @@ run_sql_files() {
         echo "Load SQL: $path"
         case "$path" in
             *.gz) zcat "$path" | $psql_cmd || true;;
+            *.dump) cat "$path" | $pgrestore_cmd || true;;
             *) cat "$path" | $psql_cmd || true;;
         esac
     done

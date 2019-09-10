@@ -6,7 +6,7 @@ import socket
 import tempfile
 from distutils import dir_util
 
-PROJECT_NAME_PREFIX = "d2docker"
+PROJECT_NAME_PREFIX = "d2-docker"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 
 
@@ -65,25 +65,19 @@ def get_free_port(start=8080, end=65535):
 
 
 def get_running_image_name():
-    """Return the name of the single running d2-docker image. Otherwise, raise an error."""
+    """Return the name of the single running d2-docker image. Otherwise, raise an D2DockerError."""
     result = run(
         [
             "docker",
             "ps",
             "--filter",
             "label=" + IMAGE_NAME_LABEL,
-            '--format={{.Names}} {{.Label "com.eyeseetea.image-name"}}',
+            '--format={{.Label "com.eyeseetea.image-name"}}',
         ],
         capture_output=True,
     )
     output_lines = result.stdout.decode("utf-8").splitlines()
-    image_names = set(
-        [
-            line_parts[1]
-            for line_parts in [line.split() for line in output_lines]
-            if len(line_parts) == 2 and line_parts[0].startswith(PROJECT_NAME_PREFIX)
-        ]
-    )
+    image_names = set(output_lines)
 
     if len(image_names) == 0:
         raise D2DockerError("There are no d2-docker images running")
@@ -166,7 +160,7 @@ def get_project_name(image_name):
     """
     clean_image_name = image_name.replace("/" + DHIS2_DATA_IMAGE, "")
     name_with_prefix = "{}-{}".format(PROJECT_NAME_PREFIX, clean_image_name)
-    return re.sub(r"[^\w]", "", name_with_prefix)
+    return re.sub(r"[^\w]", "-", name_with_prefix)
 
 
 def get_core_image_name(data_image_name):

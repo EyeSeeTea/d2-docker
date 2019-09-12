@@ -240,11 +240,12 @@ def get_item_type(name):
             return "folder"
 
 
-def get_docker_directory(dhis2_data_docker_directory=None):
+def get_docker_directory(args, type):
     """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    default_dir = os.path.join(script_dir, "images", DHIS2_DATA_IMAGE)
-    docker_dir = dhis2_data_docker_directory or os.path.realpath(default_dir)
+    subdir = "images/dhis2-core" if type == "core" else "images/dhis2-data"
+    basedir = args.dhis2_docker_images_directory or script_dir
+    docker_dir = os.path.join(basedir, subdir)
 
     if not os.path.isdir(docker_dir):
         raise D2DockerError("Docker directory not found: {}".format(docker_dir))

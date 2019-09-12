@@ -14,6 +14,6 @@ def setup(parser):
 
 def run(args):
     image_name = utils.get_running_image_name()
-    docker_dir = utils.get_docker_directory(args.dhis2_data_docker_directory)
+    docker_dir = utils.get_docker_directory(args, "data")
     utils.logger.info("Commit image: {}".format(image_name))
     utils.build_image_from_source(docker_dir, image_name, args.dest_image or image_name)

@@ -14,15 +14,16 @@ from d2_docker.commands import (
     import_,
     list_,
     run_sql,
+    create,
 )
 
-COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_, run_sql]
+COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_, run_sql, create]
 
 
 def get_parser():
     parser = argparse.ArgumentParser(prog="d2-docker")
     parser.add_argument(
-        "--dhis2-data-docker-directory",
+        "--dhis2-docker-images-directory",
         metavar="DIRECTORY",
         help="Directory containing dhis2-data docker source code",
     )

@@ -6,9 +6,31 @@
 
 ## Install
 
-\$ sudo python3 setup.py install
+```
+$ sudo python3 setup.py install
+```
 
 ## Usage
+
+### Setup core
+
+First we need to create the core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org])(https://releases.dhis2.org/):
+
+```
+$ d2-docker create core eyeseetea/dhis2-core:2.30 --version=2.30
+```
+
+Alternatively, you may directly specify the WAR file:
+
+```
+$ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war
+```
+
+### Create a base DHIS2 data image
+
+```
+$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps]
+```
 
 ### Start a DHIS2 instance
 
@@ -18,14 +40,15 @@ Start a new container from a _dhis2-data_ base image:
 $ d2-docker start eyeseetea/dhis2-data:2.30-sierra
 ```
 
-Notes:
+Some notes:
 
 -   A d2-docker instance is composed of 4 containers: `dhis2-data` (database + apps), `dhis2-core` (tomcat + dhis.war), `postgis` (postgres with postgis support) and `nginx` (web server).
--   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, pass the option `--core-image eyeseetea/dhis2-core:2.30-custom`.
+-   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, use `--core-image= eyeseetea/dhis2-core:2.30-custom`.
 -   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
--   Use option `--pull` to overwrite the local images with the images in the hub. Use option `--detach` to run containers in the background.
+-   Use option `--pull` to overwrite the local images with the images in the hub.
+-   Use option `--detach` to run containers in the background.
 -   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
--   Use option `--run-sql=DIRECTORY` to run SQL files (.sql or .sql.gz) after the DB has been initialized.
+-   Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
 -   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080`, regardless of the public port that the instance is exposed to. Of course, this endpoint is only available for post-scripts.
 
 ### Show logs for running containers
@@ -110,7 +133,7 @@ $ d2-docker copy eyeseetea/dhis2-data:2.30-sierra eyeseetea/dhis2-data:2.30-sier
 $ docker image ls | grep 2.30-sierra2
 eyeseetea/dhis2-data      2.30-sierra2         930aced0d915        1 minutes ago      106MB
 $ ls sierra-data/
-apps  db.sql.gz
+apps db.sql.gz
 ```
 
 Alternatively, you can use a data directory (db + apps) as source and create Docker images from it:
@@ -119,8 +142,8 @@ Alternatively, you can use a data directory (db + apps) as source and create Doc
 $ d2-docker copy sierra-data eyeseetea/dhis2-data:2.30-sierra3 eyeseetea/dhis2-data:2.30-sierra4
 [...]
 $ docker image ls | grep "2.30-sierra\(3\|4\)"
-eyeseetea/dhis2-data      2.30-sierra3         930aced0d915        1 minutes ago      106MB
-eyeseetea/dhis2-data      2.30-sierra4         d3a374301234        1 minutes ago      106MB
+eyeseetea/dhis2-data 2.30-sierra3 930aced0d915 1 minutes ago 106MB
+eyeseetea/dhis2-data 2.30-sierra4 d3a374301234 1 minutes ago 106MB
 ```
 
 ### List all local d2-docker data images
@@ -136,47 +159,15 @@ eyeseetea/dhis2-data:2.30-cambodia STOPPED
 
 ### Run SQL file in container
 
-Run SQL in a running Dhis2 instance. Note that some changes won't be visible depending on the cache policies of the instance.
+Run a SQL file or open an interactive postgres session in a running Dhis2 instance:
 
 ```
-$ echo "update dashboard set name = 'Antenatal Care Name' where uid = 'nghVC4wtyzi'" > set-name.sql
-
-$ d2-docker.py run-sql -i eyeseetea/dhis2-data:2.30-sierra set-name.sql
-[d2-docker:INFO] Run SQL file set-name.sql for image eyeseetea/dhis2-data:2.30-sierra
-UPDATE 1
+$ d2-docker.py run-sql eyeseetea/dhis2-data:2.30-sierra
 ```
-
-## Docker instances
-
-In addition to the _dhis2-data_ image, `d2-docker` needs those base images to work:
-
--   [mdillon/postgis:10-alpine](https://hub.docker.com/r/mdillon/postgis/)
--   [jwilder/nginx-proxy:alpine](https://hub.docker.com/r/jwilder/nginx-proxy)
--   [eyeseetea/dhis2-core:2.30](https://hub.docker.com/r/eyeseetea/dhis2-core)
-
-The folder `images/` contains the source code for our custom Docker images. Should you ever need to modify those base images, build them and push to the hub repository:
-
-```
-$ cd images/dhis2-core
-$ cp /path/to/new/dhis.war .
-$ docker build . --tag="eyeseetea/dhis2-core:2.30"
-$ docker push eyeseetea/dhis2-core:2.30
-```
-
-This folder also contains the source code for `dhis2-data` docker image, which is used internally by the scripts to create new images (in a commit, for example). You may also need to modify base images and push them:
-
-```
-$ cd images/dhis2-data
-$ cp /path/to/dhis2-db-for-vietnam.sql.gz db.sql.gz
-$ docker build . --tag="eyeseetea/dhis2-data:2.30-vietnam"
-$ docker push "eyeseetea/dhis2-data:2.30-vietnam"
-```
-
-However, you tipically create new `dhis2-data` images by using the the `d2-docker copy` command.
 
 ## Clean-up
 
-Docker infrastructure (images, networks, containers, volumes) take up a lot of space. Some command to clean-up:
+Docker infrastructure (images, networks, containers, volumes) takes up a lot of hard-disk space.
 
 Remove all local volumes not used by at least one container:
 
@@ -196,7 +187,7 @@ Remove all dangling images (the temporal images that have `<none>` on its name/t
 $ docker image prune
 ```
 
-**WARNING:: Dangerous operation**: Delete all stopped containers, networks, volumes, images and cache. Note, that any `dhis2-data` image not pushed to the repository, will be also deleted (as it's not kept as an active container):
+**WARNING: Dangerous operation** Delete all stopped containers, networks, volumes, images and cache. Note, that any `dhis2-data` image still not pushed to the repository, will be also deleted whether the instance is running or nor (as it's not kept as an active container):
 
 ```
 $ docker system prune -a --volumes

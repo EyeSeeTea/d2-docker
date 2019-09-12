@@ -16,7 +16,7 @@ def setup(parser):
 
 def run(args):
     source = args.source
-    docker_dir = utils.get_docker_directory(args.dhis2_data_docker_directory)
+    docker_dir = utils.get_docker_directory(args, "data")
     copy(source, args.destinations, docker_dir)
 
 

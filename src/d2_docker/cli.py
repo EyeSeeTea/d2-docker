@@ -28,7 +28,6 @@ def get_parser():
         help="Directory containing dhis2-data docker source code",
     )
     parser.add_argument(
-        "-l",
         "--log-level",
         metavar="NOTSET | DEBUG | INFO | WARNING | ERROR | CRITICAL",
         default="DEBUG",

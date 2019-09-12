@@ -1,6 +1,6 @@
 ## Requirements
 
--   Python >= 3.5 (with python3-distutils)
+-   Python >= 3.5 (with python3-distutils). In Windows, use Python installed from https://www.python.org/downloads.
 -   Docker >= 18
 -   Docker compose >= 1.17
 
@@ -14,7 +14,7 @@ $ sudo python3 setup.py install
 
 ### Setup core
 
-First we need to create the core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org])(https://releases.dhis2.org/):
+First we need to create a core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org])(https://releases.dhis2.org/):
 
 ```
 $ d2-docker create core eyeseetea/dhis2-core:2.30 --version=2.30
@@ -27,6 +27,8 @@ $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war
 ```
 
 ### Create a base DHIS2 data image
+
+Create a dhis2-data image from a .sql.gz SQL file and the apps directory to include:
 
 ```
 $ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps]

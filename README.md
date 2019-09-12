@@ -162,7 +162,7 @@ eyeseetea/dhis2-data:2.30-cambodia STOPPED
 Run a SQL file or open an interactive postgres session in a running Dhis2 instance:
 
 ```
-$ d2-docker.py run-sql eyeseetea/dhis2-data:2.30-sierra
+$ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
 ```
 
 ## Clean-up

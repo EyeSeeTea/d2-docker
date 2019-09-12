@@ -1,3 +1,4 @@
+import contextlib
 import subprocess
 import logging
 import re
@@ -135,7 +136,7 @@ def get_image_status(image_name, first_port=8080):
             if service == "gateway":
                 port = get_port_from_docker_ports(ports)
 
-    if containers and port:
+    if containers:
         return {"state": "running", "containers": containers, "port": port}
     else:
         return {"state": "stopped"}
@@ -354,6 +355,30 @@ def add_core_image_arg(parser):
     parser.add_argument(
         "-c", "--core-image", type=str, metavar="DOCKER_CORE_IMAGE", help="Docker dhis2-core image"
     )
+
+
+@contextlib.contextmanager
+def running_containers(image_name, *up_args, **run_docker_compose_kwargs):
+    """Start docker-compose services for an image in a context manager and stop it afterwards."""
+    try:
+        run_docker_compose(["up", "--detach", *up_args], image_name, **run_docker_compose_kwargs)
+        status = get_image_status(image_name)
+        if status["state"] != "running":
+            raise D2DockerError("Could not run image: {}".format(image_name))
+        else:
+            yield status
+    finally:
+        run_docker_compose(["stop", *up_args], image_name)
+
+
+def noop(value):
+    """Do nothing with-statament context."""
+
+    @contextlib.contextmanager
+    def _yielder(*args, **kwargs):
+        yield value
+
+    return _yielder
 
 
 logger = get_logger()

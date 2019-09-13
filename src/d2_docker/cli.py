@@ -47,7 +47,7 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    utils.logger.setLevel(args.log_level)
+    utils.logger.setLevel(args.log_level.upper())
 
     if not getattr(args, "func", None):
         parser.print_usage()

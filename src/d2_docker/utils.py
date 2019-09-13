@@ -200,10 +200,8 @@ def run_docker_compose(
     final_image_name = data_image or get_running_image_name()
     project_name = get_project_name(final_image_name)
     core_image_name = core_image or get_core_image_name(data_image)
-
-    check_directory_for_docker_volume(post_sql_dir)
-    check_directory_for_docker_volume(scripts_dir)
-    abspath = os.path.abspath
+    post_sql_dir_abs = get_absdir_for_docker_volume(post_sql_dir)
+    scripts_dir_abs = get_absdir_for_docker_volume(scripts_dir)
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
@@ -211,8 +209,8 @@ def run_docker_compose(
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section
-        ("POST_SQL_DIR", abspath(post_sql_dir) if post_sql_dir else "./.post-sql"),
-        ("SCRIPTS_DIR", abspath(scripts_dir) if scripts_dir else "./.scripts"),
+        ("POST_SQL_DIR", post_sql_dir_abs),
+        ("SCRIPTS_DIR", scripts_dir_abs),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 
@@ -220,9 +218,14 @@ def run_docker_compose(
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
 
 
-def check_directory_for_docker_volume(directory):
-    if directory and not os.path.isdir(directory) and os.path.isabs(directory):
-        raise D2DockerError("Should be a relative directory: {}".format(directory))
+def get_absdir_for_docker_volume(directory, default=".empty"):
+    """Return absolute path for given directory, with default fallback."""
+    if not directory:
+        return default
+    elif not os.path.isdir(directory):
+        raise D2DockerError("Should be a directory: {}".format(directory))
+    else:
+        return os.path.abspath(directory)
 
 
 def get_item_type(name):

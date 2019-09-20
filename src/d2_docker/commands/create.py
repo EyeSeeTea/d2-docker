@@ -12,7 +12,7 @@ RELEASES_BASEURL = "https://releases.dhis2.org"
 
 
 def setup(parser):
-    subparser = parser.add_subparsers(help="Image type", dest="type")
+    subparser = parser.add_subparsers(help="Image type", dest="type", required=True)
 
     core_parser = subparser.add_parser("core", help="Create core image")
     core_parser.add_argument("core_image", metavar="IMAGE", help="Image core name")
@@ -26,11 +26,12 @@ def setup(parser):
 
 
 def run(args):
-    print(args)
     if args.type == "core":
         create_core(args)
-    else:
+    elif args.type == "data":
         create_data(args)
+    else:
+        raise utils.D2DockerError("Unknown subcommand for create: {}".format(args.type))
 
 
 @contextlib.contextmanager

@@ -48,7 +48,8 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
 
     try:
         logger.debug("Run: {}".format(cmd))
-        return subprocess.run(command_parts, check=raise_on_error, env=env, **kwargs)
+        env2 = dict(os.environ, **env) if env else os.environ
+        return subprocess.run(command_parts, check=raise_on_error, env=env2, **kwargs)
     except subprocess.CalledProcessError as exc:
         msg = "Command {} failed with code {}: {}"
         raise D2DockerError(msg.format(cmd, exc.returncode, exc.stderr))

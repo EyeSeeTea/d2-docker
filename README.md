@@ -1,6 +1,6 @@
 ## Requirements
 
--   Python >= 3.5 (with python3-distutils). In Windows, use Python installed from https://www.python.org/downloads.
+-   Python >= 3.5 (with python3-distutils). In Windows, install from https://www.python.org/downloads.
 -   Docker >= 18
 -   Docker compose >= 1.17
 
@@ -14,7 +14,7 @@ $ sudo python3 setup.py install
 
 ### Setup core
 
-First we need to create a core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org])(https://releases.dhis2.org/):
+First we need to create a core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org](https://releases.dhis2.org/)):
 
 ```
 $ d2-docker create core eyeseetea/dhis2-core:2.30 --version=2.30
@@ -174,7 +174,7 @@ Docker infrastructure (images, networks, containers, volumes) takes up a lot of 
 Remove all local volumes not used by at least one container:
 
 ```
-$ docker container prune
+$ docker volume prune
 ```
 
 Remove all stopped containers:

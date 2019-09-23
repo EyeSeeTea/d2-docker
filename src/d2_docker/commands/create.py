@@ -12,7 +12,7 @@ RELEASES_BASEURL = "https://releases.dhis2.org"
 
 
 def setup(parser):
-    subparser = parser.add_subparsers(help="Image type", dest="type", required=True)
+    subparser = parser.add_subparsers(help="Image type", dest="type")
 
     core_parser = subparser.add_parser("core", help="Create core image")
     core_parser.add_argument("core_image", metavar="IMAGE", help="Image core name")

@@ -11,4 +11,5 @@ def setup(parser):
 def run(args):
     input_file = args.input_file
     utils.logger.info("Load images from file: {}".format(input_file))
-    utils.load_images_file(input_file)
+    info = utils.load_images_file(input_file)
+    print(info.stdout.decode("utf-8").strip())

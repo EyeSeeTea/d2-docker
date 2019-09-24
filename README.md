@@ -1,19 +1,35 @@
 ## Requirements
 
--   Python >= 3.5 (with setuptools).
+-   Operating System: GNU/Linux or Windows 10.
+-   Python >= 3.5 (with setuptools)
 -   Docker >= 18
 -   Docker compose >= 1.17
+-   RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
-In Ubuntu 18.04:
+On Ubuntu 18.04:
 
 ```
 $ sudo apt install docker.io docker-compose python3 python3-setuptools
 ```
 
+On Windows 10:
+
+-   Install Python: https://www.python.org/downloads
+-   Install Docker Desktop: https://docs.docker.com/docker-for-windows/install
+-   Configure Docker Desktop to give more memory to instance: Settings -> Advanced -> Memory: 6400 Mb (modify to meet your needs)
+
 ## Install
+
+On GNU/Linux:
 
 ```
 $ sudo python3 setup.py install
+```
+
+For Windows, open a terminal as an Administrator and run:
+
+```
+$ python setup.py install
 ```
 
 ## Usage

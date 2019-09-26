@@ -1,0 +1,56 @@
+version: "3"
+services:
+    core:
+        image: "${DHIS2_CORE_IMAGE}"
+        labels:
+            - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
+        volumes:
+            - home:/DHIS2_home
+            - data:/config/data
+            - ./config:/config
+            - "${SCRIPTS_DIR}:/config/scripts"
+            - "${POST_SQL_DIR}:/config/data/db/post"
+        environment:
+            CATALINA_OPTS: "-Dcontext.path="
+            JAVA_OPTS: "-Xmx7500m -Xms4000m"
+            LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
+        entrypoint: sh /config/dhis2-core-entrypoint.sh
+        command: sh /config/dhis2-core-start.sh
+        depends_on:
+            - "db"
+    db:
+        image: "mdillon/postgis:10-alpine"
+        labels:
+            - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: dhis2
+            POSTGRES_USER: dhis
+            POSTGRES_PASSWORD: dhis
+        command: "postgres -c max_locks_per_transaction=100"
+    gateway:
+        image: "jwilder/nginx-proxy:alpine"
+        labels:
+            - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
+        ports:
+            - "${DHIS2_CORE_PORT:-8080}:80"
+        volumes:
+            - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./config/50x.html:/usr/share/nginx/html/50x.html:ro
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+        depends_on:
+            - "core"
+    data:
+        image: "${DHIS2_DATA_IMAGE}"
+        environment:
+            VOLUME: /volume-data
+            LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
+        volumes:
+            - data:/volume-data
+
+volumes:
+    pgdata:
+    home:
+    data:
+    empty:

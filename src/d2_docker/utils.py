@@ -73,7 +73,7 @@ def get_running_image_name():
             "ps",
             "--filter",
             "label=" + IMAGE_NAME_LABEL,
-            '--format={{.Label "com.eyeseetea.image-name"}}',
+            '--format={{.Label "%s"}}' % IMAGE_NAME_LABEL,
         ],
         capture_output=True,
     )
@@ -123,19 +123,23 @@ def get_image_status(image_name, first_port=8080):
     final_image_name = image_name or get_running_image_name()
     project_name = get_project_name(final_image_name)
     output_lines = run_docker_ps(
-        ["--filter", "label=" + IMAGE_NAME_LABEL, "--format={{.Names}} {{.Ports}}"]
+        [
+            "--filter",
+            "label=" + IMAGE_NAME_LABEL,
+            '--format={{.Label "%s"}} {{.Names}} {{.Ports}}' % IMAGE_NAME_LABEL,
+        ]
     )
 
     containers = {}
     port = None
 
     for line in output_lines:
-        parts = line.split(None, 1)
-        if len(parts) != 2:
+        parts = line.split(None, 2)
+        if len(parts) != 3:
             continue
-        container_name, ports = parts
+        image_name_part, container_name, ports = parts
         indexed_service = container_name.split("_")[-2:]
-        if indexed_service:
+        if image_name_part == final_image_name and indexed_service:
             service = indexed_service[0]
             containers[service] = container_name
             if service == "gateway":

@@ -72,7 +72,7 @@ setup_tomcat() {
 
 wait_for_postgres() {
     debug "Waiting for postgres: ${host}:${psql_port}"
-    while ! nc -z $host $psql_port; do
+    while ! echo "select 1;" | $psql_cmd; do
         sleep 1
     done
 }

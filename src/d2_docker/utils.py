@@ -227,10 +227,11 @@ def run_docker_compose(
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
 
 
-def get_absdir_for_docker_volume(directory, default="empty"):
+def get_absdir_for_docker_volume(directory):
     """Return absolute path for given directory, with default fallback."""
     if not directory:
-        return default
+        empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
+        return empty_directory
     elif not os.path.isdir(directory):
         raise D2DockerError("Should be a directory: {}".format(directory))
     else:

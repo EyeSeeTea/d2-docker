@@ -39,7 +39,7 @@ if [ "$(id -u)" = "0" ]; then
         $TOMCATDIR/work \
         $TOMCATDIR/logs
         chown -R tomcat:tomcat $DHIS2HOME
-        chmod +x "$0"
+        chmod +x "$0" || true
         exec su-exec tomcat "$0" "$@"
     fi
 fi

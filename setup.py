@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="d2_docker",
-    version="0.0.1",
+    version="1.0.1",
     description="Dockers for DHIS2 instances",
     long_description=open("README.md", encoding="utf-8").read(),
     keywords=["python"],

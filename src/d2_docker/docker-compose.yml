@@ -6,10 +6,10 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - home:/DHIS2_home
-            - data:/config/data
             - ./config:/config
-            - "${SCRIPTS_DIR}:/config/scripts"
-            - "${POST_SQL_DIR}:/config/data/db/post"
+            - data:/data
+            - "${SCRIPTS_DIR}:/data/scripts"
+            - "${POST_SQL_DIR}:/data/db/post"
         environment:
             CATALINA_OPTS: "-Dcontext.path="
             JAVA_OPTS: "-Xmx7500m -Xms4000m"

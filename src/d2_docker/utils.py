@@ -10,6 +10,7 @@ from distutils import dir_util
 PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
+DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 
 
 def get_logger():
@@ -72,12 +73,12 @@ def get_running_image_name():
             "ps",
             "--filter",
             "label=" + IMAGE_NAME_LABEL,
-            '--format={{.Label "com.eyeseetea.image-name"}}',
+            '--format={{.Label "%s"}}' % IMAGE_NAME_LABEL,
         ],
         capture_output=True,
     )
     output_lines = result.stdout.decode("utf-8").splitlines()
-    image_names = set(output_lines)
+    image_names = set(line for line in output_lines if line.strip())
 
     if len(image_names) == 0:
         raise D2DockerError("There are no d2-docker images running")
@@ -121,23 +122,30 @@ def get_image_status(image_name, first_port=8080):
     """
     final_image_name = image_name or get_running_image_name()
     project_name = get_project_name(final_image_name)
-    output_lines = run_docker_ps(["--format={{.Names}} {{.Ports}}"])
+    output_lines = run_docker_ps(
+        [
+            "--filter",
+            "label=" + IMAGE_NAME_LABEL,
+            '--format={{.Label "%s"}} {{.Names}} {{.Ports}}' % IMAGE_NAME_LABEL,
+        ]
+    )
 
     containers = {}
     port = None
 
     for line in output_lines:
-        parts = line.split(None, 1)
-        if len(parts) != 2:
+        parts = line.split(None, 2)
+        if len(parts) != 3:
             continue
-        container_name, ports = parts
-        if container_name.startswith(project_name + "_"):
-            service = container_name[len(project_name) + 1 :].split("_", 1)[0]
+        image_name_part, container_name, ports = parts
+        indexed_service = container_name.split("_")[-2:]
+        if image_name_part == final_image_name and indexed_service:
+            service = indexed_service[0]
             containers[service] = container_name
             if service == "gateway":
                 port = get_port_from_docker_ports(ports)
 
-    if containers:
+    if containers and set(containers.keys()) == set(DOCKER_COMPOSE_SERVICES) and port:
         return {"state": "running", "containers": containers, "port": port}
     else:
         return {"state": "stopped"}
@@ -219,10 +227,11 @@ def run_docker_compose(
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
 
 
-def get_absdir_for_docker_volume(directory, default="empty"):
+def get_absdir_for_docker_volume(directory):
     """Return absolute path for given directory, with default fallback."""
     if not directory:
-        return default
+        empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
+        return empty_directory
     elif not os.path.isdir(directory):
         raise D2DockerError("Should be a directory: {}".format(directory))
     else:
@@ -365,7 +374,7 @@ def add_core_image_arg(parser):
 def running_containers(image_name, *up_args, **run_docker_compose_kwargs):
     """Start docker-compose services for an image in a context manager and stop it afterwards."""
     try:
-        run_docker_compose(["up", "--detach", *up_args], image_name, **run_docker_compose_kwargs)
+        run_docker_compose(["up", "-d", *up_args], image_name, **run_docker_compose_kwargs)
         status = get_image_status(image_name)
         if status["state"] != "running":
             raise D2DockerError("Could not run image: {}".format(image_name))

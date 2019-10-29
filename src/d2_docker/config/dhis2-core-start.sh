@@ -34,11 +34,7 @@ run_sql_files() {
     
     find "$base_db_path" -type f | sort | while read path; do
         echo "Load SQL: $path"
-        case "$path" in
-            *.gz) zcat "$path" | $psql_cmd || true;;
-            *.dump) cat "$path" | $pgrestore_cmd || true;;
-            *) cat "$path" | $psql_cmd || true;;
-        esac
+	$pgrestore_cmd "$path" || zcat "$path" | $psql_cmd || cat "$path" | $psql_cmd || true
     done
 }
 

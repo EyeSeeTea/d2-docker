@@ -20,7 +20,7 @@ def run(args):
     yaml_contents = result.stdout.decode("utf-8")
 
     # Use regexp instead of using a third-party YAML parser to ease deployment on Windows.
-    image_names = re.findall(r"image: (\S+)$", yaml_contents, re.MULTILINE)
+    image_names = re.findall(r"image: (\S+)\r?$", yaml_contents, re.MULTILINE)
     utils.logger.info("Export images: {}".format(", ".join(image_names)))
     tar_file = args.output_file + ".tar"
     utils.save_images(image_names, tar_file)

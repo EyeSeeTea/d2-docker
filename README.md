@@ -122,7 +122,7 @@ You can export all the images needed by d2-docker to a single file, ready to dis
 Note that you must commit any changes first, since this will export images, not containers.
 
 ```
-$ d2-docker export -i eyeseetea/dhis2-data:2.30-sierra dhis2-sierra.tgz
+$ d2-docker export -i eyeseetea/dhis2-data:2.30-sierra dhis2-sierra
 ```
 
 Now you can copy this file to any other machine, which may now use commands _import FILE_ and _start FILE_.

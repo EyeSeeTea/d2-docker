@@ -34,7 +34,7 @@ run_sql_files() {
     
     find "$base_db_path" -type f | sort | while read path; do
         echo "Load SQL: $path"
-	$pgrestore_cmd "$path" || zcat "$path" | $psql_cmd || cat "$path" | $psql_cmd || true
+        $pgrestore_cmd "$path" || zcat "$path" | $psql_cmd || cat "$path" | $psql_cmd || true
     done
 }
 
@@ -54,7 +54,7 @@ run_post_scripts() {
 
 
 copy_apps() {
-    debug "Copy Dhis2 apps"
+    debug "Copy Dhis2 apps: $source_apps_path -> $dest_apps_path"
     mkdir -p "$dest_apps_path/apps"
     if test -e "$source_apps_path"; then
         cp -Rv "$source_apps_path" "$dest_apps_path"

@@ -197,7 +197,7 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     scripts_dir=None,
-    **kwargs,
+    **kwargs
 ):
     """
     Run a docker-compose command for a given image.

@@ -18,6 +18,9 @@ services:
         command: sh /config/dhis2-core-start.sh
         depends_on:
             - "db"
+        restart: unless-stopped
+        networks:
+            - d2-docker
     db:
         image: "mdillon/postgis:10-alpine"
         labels:
@@ -29,6 +32,9 @@ services:
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
         command: "postgres -c max_locks_per_transaction=100"
+        restart: unless-stopped
+        networks:
+            - d2-docker
     gateway:
         image: "jwilder/nginx-proxy:alpine"
         labels:
@@ -41,6 +47,9 @@ services:
             - /var/run/docker.sock:/tmp/docker.sock:ro
         depends_on:
             - "core"
+        restart: unless-stopped
+        networks:
+            - d2-docker
     data:
         image: "${DHIS2_DATA_IMAGE}"
         environment:
@@ -54,3 +63,5 @@ volumes:
     home:
     data:
     empty:
+networks:
+    d2-docker:

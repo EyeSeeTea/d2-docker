@@ -18,6 +18,7 @@ def setup(parser):
     core_parser.add_argument("core_image", metavar="IMAGE", help="Image core name")
     core_parser.add_argument("-v", "--version", help="DHIS2 version (https://releases.dhis2.org/)")
     core_parser.add_argument("--war", help="WAR file")
+    core_parser.add_argument("--dhis2-home", metavar="FILE", nargs="+", help="DHIS2_HOME file")
 
     data_parser = subparser.add_parser("data", help="Create data image")
     data_parser.add_argument("data_image", metavar="IMAGE", help="Image core name")
@@ -55,10 +56,17 @@ def create_core(args):
             utils.logger.info("Download file: {}".format(war_url))
             urllib.request.urlretrieve(war_url, war_path)
         elif args.war:
-            utils.logger.debug("Copy file: {} -> {}".format(args.war, war_path))
+            utils.logger.debug("Copy WAR file: {} -> {}".format(args.war, war_path))
             shutil.copy(args.war, war_path)
         else:
             raise utils.D2DockerError("One option is required: --version | --war")
+
+        dhis2_home_path = os.path.join(build_dir, "dhis2-home-files")
+        utils.mkdir_p(dhis2_home_path)
+
+        for source_home_file in args.dhis2_home or []:
+            utils.logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
+            shutil.copy(source_home_file, dhis2_home_path)
 
         utils.run(["docker", "build", build_dir, "--tag", image])
 

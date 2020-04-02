@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e -u -o pipefail
 #
 # Tasks:
@@ -23,11 +23,9 @@ root_db_path="/data/db"
 post_db_path="/data/db/post"
 source_apps_path="/data/apps"
 dest_apps_path="/DHIS2_home/files/"
-warfile="/usr/local/tomcat/webapps/ROOT.war"
-tomcatdir="/usr/local/tomcat"
 
 debug() {
-    echo "[dhis2-core-start] $@" >&2
+    echo "[dhis2-core-start] $*" >&2
 }
 
 run_sql_files() {

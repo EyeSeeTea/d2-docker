@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e -u -o pipefail
 #
 # Tasks:
@@ -17,16 +17,15 @@ dhis2_url="http://localhost:8080"
 psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
 pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
+homedir="/dhis2-home-files"
 scripts_dir="/data/scripts"
 root_db_path="/data/db"
 post_db_path="/data/db/post"
 source_apps_path="/data/apps"
 dest_apps_path="/DHIS2_home/files/"
-warfile="/usr/local/tomcat/webapps/ROOT.war"
-tomcatdir="/usr/local/tomcat"
 
 debug() {
-    echo "[dhis2-core-start] $@" >&2
+    echo "[dhis2-core-start] $*" >&2
 }
 
 run_sql_files() {
@@ -63,6 +62,7 @@ copy_apps() {
 
 setup_tomcat() {
     cp -v "$configdir/DHIS2_home/dhis.conf" /DHIS2_home/dhis.conf
+    cp -v $homedir/* /DHIS2_home/ || true
     cp -v "$configdir/server.xml" /usr/local/tomcat/conf/server.xml
 }
 

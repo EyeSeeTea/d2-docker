@@ -48,6 +48,12 @@ Alternatively, you may directly specify the WAR file:
 $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war
 ```
 
+You can add configuration files to folder DHIS2_HOME. A typical example is to add the GEE (Google Earth Engine) credentials:
+
+```
+$ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/tmp/dhis-google-auth.json
+```
+
 ### Create a base DHIS2 data image
 
 Create a dhis2-data image from a .sql.gz SQL file and the apps directory to include:

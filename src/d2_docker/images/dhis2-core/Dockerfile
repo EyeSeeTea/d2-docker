@@ -15,6 +15,8 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
 RUN apk add --update --no-cache bash su-exec
 
 COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
+COPY dhis2-home-files /dhis2-home-files
+
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

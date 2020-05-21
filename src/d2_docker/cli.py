@@ -15,9 +15,23 @@ from d2_docker.commands import (
     list_,
     run_sql,
     create,
+    upgrade,
 )
 
-COMMAND_MODULES = [start, logs, stop, commit, push, copy, export, import_, list_, run_sql, create]
+COMMAND_MODULES = [
+    start,
+    logs,
+    stop,
+    commit,
+    push,
+    copy,
+    export,
+    import_,
+    list_,
+    run_sql,
+    create,
+    upgrade,
+]
 
 
 def get_parser():

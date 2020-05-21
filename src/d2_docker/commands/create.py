@@ -2,13 +2,10 @@ import contextlib
 import os
 import shutil
 import tempfile
-import urllib.request
 
 from d2_docker import utils
 
 DESCRIPTION = "Create d2-docker images"
-
-RELEASES_BASEURL = "https://releases.dhis2.org"
 
 
 def setup(parser):
@@ -35,47 +32,23 @@ def run(args):
         raise utils.D2DockerError("Unknown subcommand for create: {}".format(args.type))
 
 
-@contextlib.contextmanager
-def temporal_build_directory(args, image_type):
-    docker_dir = utils.get_docker_directory(args, image_type)
-
-    with tempfile.TemporaryDirectory() as build_dir:
-        utils.logger.debug("Temporal directory: {}".format(build_dir))
-        utils.copytree(docker_dir, build_dir)
-        yield build_dir
-
-
 def create_core(args):
-    image = args.core_image
-    utils.logger.info("Create core image: {}".format(image))
-
-    with temporal_build_directory(args, "core") as build_dir:
-        war_path = os.path.join(build_dir, "dhis.war")
-        if args.version:
-            war_url = "{}/{}/dhis.war".format(RELEASES_BASEURL, args.version)
-            utils.logger.info("Download file: {}".format(war_url))
-            urllib.request.urlretrieve(war_url, war_path)
-        elif args.war:
-            utils.logger.debug("Copy WAR file: {} -> {}".format(args.war, war_path))
-            shutil.copy(args.war, war_path)
-        else:
-            raise utils.D2DockerError("One option is required: --version | --war")
-
-        dhis2_home_path = os.path.join(build_dir, "dhis2-home-files")
-        utils.mkdir_p(dhis2_home_path)
-
-        for source_home_file in args.dhis2_home or []:
-            utils.logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
-            shutil.copy(source_home_file, dhis2_home_path)
-
-        utils.run(["docker", "build", build_dir, "--tag", image])
+    docker_dir = utils.get_docker_directory("core", args)
+    utils.create_core(
+        docker_dir=docker_dir,
+        image=args.core_image,
+        version=args.version,
+        war=args.war,
+        dhis2_home_paths=args.dhis2_home,
+    )
 
 
 def create_data(args):
     image = args.data_image
+    docker_dir = utils.get_docker_directory("data", args)
     utils.logger.info("Create data image: {}".format(image))
 
-    with temporal_build_directory(args, "data") as build_dir:
+    with utils.temporal_build_directory(docker_dir) as build_dir:
         if args.apps_dir:
             dest_apps_dir = os.path.join(build_dir, "apps")
             utils.logger.debug("Copy apps: {} -> {}".format(args.apps_dir, dest_apps_dir))

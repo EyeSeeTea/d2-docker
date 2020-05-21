@@ -91,6 +91,13 @@ def get_running_image_name():
         raise D2DockerError("Multiple d2-docker images running, specify one:\n{}".format(names))
 
 
+def run_docker(args):
+    """Run docker."""
+    cmd = ["docker", *args]
+    result = run(cmd, capture_output=True)
+    return [s.strip() for s in result.stdout.decode("utf-8").splitlines()]
+
+
 def run_docker_ps(args):
     """Run docker ps filtered by app label and return output lines."""
     cmd = ["docker", "ps", "--filter", "label=" + IMAGE_NAME_LABEL, *args]

@@ -40,14 +40,14 @@ run_sql_files() {
 run_pre_scripts() {
     find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read path; do
         debug "Run pre-tomcat script: $path"
-        bash "$path"
+        (cd "$(dirname "$path")" && bash "$path")
     done
 }
 
 run_post_scripts() {
     find "$scripts_dir" -type f -name '*.sh' -name 'post*' | sort | while read path; do
         debug "Run post-tomcat script: $path"
-        bash "$path"
+        (cd "$(dirname "$path")" && bash "$path")
     done
 }
 

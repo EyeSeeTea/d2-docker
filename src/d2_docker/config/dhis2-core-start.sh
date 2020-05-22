@@ -51,7 +51,6 @@ run_post_scripts() {
     done
 }
 
-
 copy_apps() {
     debug "Copy Dhis2 apps: $source_apps_path -> $dest_apps_path"
     mkdir -p "$dest_apps_path/apps"
@@ -80,12 +79,13 @@ start_tomcat() {
 
 wait_for_tomcat() {
     debug "Waiting for Tomcat to start: $dhis2_url"
-    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action" ; do
-        sleep 1;
+    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action"; do
+        sleep 1
     done
 }
 
-run() { local host=$1 psql_port=$2
+run() {
+    local host=$1 psql_port=$2
     setup_tomcat
     copy_apps
     wait_for_postgres

@@ -414,7 +414,7 @@ def wait_for_server(port):
             res = requests.get(url)
             status = res.status_code
             logger.debug("wait_for_server:status={}".format(status))
-            if status == 502:
+            if status == 502 or status == 504:
                 pass
             elif status == 200:
                 return True

@@ -76,13 +76,13 @@ def create_data(args):
     utils.logger.info("Create data image: {}".format(image))
 
     with temporal_build_directory(args, "data") as build_dir:
+        db_path = os.path.join(build_dir, "db/")
+        utils.mkdir_p(db_path)
         if args.apps_dir:
             dest_apps_dir = os.path.join(build_dir, "apps")
             utils.logger.debug("Copy apps: {} -> {}".format(args.apps_dir, dest_apps_dir))
             utils.copytree(args.apps_dir, dest_apps_dir)
         if args.sql:
-            db_path = os.path.join(build_dir, "db/")
-            utils.mkdir_p(db_path)
             utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))
             shutil.copy(args.sql, db_path)
 

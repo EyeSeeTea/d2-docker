@@ -362,6 +362,11 @@ def push_image(image_name):
     return run(["docker", "push", image_name])
 
 
+def pull_image(image_name):
+    """Pull Docker image from the repository."""
+    return run(["docker", "pull", image_name])
+
+
 def save_images(image_names, output_file_path):
     """Save list of Docker images into a local file."""
     run(["docker", "save", *image_names, "-o", output_file_path])

@@ -153,6 +153,12 @@ $ d2-docker start dhis2-sierra.tgz
 
 On the first run, the images will been created, but you can either run this command again or the standard `start DHIS2_DATA_IMAGE_NAME`.
 
+### Delete image/containers linked to an instance
+
+```
+$ d2-docker rm eyeseetea/dhis2-data:2.30-sierra
+```
+
 ### Copy Docker images to/from local directories
 
 You can use a Docker image or a data directory (db + apps) as source, that will create a new Docker image _eyeseetea/dhis2-data:2.30-sierra2_ and a `sierra-data/` directory:

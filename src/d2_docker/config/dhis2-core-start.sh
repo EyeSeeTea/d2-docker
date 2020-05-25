@@ -30,27 +30,39 @@ debug() {
 
 run_sql_files() {
     base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
-    
-    find "$base_db_path" -type f | sort | while read path; do
+
+    find "$base_db_path" -type f \( -name '*.dump' \) |
+        sort | while read -r path; do
+        echo "Load SQL dump: $path"
+        $pgrestore_cmd "$path" || true
+    done
+
+    find "$base_db_path" -type f \( -name '*.sql.gz' \) |
+        sort | while read -r path; do
+        echo "Load SQL (compressed): $path"
+        zcat "$path" | $psql_cmd || true
+    done
+
+    find "$base_db_path" -type f \( -name '*.sql' \) |
+        sort | while read -r path; do
         echo "Load SQL: $path"
-        $pgrestore_cmd "$path" || zcat "$path" | $psql_cmd || cat "$path" | $psql_cmd || true
+        $psql_cmd <"$path" || true
     done
 }
 
 run_pre_scripts() {
-    find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read path; do
+    find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read -r path; do
         debug "Run pre-tomcat script: $path"
-        bash "$path"
+        (cd "$(dirname "$path")" && bash "$path")
     done
 }
 
 run_post_scripts() {
-    find "$scripts_dir" -type f -name '*.sh' -name 'post*' | sort | while read path; do
+    find "$scripts_dir" -type f -name '*.sh' -name 'post*' | sort | while read -r path; do
         debug "Run post-tomcat script: $path"
-        bash "$path"
+        (cd "$(dirname "$path")" && bash "$path")
     done
 }
-
 
 copy_apps() {
     debug "Copy Dhis2 apps: $source_apps_path -> $dest_apps_path"
@@ -80,12 +92,13 @@ start_tomcat() {
 
 wait_for_tomcat() {
     debug "Waiting for Tomcat to start: $dhis2_url"
-    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action" ; do
-        sleep 1;
+    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action"; do
+        sleep 1
     done
 }
 
-run() { local host=$1 psql_port=$2
+run() {
+    local host=$1 psql_port=$2
     setup_tomcat
     copy_apps
     wait_for_postgres

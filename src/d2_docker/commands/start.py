@@ -73,7 +73,7 @@ def start(args, image_name):
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
     )
 
-    try:
+    with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
             ["up", *up_args],
             image_name,
@@ -83,9 +83,6 @@ def start(args, image_name):
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
         )
-    except KeyboardInterrupt:
-        utils.logger.info("Control+C pressed, stopping containers")
-        utils.run_docker_compose(["stop"], image_name, core_image=core_image)
 
     if args.detach:
         utils.logger.info("Detaching... run d2-docker logs to see logs")

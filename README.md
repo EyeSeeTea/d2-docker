@@ -203,6 +203,35 @@ Run a SQL file or open an interactive postgres session in a running Dhis2 instan
 $ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
 ```
 
+### Upgrade DHIS2 version
+
+```
+$ d2-docker upgrade \
+    --from=eyeseetea/dhis2-data:2.30-sierra \
+    --to=eyeseetea/dhis2-data:2.32-sierra \
+    --migrations=upgrade-sierra/
+```
+
+Migration folder `upgrade-sierra` should then contain data to be used in each intermediate upgrade version. Supported migration data:
+
+- DHIS2 war file: `dhis.war` (if not specified, it will be download from the releases page)
+- DHIS2 home files: `dhis2-home/`
+- Shell scripts (pre-tomcat): `*.sh`
+- Shell scripts (post-tomcat): `post-*.sh`
+- SQL files: `*.sql`
+
+A full example might look:
+
+```
+upgrade-sierra/2.31/dhis.war
+upgrade-sierra/2.31/fix-users.sql
+upgrade-sierra/2.31/dhis2-home/dhis-google-auth.json
+upgrade-sierra/2.31/post-metadata.sh
+upgrade-sierra/2.31/some-metadata-used-by-the-script.json
+
+upgrade-sierra/2.32/fix-org-units-geometry.sql
+```
+
 ## Clean-up
 
 Docker infrastructure (images, networks, containers, volumes) takes up a lot of hard-disk space.

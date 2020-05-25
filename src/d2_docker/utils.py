@@ -322,8 +322,7 @@ def export_data_from_image(source_image, dest_path):
     container_id = result.stdout.decode("utf8").splitlines()[0]
     mkdir_p(dest_path)
     try:
-        db_dest_path = os.path.join(dest_path, "db.sql.gz")
-        run(["docker", "cp", container_id + ":" + "/data/db/00-base.db.sql.gz", db_dest_path])
+        run(["docker", "cp", container_id + ":" + "/data/db", dest_path])
         run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
@@ -336,7 +335,7 @@ def export_data_from_running_containers(image_name, containers, destination):
     mkdir_p(destination)
     run(["docker", "cp", apps_source, destination])
 
-    db_path = os.path.join(destination, "db.sql.gz")
+    db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)
 
 

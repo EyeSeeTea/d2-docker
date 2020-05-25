@@ -22,7 +22,7 @@ def setup(parser):
 
     data_parser = subparser.add_parser("data", help="Create data image")
     data_parser.add_argument("data_image", metavar="IMAGE", help="Image core name")
-    data_parser.add_argument("--sql", help="SQL .tar.gz file")
+    data_parser.add_argument("--sql", help=".sql (plain text), .sql.gz (gzipped plain text format) or .dump database file (binary format)")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
 
 
@@ -76,13 +76,14 @@ def create_data(args):
     utils.logger.info("Create data image: {}".format(image))
 
     with temporal_build_directory(args, "data") as build_dir:
+        db_path = os.path.join(build_dir, "db/")
+        utils.mkdir_p(db_path)
         if args.apps_dir:
             dest_apps_dir = os.path.join(build_dir, "apps")
             utils.logger.debug("Copy apps: {} -> {}".format(args.apps_dir, dest_apps_dir))
             utils.copytree(args.apps_dir, dest_apps_dir)
         if args.sql:
-            sql_path = os.path.join(build_dir, "db.sql.gz")
-            utils.logger.debug("Copy SQL file:  {} -> {}".format(args.sql, sql_path))
-            shutil.copy(args.sql, sql_path)
+            utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))
+            shutil.copy(args.sql, db_path)
 
         utils.run(["docker", "build", build_dir, "--tag", image])

@@ -3,14 +3,21 @@ import subprocess
 import logging
 import re
 import os
+import requests
+import shutil
 import socket
 import tempfile
+import time
+import urllib.request
 from distutils import dir_util
+
+from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
+RELEASES_BASEURL = "https://releases.dhis2.org"
 
 
 def get_logger():
@@ -183,17 +190,7 @@ def get_core_image_name(data_image_name):
 
     Example: eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
     """
-    sp1 = data_image_name.split("/", 1)
-    if len(sp1) != 2:
-        raise D2DockerError("Invalid data image name: {}".format(data_image_name))
-    namespace, name_with_tag = sp1
-    sp2 = name_with_tag.split(":", 1)
-    if len(sp2) != 2:
-        raise D2DockerError("Invalid data image name: {}".format(data_image_name))
-    name, tag = sp2
-    sp3 = tag.split("-", 1)
-
-    return "{}/dhis2-core:{}".format(namespace, sp3[0])
+    return ImageName.from_string(data_image_name).core().get()
 
 
 def run_docker_compose(
@@ -261,11 +258,11 @@ def get_item_type(name):
             return "folder"
 
 
-def get_docker_directory(args, type):
+def get_docker_directory(type, args=None):
     """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     subdir = "images/dhis2-core" if type == "core" else "images/dhis2-data"
-    basedir = args.dhis2_docker_images_directory or script_dir
+    basedir = args and args.dhis2_docker_images_directory or script_dir
     docker_dir = os.path.join(basedir, subdir)
 
     if not os.path.isdir(docker_dir):
@@ -403,6 +400,60 @@ def noop(value):
         yield value
 
     return _yielder
+
+
+@contextlib.contextmanager
+def temporal_build_directory(source_dir):
+    with tempfile.TemporaryDirectory() as build_dir:
+        logger.debug("Temporal directory: {}".format(build_dir))
+        copytree(source_dir, build_dir)
+        yield build_dir
+
+
+def wait_for_server(port):
+    url = "http://localhost:{}".format(port)
+    while True:
+        try:
+            logger.debug("wait_for_server:url={}".format(url))
+            res = requests.get(url)
+            status = res.status_code
+            logger.debug("wait_for_server:status={}".format(status))
+            if status == 502 or status == 504:
+                pass
+            elif status == 200:
+                return True
+            else:
+                return False
+        except requests.exceptions.ConnectionError:
+            logger.debug("wait_for_server:connection-error")
+        time.sleep(5)
+
+
+def create_core(
+    *, docker_dir, image, version=None, war=None, dhis2_home_paths=None,
+):
+    logger.info("Create core image: {}".format(image))
+
+    with temporal_build_directory(docker_dir) as build_dir:
+        war_path = os.path.join(build_dir, "dhis.war")
+        if war:
+            logger.debug("Copy WAR file: {} -> {}".format(war, war_path))
+            shutil.copy(war, war_path)
+        elif version:
+            war_url = "{}/{}/dhis.war".format(RELEASES_BASEURL, version)
+            logger.info("Download file: {}".format(war_url))
+            urllib.request.urlretrieve(war_url, war_path)
+        else:
+            raise D2DockerError("One option is required: --version | --war")
+
+        dhis2_home_path = os.path.join(build_dir, "dhis2-home-files")
+        mkdir_p(dhis2_home_path)
+
+        for source_home_file in dhis2_home_paths or []:
+            logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
+            shutil.copy(source_home_file, dhis2_home_path)
+
+        run(["docker", "build", build_dir, "--tag", image])
 
 
 logger = get_logger()

@@ -22,7 +22,7 @@ def setup(parser):
 
     data_parser = subparser.add_parser("data", help="Create data image")
     data_parser.add_argument("data_image", metavar="IMAGE", help="Image core name")
-    data_parser.add_argument("--sql", help=".sql, .sql.gz or .dump database file")
+    data_parser.add_argument("--sql", help=".sql (plain text), .sql.gz (gzipped plain text format) or .dump database file (binary format)")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
 
 

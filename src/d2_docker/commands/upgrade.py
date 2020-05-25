@@ -15,6 +15,8 @@ def setup(parser):
     parser.add_argument("--from", dest="from_", metavar="IMAGE", required=True, help="Source image")
     parser.add_argument("--to", metavar="IMAGE", required=True, help="Destination image data name")
 
+    parser.add_argument("-k", "--keep-running", action="store_true", help="Keep last image running")
+
     parser.add_argument(
         "--migrations",
         dest="migrations_dir",
@@ -36,6 +38,7 @@ def run(args):
     for version in versions[1:]:
         dest_image_with_version = dest_image.with_version(version)
         core_image = dest_image_with_version.core().with_name(args.core_image_suffix).get()
+        keep_running = args.keep_running and version == versions[-1]
         upgrade_to_version(
             migrations_dir=args.migrations_dir,
             version=version,
@@ -43,11 +46,16 @@ def run(args):
             source_image=source_image.get(),
             dest_image=dest_image_with_version.get(),
             port=args.port,
+            keep_running=keep_running,
         )
         source_image = source_image.with_version(version)
 
+    utils.logger.info("Done")
 
-def upgrade_to_version(*, version, source_image, dest_image, core_image, port, migrations_dir):
+
+def upgrade_to_version(
+    *, version, source_image, dest_image, core_image, port, migrations_dir, keep_running
+):
     utils.logger.info("Upgrade: {} -> {}".format(source_image, dest_image))
     version_path = os.path.join(migrations_dir, version) if migrations_dir else None
 
@@ -92,4 +100,5 @@ def upgrade_to_version(*, version, source_image, dest_image, core_image, port, m
     utils.build_image_from_source(data_docker_dir, dest_image, dest_image)
 
     # Stop
-    utils.run_docker_compose(["stop"], dest_image)
+    if not keep_running:
+        utils.run_docker_compose(["stop"], dest_image)

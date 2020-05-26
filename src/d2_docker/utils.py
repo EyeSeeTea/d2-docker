@@ -3,7 +3,6 @@ import subprocess
 import logging
 import re
 import os
-import requests
 import shutil
 import socket
 import tempfile
@@ -424,17 +423,16 @@ def wait_for_server(port):
     while True:
         try:
             logger.debug("wait_for_server:url={}".format(url))
-            res = requests.get(url)
-            status = res.status_code
-            logger.debug("wait_for_server:status={}".format(status))
-            if status == 502 or status == 504:
-                pass
-            elif status == 200:
-                return True
-            else:
+            urllib.request.urlopen(url)
+            logger.debug("wait_for_server:ok")
+            return True
+        except urllib.request.URLError as e:
+            logger.debug("wait_for_server:url-error: {}".format(e.reason))
+        except urllib.request.HTTPError as e:
+            if e.code == 404:
                 return False
-        except requests.exceptions.ConnectionError:
-            logger.debug("wait_for_server:connection-error")
+            else:
+                logger.debug("wait_for_server:http-error: {}".format(e.code))
         time.sleep(5)
 
 

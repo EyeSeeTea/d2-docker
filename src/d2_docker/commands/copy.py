@@ -16,7 +16,7 @@ def setup(parser):
 
 def run(args):
     source = args.source
-    docker_dir = utils.get_docker_directory(args, "data")
+    docker_dir = utils.get_docker_directory("data", args)
     copy(source, args.destinations, docker_dir)
 
 

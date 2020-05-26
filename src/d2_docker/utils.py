@@ -403,6 +403,15 @@ def noop(value):
 
 
 @contextlib.contextmanager
+def stop_docker_on_interrupt(data_image, core_image):
+    try:
+        yield
+    except KeyboardInterrupt:
+        logger.info("Control+C pressed, stopping containers")
+        run_docker_compose(["stop"], data_image, core_image=core_image)
+
+
+@contextlib.contextmanager
 def temporal_build_directory(source_dir):
     with tempfile.TemporaryDirectory() as build_dir:
         logger.debug("Temporal directory: {}".format(build_dir))

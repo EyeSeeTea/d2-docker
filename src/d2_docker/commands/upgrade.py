@@ -15,7 +15,7 @@ def setup(parser):
     parser.add_argument("--from", dest="from_", metavar="IMAGE", required=True, help="Source image")
     parser.add_argument("--to", metavar="IMAGE", required=True, help="Destination image data name")
 
-    parser.add_argument("-k", "--keep-running", action="store_true", help="Keep last image running")
+    parser.add_argument("-r", "--keep-running", action="store_true", help="Keep last image running")
 
     parser.add_argument(
         "--migrations",
@@ -83,21 +83,22 @@ def upgrade_to_version(
 
     utils.run_docker_compose(["down", "--volumes"], dest_image, core_image=core_image)
 
-    utils.run_docker_compose(
-        ["up", "--force-recreate", "-d"],
-        dest_image,
-        port=final_port,
-        core_image=core_image,
-        load_from_data=True,
-        post_sql_dir=version_path,
-        scripts_dir=version_path,
-    )
+    with utils.stop_docker_on_interrupt(dest_image, core_image):
+        utils.run_docker_compose(
+            ["up", "--force-recreate", "-d"],
+            dest_image,
+            port=final_port,
+            core_image=core_image,
+            load_from_data=True,
+            post_sql_dir=version_path,
+            scripts_dir=version_path,
+        )
 
-    if not utils.wait_for_server(final_port):
-        raise utils.D2DockerError("Error waiting for DHIS2 instance to be active")
+        if not utils.wait_for_server(final_port):
+            raise utils.D2DockerError("Error waiting for DHIS2 instance to be active")
 
-    # Commit
-    utils.build_image_from_source(data_docker_dir, dest_image, dest_image)
+        # Commit
+        utils.build_image_from_source(data_docker_dir, dest_image, dest_image)
 
     # Stop
     if not keep_running:

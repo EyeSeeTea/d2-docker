@@ -15,7 +15,7 @@ def setup(parser):
     parser.add_argument("--from", dest="from_", metavar="IMAGE", required=True, help="Source image")
     parser.add_argument("--to", metavar="IMAGE", required=True, help="Destination image data name")
 
-    parser.add_argument("-k", "--keep-running", action="store_true", help="Keep last image running")
+    parser.add_argument("--keep-running", action="store_true", help="Keep last image running")
 
     parser.add_argument(
         "--migrations",

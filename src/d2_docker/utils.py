@@ -9,6 +9,7 @@ import tempfile
 import time
 import urllib.request
 from distutils import dir_util
+from pathlib import Path
 
 from .image_name import ImageName
 
@@ -235,7 +236,7 @@ def get_absdir_for_docker_volume(directory):
     if not directory:
         empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
         return empty_directory
-    elif not os.path.isdir(directory):
+    elif not Path(directory).is_dir():
         raise D2DockerError("Should be a directory: {}".format(directory))
     else:
         return os.path.abspath(directory)
@@ -264,7 +265,7 @@ def get_docker_directory(type, args=None):
     basedir = args and args.dhis2_docker_images_directory or script_dir
     docker_dir = os.path.join(basedir, subdir)
 
-    if not os.path.isdir(docker_dir):
+    if not Path(docker_dir).is_dir():
         raise D2DockerError("Docker directory not found: {}".format(docker_dir))
     else:
         logger.debug("Docker directory: {}".format(docker_dir))

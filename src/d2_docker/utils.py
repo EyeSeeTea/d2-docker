@@ -235,7 +235,7 @@ def get_absdir_for_docker_volume(directory):
     if not directory:
         empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
         return empty_directory
-    elif not os.path.isdir(directory):
+    elif not os.path.isdir(directory.replace("\/", "\\")):
         raise D2DockerError("Should be a directory: {}".format(directory))
     else:
         return os.path.abspath(directory)

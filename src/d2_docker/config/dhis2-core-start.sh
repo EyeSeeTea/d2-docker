@@ -9,11 +9,12 @@ set -e -u -o pipefail
 #   - Run post-tomcat shell scripts
 #
 
-# Global LOAD_FROM_DATA="yes" | "no"
+# Global: LOAD_FROM_DATA="yes" | "no"
+# Global: DEPLOY_PATH=string
 
 export PGPASSWORD="dhis"
 
-dhis2_url="http://localhost:8080"
+dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
 pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
@@ -92,7 +93,7 @@ start_tomcat() {
 
 wait_for_tomcat() {
     debug "Waiting for Tomcat to start: $dhis2_url"
-    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action"; do
+    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "^Location"; do
         sleep 1
     done
 }

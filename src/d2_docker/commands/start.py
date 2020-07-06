@@ -17,6 +17,7 @@ def setup(parser):
     parser.add_argument(
         "-k", "--keep-containers", action="store_true", help="Keep existing containers"
     )
+    parser.add_argument("--tomcat-server-xml", metavar="FILE", help="Use custom Tomcat server.xml")
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument(
         "--run-scripts",
@@ -82,6 +83,7 @@ def start(args, image_name):
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
+            tomcat_server=args.tomcat_server_xml
         )
 
     if args.detach:

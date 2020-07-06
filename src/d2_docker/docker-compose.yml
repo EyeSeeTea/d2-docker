@@ -8,6 +8,7 @@ services:
             - home:/DHIS2_home
             - ./config:/config
             - data:/data
+            - "${TOMCAT_SERVER}:/config/override/tomcat/server.xml"
             - "${SCRIPTS_DIR}:/data/scripts"
             - "${POST_SQL_DIR}:/data/db/post"
         environment:

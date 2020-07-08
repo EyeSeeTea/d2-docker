@@ -15,6 +15,7 @@ services:
             JAVA_OPTS: "-Xmx7500m -Xms4000m"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
+            DHIS2_AUTH: "${DHIS2_AUTH}"
         entrypoint: sh /config/dhis2-core-entrypoint.sh
         command: sh /config/dhis2-core-start.sh
         depends_on:

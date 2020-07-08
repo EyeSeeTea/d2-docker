@@ -202,6 +202,7 @@ def run_docker_compose(
     post_sql_dir=None,
     scripts_dir=None,
     deploy_path="",
+    dhis2_auth=None,
     **kwargs,
 ):
     """
@@ -226,6 +227,7 @@ def run_docker_compose(
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path),
+        ("DHIS2_AUTH", dhis2_auth),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
 

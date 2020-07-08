@@ -11,6 +11,7 @@ def setup(parser):
         "image_or_file", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
     )
     utils.add_core_image_arg(parser)
+    parser.add_argument("--auth", metavar="USER:PASSWORD", help="Dhis2 instance authentication")
     parser.add_argument(
         "-d", "--detach", action="store_true", help="Run containers on the background"
     )
@@ -85,7 +86,8 @@ def start(args, image_name):
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
-            deploy_path=deploy_path
+            deploy_path=deploy_path,
+            dhis2_auth=args.auth
         )
 
     if args.detach:

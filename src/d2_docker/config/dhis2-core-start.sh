@@ -56,7 +56,7 @@ run_sql_files() {
 run_pre_scripts() {
     find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read -r path; do
         debug "Run pre-tomcat script: $path"
-        (cd "$(dirname "$path")" && bash -x "$path" "$dhis2_url_with_auth")
+        (cd "$(dirname "$path")" && bash -x "$path")
     done
 }
 

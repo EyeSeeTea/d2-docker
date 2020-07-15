@@ -152,7 +152,7 @@ def get_image_status(image_name, first_port=8080):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        indexed_service = container_name.split("_")[-2:]
+        indexed_service = container_name.split("_", 2)[-2:]
         if image_name_part == final_image_name and indexed_service:
             service = indexed_service[0]
             containers[service] = container_name
@@ -201,6 +201,8 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     scripts_dir=None,
+    deploy_path="",
+    dhis2_auth=None,
     tomcat_server=None,
     **kwargs,
 ):
@@ -225,6 +227,8 @@ def run_docker_compose(
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
+        ("DEPLOY_PATH", deploy_path),
+        ("DHIS2_AUTH", dhis2_auth),
         ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)

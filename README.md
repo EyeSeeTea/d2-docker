@@ -76,10 +76,12 @@ Some notes:
 -   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, use `--core-image= eyeseetea/dhis2-core:2.30-custom`.
 -   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
 -   Use option `--pull` to overwrite the local images with the images in the hub.
--   Use option `--detach` to run containers in the background.
--   Use option `-k`/`--keep-containers` to re-use existing containers, so data from the previous run will be kept.
+-   Use option `--detach` to run the container in the background.
+-   Use option `--deploy-path` to run the container with a deploy path namespace (i.e: `--deploy-path=dhis2` serves `http://localhost:8080/dhis2`)
+-   Use option `-k`/`--keep-containers` to re-use existing docker containers, so data from the previous run will be kept.
+-   Use option `-auth` to pass the instance authentication (`USER:PASS`). It will be used to call post-tomcat scripts.
 -   Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
--   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080`, regardless of the public port that the instance is exposed to. Of course, this endpoint is only available for post-scripts.
+-   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 
 #### Custom Tomcat server.xml
 

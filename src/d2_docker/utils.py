@@ -201,7 +201,7 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     scripts_dir=None,
-    deploy_path="",
+    deploy_path=None,
     **kwargs,
 ):
     """
@@ -225,9 +225,9 @@ def run_docker_compose(
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
-        ("DEPLOY_PATH", deploy_path),
+        ("DEPLOY_PATH", deploy_path or ""),
     ]
-    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
+    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)

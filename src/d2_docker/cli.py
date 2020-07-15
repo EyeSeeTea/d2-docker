@@ -18,6 +18,7 @@ from d2_docker.commands import (
     run_sql,
     create,
     upgrade,
+    version
 )
 
 COMMAND_MODULES = [
@@ -35,6 +36,7 @@ COMMAND_MODULES = [
     run_sql,
     create,
     upgrade,
+    version,
 ]
 
 def get_parser():
@@ -47,7 +49,7 @@ def get_parser():
     parser.add_argument(
         "--log-level",
         metavar="NOTSET | DEBUG | INFO | WARNING | ERROR | CRITICAL",
-        default="DEBUG",
+        default="INFO",
         help="Run command with the given log level",
     )
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")

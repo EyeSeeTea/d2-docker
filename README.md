@@ -83,6 +83,36 @@ Some notes:
 -   Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
 -   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 
+#### Custom Tomcat server.xml
+
+Copy the default [server.xml](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/server.xml) and use it as a template to create your own configuration. Then pass it to the `start` command:
+
+```
+$ d2-docker start --tomcat-server-xml=server-xml.xml ...
+```
+
+Note that you should not change the catalina connector port (8080, by default). A typical configuration to use _https_ would look like this:
+
+```
+<Server port="8005" shutdown="SHUTDOWN">
+    ...
+    <Service name="Catalina">
+        <Connector
+            port="8080"
+            protocol="HTTP/1.1"
+            proxyPort="443"
+            scheme="https"
+            secure="true"
+            proxyName="some-host.org"
+            connectionTimeout="20000"
+            URIEncoding="UTF-8"
+            relaxedQueryChars='\ { } | [ ]'
+            redirectPort="8443"
+        />
+    ...
+/>
+```
+
 ### Show logs for running containers
 
 Check logs of a running container:

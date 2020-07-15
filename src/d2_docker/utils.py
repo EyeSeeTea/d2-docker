@@ -201,7 +201,7 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     scripts_dir=None,
-    deploy_path="",
+    deploy_path=None,
     dhis2_auth=None,
     tomcat_server=None,
     **kwargs,
@@ -227,11 +227,11 @@ def run_docker_compose(
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
-        ("DEPLOY_PATH", deploy_path),
-        ("DHIS2_AUTH", dhis2_auth),
+        ("DEPLOY_PATH", deploy_path or ""),
+        ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
     ]
-    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
+    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)

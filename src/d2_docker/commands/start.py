@@ -93,7 +93,7 @@ def start(args, image_name):
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,
-            dhis2_auth=args.auth
+            dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml
         )
 

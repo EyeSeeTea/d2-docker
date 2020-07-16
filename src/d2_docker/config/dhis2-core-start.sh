@@ -9,11 +9,14 @@ set -e -u -o pipefail
 #   - Run post-tomcat shell scripts
 #
 
-# Global LOAD_FROM_DATA="yes" | "no"
+# Global: LOAD_FROM_DATA="yes" | "no"
+# Global: DEPLOY_PATH=string
+# Global: DHIS2_AUTH=string
 
 export PGPASSWORD="dhis"
 
-dhis2_url="http://localhost:8080"
+dhis2_url="http://localhost:8080/$DEPLOY_PATH"
+dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
 psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
 pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
@@ -23,6 +26,7 @@ root_db_path="/data/db"
 post_db_path="/data/db/post"
 source_apps_path="/data/apps"
 dest_apps_path="/DHIS2_home/files/"
+tomcat_conf_dir="/usr/local/tomcat/conf"
 
 debug() {
     echo "[dhis2-core-start] $*" >&2
@@ -53,14 +57,14 @@ run_sql_files() {
 run_pre_scripts() {
     find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read -r path; do
         debug "Run pre-tomcat script: $path"
-        (cd "$(dirname "$path")" && bash "$path")
+        (cd "$(dirname "$path")" && bash -x "$path")
     done
 }
 
 run_post_scripts() {
     find "$scripts_dir" -type f -name '*.sh' -name 'post*' | sort | while read -r path; do
         debug "Run post-tomcat script: $path"
-        (cd "$(dirname "$path")" && bash "$path")
+        (cd "$(dirname "$path")" && bash -x "$path" "$dhis2_url_with_auth")
     done
 }
 
@@ -73,9 +77,11 @@ copy_apps() {
 }
 
 setup_tomcat() {
+    debug "Setup tomcat"
     cp -v "$configdir/DHIS2_home/dhis.conf" /DHIS2_home/dhis.conf
     cp -v $homedir/* /DHIS2_home/ || true
-    cp -v "$configdir/server.xml" /usr/local/tomcat/conf/server.xml
+    cp -v "$configdir/server.xml" "$tomcat_conf_dir/server.xml"
+    find "$configdir/override/tomcat/" -maxdepth 1 -type f -size +0 -exec cp -v {} "$tomcat_conf_dir/" \;
 }
 
 wait_for_postgres() {
@@ -92,7 +98,7 @@ start_tomcat() {
 
 wait_for_tomcat() {
     debug "Waiting for Tomcat to start: $dhis2_url"
-    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "Location: .*redirect.action"; do
+    while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "^Location"; do
         sleep 1
     done
 }

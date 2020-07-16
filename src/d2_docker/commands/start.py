@@ -1,22 +1,29 @@
 import os
 import re
 
+import d2_docker
 from d2_docker import utils
 
 DESCRIPTION = "Start a container from an existing dhis2-data Docker image or from an exported file"
 
 
 def setup(parser):
+    d2_docker_path = os.path.abspath(d2_docker.__path__[0])
+    server_xml_path = os.path.join(d2_docker_path, "config", "server.xml")
+    server_xml_help = "Use a custom Tomcat server.xml file. Template: {0}".format(server_xml_path)
+
     parser.add_argument(
         "image_or_file", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
     )
     utils.add_core_image_arg(parser)
+    parser.add_argument("--auth", metavar="USER:PASSWORD", help="Dhis2 instance authentication")
     parser.add_argument(
         "-d", "--detach", action="store_true", help="Run containers on the background"
     )
     parser.add_argument(
         "-k", "--keep-containers", action="store_true", help="Keep existing containers"
     )
+    parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument(
         "--run-scripts",
@@ -25,6 +32,7 @@ def setup(parser):
     )
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
+    parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
 
 
 def run(args):
@@ -73,6 +81,8 @@ def start(args, image_name):
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
     )
 
+    deploy_path = ("/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else "")
+
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
             ["up", *up_args],
@@ -82,6 +92,9 @@ def start(args, image_name):
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
             scripts_dir=args.run_scripts,
+            deploy_path=deploy_path,
+            dhis2_auth=args.auth,
+            tomcat_server=args.tomcat_server_xml
         )
 
     if args.detach:

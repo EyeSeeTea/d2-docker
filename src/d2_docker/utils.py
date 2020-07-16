@@ -152,7 +152,7 @@ def get_image_status(image_name, first_port=8080):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        indexed_service = container_name.split("_")[-2:]
+        indexed_service = container_name.split("_", 2)[-2:]
         if image_name_part == final_image_name and indexed_service:
             service = indexed_service[0]
             containers[service] = container_name
@@ -201,6 +201,9 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     scripts_dir=None,
+    deploy_path=None,
+    dhis2_auth=None,
+    tomcat_server=None,
     **kwargs,
 ):
     """
@@ -224,15 +227,18 @@ def run_docker_compose(
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
+        ("DEPLOY_PATH", deploy_path or ""),
+        ("DHIS2_AUTH", dhis2_auth or ""),
+        ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
     ]
-    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v)
+    env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
 
 
 def get_absdir_for_docker_volume(directory):
-    """Return absolute path for given directory, with default fallback."""
+    """Return absolute path for given directory, with fallback to empty directory."""
     if not directory:
         empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
         return empty_directory
@@ -240,6 +246,14 @@ def get_absdir_for_docker_volume(directory):
         raise D2DockerError("Should be a directory: {}".format(directory))
     else:
         return os.path.abspath(directory)
+
+
+def get_abs_file_for_docker_volume(file_path):
+    """Return absolute path for given file, with fallback to empty file."""
+    if not file_path:
+        return os.path.join(os.path.dirname(__file__), ".empty", "placeholder")
+    else:
+        return os.path.abspath(file_path)
 
 
 def get_item_type(name):

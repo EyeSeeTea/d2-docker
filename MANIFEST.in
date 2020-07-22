@@ -4,3 +4,4 @@ include requirements.txt
 include src/d2_docker/docker-compose.yml
 recursive-include src/d2_docker/config *
 recursive-include src/d2_docker/images *
+recursive-include src/d2_docker/.empty *

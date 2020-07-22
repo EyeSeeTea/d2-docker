@@ -17,7 +17,7 @@ def run(args):
 
 
 def get_images_info(running_containers):
-    """Get a list of images info: "{NAME} STOPPED" or "{NAME} RUNNING[port={N}]"."""
+    """Get a list of images info: "{NAME} STOPPED" or "{NAME} RUNNING[port={N},deploy_path={PATH}]"."""
     cmd_image = ["docker", "image", "ls", "--format={{.Repository}} {{.Tag}}"]
     result_image = utils.run(cmd_image, capture_output=True)
     lines_parts = [line.split() for line in result_image.stdout.decode("utf-8").splitlines()]
@@ -33,9 +33,22 @@ def get_images_info(running_containers):
         image_name = repo + ":" + tag
 
         if utils.DHIS2_DATA_IMAGE in repo:
-            port = running_containers.get(image_name, None)
-            state = "RUNNING[port={}]".format(port) if port else "STOPPED"
-            value = {"port": port, "text": "{} {}".format(image_name, state)}
+            info = running_containers.get(image_name, None) or {}
+            port = info.get("port", None)
+
+            if port:
+                deploy_path = info.get("deploy_path", None)
+                extra_info = ",".join(filter(bool, [
+                    "port={}".format(port),
+                    "deploy_path={}".format(deploy_path) if deploy_path else None,
+                ]))
+                state = "RUNNING[{}]".format(extra_info)
+            else:
+                state = "STOPPED"
+            value = {
+                "port": port,
+                "text": "{} {}".format(image_name, state),
+            }
             data_image_names.append(value)
 
     return data_image_names
@@ -43,15 +56,19 @@ def get_images_info(running_containers):
 
 def get_running_containers():
     """Return dictionary of {DATA_IMAGE_NAME: PORT} of active d2-docker instances."""
-    lines = utils.run_docker_ps(['--format={{.Label "com.eyeseetea.image-name"}} {{.Ports}}'])
-    lines_parts_ps = [line.split(None, 1) for line in lines]
+    lines = utils.run_docker_ps(['--format={{.Label "com.eyeseetea.image-name"}} {{.Ports}} {{.Label "com.eyeseetea.deploy-path"}}'])
+    lines_parts_ps = [line.split(None, 2) for line in lines]
 
     running_containers = {}
     for entry in lines_parts_ps:
-        if len(entry) != 2:
+        if len(entry) == 2:
+            image_name, ports = entry
+            deploy_path = ""
+        elif len(entry) == 3:
+            image_name, ports, deploy_path = entry
+        else:
             continue
-        image_name, ports = entry
         port = utils.get_port_from_docker_ports(ports)
         if port:
-            running_containers[image_name] = port
+            running_containers[image_name] = dict(port=port, deploy_path=deploy_path)
     return running_containers

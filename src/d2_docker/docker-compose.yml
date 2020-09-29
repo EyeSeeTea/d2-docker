@@ -13,10 +13,12 @@ services:
             - "${POST_SQL_DIR}:/data/db/post"
         environment:
             CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH}"
-            JAVA_OPTS: "-Xmx7500m -Xms4000m"
+            JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"
+        ports:
+            - "${CORE_DEBUG_PORT:-7000}:${CORE_DEBUG_PORT:-7000}"
         entrypoint: sh /config/dhis2-core-entrypoint.sh
         command: sh /config/dhis2-core-start.sh
         restart: unless-stopped
@@ -32,6 +34,8 @@ services:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
+        ports:
+            - "${DB_DEBUG_PORT:-5432}:5432"
         command: "postgres -c max_locks_per_transaction=100"
         restart: unless-stopped
     gateway:

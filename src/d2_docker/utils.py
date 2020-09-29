@@ -204,6 +204,8 @@ def run_docker_compose(
     deploy_path=None,
     dhis2_auth=None,
     tomcat_server=None,
+    db_debug_port=None,
+    core_debug_port=None,
     **kwargs,
 ):
     """
@@ -221,9 +223,12 @@ def run_docker_compose(
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
-        ("DHIS2_CORE_PORT", str(port)) if port else None,
+        ("DHIS2_CORE_PORT", str(port) if port else None),
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
+        ("DB_DEBUG_PORT", str(db_debug_port) if db_debug_port else None),
+        ("CORE_DEBUG_PORT", str(core_debug_port) if core_debug_port else None),
+        ("JAVA_OPTS", "-Xdebug -Xrunjdwp:transport=dt_socket,address=%s,server=y,suspend=n" % str(core_debug_port) if core_debug_port else ""),
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),

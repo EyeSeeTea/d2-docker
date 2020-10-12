@@ -19,6 +19,7 @@ services:
             DHIS2_AUTH: "${DHIS2_AUTH}"
         entrypoint: sh /config/dhis2-core-entrypoint.sh
         command: sh /config/dhis2-core-start.sh
+        restart: unless-stopped
         depends_on:
             - "db"
     db:
@@ -32,6 +33,7 @@ services:
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
         command: "postgres -c max_locks_per_transaction=100"
+        restart: unless-stopped
     gateway:
         image: "jwilder/nginx-proxy:alpine"
         labels:
@@ -43,6 +45,7 @@ services:
             - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./config/50x.html:/usr/share/nginx/html/50x.html:ro
             - /var/run/docker.sock:/tmp/docker.sock:ro
+        restart: unless-stopped
         depends_on:
             - "core"
     data:

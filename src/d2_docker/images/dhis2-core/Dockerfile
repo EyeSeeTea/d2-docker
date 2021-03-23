@@ -1,4 +1,4 @@
-FROM tomcat:8.5.34-jre8-alpine
+FROM tomcat:9.0.20-jre8-alpine
 
 ENV DHIS2_HOME=/DHIS2_home
 

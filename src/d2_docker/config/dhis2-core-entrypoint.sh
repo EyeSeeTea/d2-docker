@@ -15,7 +15,9 @@ PACKAGES="curl postgresql-client"
 
 # Custom
 install_packages() {
-    apk add --no-network /config/apk/*.apk
+    #apk add --no-network /config/apk/*.apk
+    #apk add "$@"
+    echo "install_packages: disabled"
 }
 
 if [ "$(id -u)" = "0" ]; then

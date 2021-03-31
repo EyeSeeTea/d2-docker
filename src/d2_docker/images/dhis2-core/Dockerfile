@@ -12,7 +12,7 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup root tomcat && \
     adduser -S -D -G tomcat tomcat
 
-RUN apk add --update --no-cache bash su-exec
+RUN apk add --update --no-cache bash su-exec curl postgresql-client
 
 COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
 COPY dhis2-home-files /dhis2-home-files

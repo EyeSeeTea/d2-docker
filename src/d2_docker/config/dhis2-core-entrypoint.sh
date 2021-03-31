@@ -15,15 +15,18 @@ PACKAGES="curl postgresql-client"
 
 # Custom
 install_packages() {
-    #apk add --no-network /config/apk/*.apk
-    #apk add "$@"
-    echo "install_packages: disabled"
+    if test "$(apk list -I $PACKAGES | wc -l)" -ne 2; then
+        # Previous core images did not have package pre-installed, install from static files
+        echo "Packages not found, installing"
+        apk add --no-network /config/apk/*.apk
+    else
+        echo "Packages found"
+    fi
 }
 
 if [ "$(id -u)" = "0" ]; then
-    # Custom
-    install_packages $PACKAGES
-    
+    install_packages
+
     if [ -f $WARFILE ]; then
         # Custom: mkdir + add -q to avoid noise in the console
         mkdir -p $TOMCATDIR/webapps/ROOT

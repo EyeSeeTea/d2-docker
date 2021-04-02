@@ -1,4 +1,4 @@
-FROM tomcat:8.5.34-jre8-alpine
+FROM tomcat:9.0.20-jre8-alpine
 
 ENV DHIS2_HOME=/DHIS2_home
 
@@ -12,7 +12,7 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup root tomcat && \
     adduser -S -D -G tomcat tomcat
 
-RUN apk add --update --no-cache bash su-exec
+RUN apk add --update --no-cache bash su-exec curl postgresql-client
 
 COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
 COPY dhis2-home-files /dhis2-home-files

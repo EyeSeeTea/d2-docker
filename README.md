@@ -56,10 +56,10 @@ $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/t
 
 ### Create a base DHIS2 data image
 
-Create a dhis2-data image from a .sql.gz SQL file and the apps directory to include:
+Create a dhis2-data image from a .sql.gz SQL file and the apps and documents directory to include:
 
 ```
-$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps]
+$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document]
 ```
 
 ### Start a DHIS2 instance
@@ -125,7 +125,7 @@ _If only one d2-docker container is active, you can omit the image name._
 
 ### Commit & push an image
 
-This will update the image from the current container (SQL dump and apps):
+This will update the image from the current container (SQL dump, apps and documents):
 
 ```
 $ d2-docker commit
@@ -193,7 +193,7 @@ $ d2-docker rm eyeseetea/dhis2-data:2.30-sierra
 
 ### Copy Docker images to/from local directories
 
-You can use a Docker image or a data directory (db + apps) as source, that will create a new Docker image _eyeseetea/dhis2-data:2.30-sierra2_ and a `sierra-data/` directory:
+You can use a Docker image or a data directory (db + apps + documents) as source, that will create a new Docker image _eyeseetea/dhis2-data:2.30-sierra2_ and a `sierra-data/` directory:
 
 ```
 $ d2-docker copy eyeseetea/dhis2-data:2.30-sierra eyeseetea/dhis2-data:2.30-sierra2 sierra-data
@@ -202,10 +202,10 @@ $ docker image ls | grep 2.30-sierra2
 eyeseetea/dhis2-data      2.30-sierra2         930aced0d915        1 minutes ago      106MB
 
 $ ls sierra-data/
-apps db.sql.gz
+apps document db.sql.gz
 ```
 
-Alternatively, you can use a data directory (db + apps) as source and create Docker images from it:
+Alternatively, you can use a data directory (db + apps + documents) as source and create Docker images from it:
 
 ```
 $ d2-docker copy sierra-data eyeseetea/dhis2-data:2.30-sierra3 eyeseetea/dhis2-data:2.30-sierra4

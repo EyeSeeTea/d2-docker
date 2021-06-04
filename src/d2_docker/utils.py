@@ -63,6 +63,14 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
         raise D2DockerError(msg.format(cmd, exc.returncode, exc.stderr))
 
 
+@contextlib.contextmanager
+def possible_errors():
+    try:
+        yield
+    except D2DockerError as exc:
+        pass
+
+
 def get_free_port(start=8080, end=65535):
     for port in range(start, end):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -320,7 +328,7 @@ def copy_image(docker_dir, source_image, dest_image):
 
 
 def build_image_from_directory(docker_dir, data_dir, dest_image_name):
-    """Build docker image from data (db + apps) directory."""
+    """Build docker image from data (db + apps + documents) directory."""
     with tempfile.TemporaryDirectory() as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
@@ -334,21 +342,28 @@ def build_image_from_directory(docker_dir, data_dir, dest_image_name):
 
 
 def export_data_from_image(source_image, dest_path):
+    logger.info("Export data from image: {} -> {}".format(source_image, dest_path))
     result = run(["docker", "create", source_image], capture_output=True)
     container_id = result.stdout.decode("utf8").splitlines()[0]
     mkdir_p(dest_path)
     try:
         run(["docker", "cp", container_id + ":" + "/data/db", dest_path])
-        run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
+        with possible_errors():
+            run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
+            run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 
 
 def export_data_from_running_containers(image_name, containers, destination):
-    """Export data (db + apps) from a running Docker container to a destination directory."""
+    """Export data (db + apps + documents) from a running Docker container to a destination directory."""
     logger.info("Copy Dhis2 apps")
-    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
     mkdir_p(destination)
+
+    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
+    run(["docker", "cp", apps_source, destination])
+
+    apps_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
     run(["docker", "cp", apps_source, destination])
 
     db_path = os.path.join(destination, "db", "db.sql.gz")

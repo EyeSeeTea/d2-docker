@@ -358,8 +358,8 @@ def export_data_from_running_containers(image_name, containers, destination):
     apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
     run(["docker", "cp", apps_source, destination])
 
-    apps_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
-    run(["docker", "cp", apps_source, destination])
+    documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
+    run(["docker", "cp", documents_source, destination])
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)

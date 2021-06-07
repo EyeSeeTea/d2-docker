@@ -84,6 +84,14 @@ Some notes:
 -   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 -   Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 
+#### Custom DHIS2 dhis.conf
+
+Copy the default [dhis.conf](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/DHIS2_home/dhis.conf) and use it as a template to create your own configuration. Then pass it to the `start` command:
+
+```
+$ d2-docker start --dhis-conf=dhis.conf ...
+```
+
 #### Custom Tomcat server.xml
 
 Copy the default [server.xml](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/server.xml) and use it as a template to create your own configuration. Then pass it to the `start` command:

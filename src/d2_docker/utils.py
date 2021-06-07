@@ -212,6 +212,7 @@ def run_docker_compose(
     scripts_dir=None,
     deploy_path=None,
     dhis_conf=None,
+    java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
     **kwargs,

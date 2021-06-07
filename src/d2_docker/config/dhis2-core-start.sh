@@ -25,7 +25,8 @@ scripts_dir="/data/scripts"
 root_db_path="/data/db"
 post_db_path="/data/db/post"
 source_apps_path="/data/apps"
-dest_apps_path="/DHIS2_home/files/"
+source_documents_path="/data/document"
+files_path="/DHIS2_home/files/"
 tomcat_conf_dir="/usr/local/tomcat/conf"
 
 debug() {
@@ -34,6 +35,8 @@ debug() {
 
 run_sql_files() {
     base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
+    debug "Files in data path"
+    find "$base_db_path" >&2;
 
     find "$base_db_path" -type f \( -name '*.dump' \) |
         sort | while read -r path; do
@@ -69,10 +72,18 @@ run_post_scripts() {
 }
 
 copy_apps() {
-    debug "Copy Dhis2 apps: $source_apps_path -> $dest_apps_path"
-    mkdir -p "$dest_apps_path/apps"
+    debug "Copy Dhis2 apps: $source_apps_path -> $files_path"
+    mkdir -p "$files_path/apps"
     if test -e "$source_apps_path"; then
-        cp -Rv "$source_apps_path" "$dest_apps_path"
+        cp -Rv "$source_apps_path" "$files_path"
+    fi
+}
+
+copy_documents() {
+    debug "Copy Dhis2 documents: $source_documents_path -> $files_path"
+    mkdir -p "$files_path/document"
+    if test -e "$source_documents_path"; then
+        cp -Rv "$source_documents_path" "$files_path"
     fi
 }
 
@@ -107,6 +118,7 @@ run() {
     local host=$1 psql_port=$2
     setup_tomcat
     copy_apps
+    copy_documents
     wait_for_postgres
     run_sql_files || true
     run_pre_scripts || true

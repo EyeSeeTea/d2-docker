@@ -21,6 +21,7 @@ def setup(parser):
     data_parser.add_argument("data_image", metavar="IMAGE", help="Image core name")
     data_parser.add_argument("--sql", help=".sql (plain text), .sql.gz (gzipped plain text format) or .dump database file (binary format)")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
+    data_parser.add_argument("--documents-dir", help="Directory containing Dhis2 documents")
 
 
 def run(args):
@@ -55,6 +56,10 @@ def create_data(args):
             dest_apps_dir = os.path.join(build_dir, "apps")
             utils.logger.debug("Copy apps: {} -> {}".format(args.apps_dir, dest_apps_dir))
             utils.copytree(args.apps_dir, dest_apps_dir)
+        if args.documents_dir:
+            dest_documents_dir = os.path.join(build_dir, "document")
+            utils.logger.debug("Copy documents: {} -> {}".format(args.documents_dir, dest_documents_dir))
+            utils.copytree(args.documents_dir, dest_documents_dir)
         if args.sql:
             utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))
             shutil.copy(args.sql, db_path)

@@ -11,6 +11,7 @@ import urllib.request
 from distutils import dir_util
 from pathlib import Path
 
+import d2_docker
 from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
@@ -210,6 +211,7 @@ def run_docker_compose(
     post_sql_dir=None,
     scripts_dir=None,
     deploy_path=None,
+    dhis_conf=None,
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
@@ -244,12 +246,17 @@ def run_docker_compose(
         ("DEPLOY_PATH", deploy_path or ""),
         ("JAVA_OPTS", java_opts or ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
-        ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
+        ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
+        ("DHIS_CONF", get_config_path("DHIS2_home/dhis.conf", dhis_conf)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
+
+
+def get_config_path(default_filename, path):
+    return os.path.abspath(path) if path else get_config_file(default_filename)
 
 
 def get_absdir_for_docker_volume(directory):
@@ -263,7 +270,7 @@ def get_absdir_for_docker_volume(directory):
         return os.path.abspath(directory)
 
 
-def get_abs_file_for_docker_volume(file_path):
+def get_absfile_for_docker_volume(file_path):
     """Return absolute path for given file, with fallback to empty file."""
     if not file_path:
         return os.path.join(os.path.dirname(__file__), ".empty", "placeholder")
@@ -474,7 +481,12 @@ def wait_for_server(port):
 
 
 def create_core(
-    *, docker_dir, image, version=None, war=None, dhis2_home_paths=None,
+    *,
+    docker_dir,
+    image,
+    version=None,
+    war=None,
+    dhis2_home_paths=None,
 ):
     logger.info("Create core image: {}".format(image))
 
@@ -498,6 +510,11 @@ def create_core(
             shutil.copy(source_home_file, dhis2_home_path)
 
         run(["docker", "build", build_dir, "--tag", image])
+
+
+def get_config_file(filename):
+    d2_docker_path = os.path.abspath(d2_docker.__path__[0])
+    return os.path.join(d2_docker_path, "config", filename)
 
 
 logger = get_logger()

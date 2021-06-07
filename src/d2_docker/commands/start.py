@@ -9,8 +9,10 @@ DESCRIPTION = "Start a container from an existing dhis2-data Docker image or fro
 
 def setup(parser):
     d2_docker_path = os.path.abspath(d2_docker.__path__[0])
-    server_xml_path = os.path.join(d2_docker_path, "config", "server.xml")
+    server_xml_path = utils.get_config_file("server.xml")
     server_xml_help = "Use a custom Tomcat server.xml file. Template: {0}".format(server_xml_path)
+    dhis_conf_path = utils.get_config_file("DHIS2_home/dhis.conf")
+    dhis_conf_help = "Use a custom dhis.conf file. Template: {0}".format(dhis_conf_path)
 
     parser.add_argument(
         "image_or_file", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
@@ -24,6 +26,7 @@ def setup(parser):
         "-k", "--keep-containers", action="store_true", help="Keep existing containers"
     )
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
+    parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument(
         "--run-scripts",
@@ -99,7 +102,8 @@ def start(args, image_name):
             dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml,
             db_debug_port= args.db_debug_port,
-            core_debug_port=args.core_debug_port
+            core_debug_port=args.core_debug_port,
+            dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
         )
 

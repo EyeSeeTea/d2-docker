@@ -452,7 +452,12 @@ def wait_for_server(port):
 
 
 def create_core(
-    *, docker_dir, image, version=None, war=None, dhis2_home_paths=None,
+    *,
+    docker_dir,
+    image,
+    version=None,
+    war=None,
+    dhis2_home_paths=None,
 ):
     logger.info("Create core image: {}".format(image))
 

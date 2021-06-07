@@ -81,7 +81,7 @@ def start(args, image_name):
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
     )
 
-    deploy_path = ("/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else "")
+    deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(

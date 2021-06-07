@@ -210,6 +210,7 @@ def run_docker_compose(
     post_sql_dir=None,
     scripts_dir=None,
     deploy_path=None,
+    java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
     **kwargs,
@@ -236,6 +237,7 @@ def run_docker_compose(
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path or ""),
+        ("JAVA_OPTS", java_opts or ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
     ]

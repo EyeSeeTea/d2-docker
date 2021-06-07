@@ -33,6 +33,7 @@ def setup(parser):
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
+    parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
 
 
 def run(args):
@@ -81,7 +82,7 @@ def start(args, image_name):
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
     )
 
-    deploy_path = ("/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else "")
+    deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
@@ -94,7 +95,8 @@ def start(args, image_name):
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,
             dhis2_auth=args.auth,
-            tomcat_server=args.tomcat_server_xml
+            tomcat_server=args.tomcat_server_xml,
+            java_opts=args.java_opts,
         )
 
     if args.detach:

@@ -40,3 +40,5 @@ def copy(source, destinations, docker_dir):
             utils.copytree(source, dest)
         else:
             raise utils.D2DockerError("Not implemented")
+
+        logger.info("Done")

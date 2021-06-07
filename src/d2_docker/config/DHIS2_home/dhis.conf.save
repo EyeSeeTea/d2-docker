@@ -1,0 +1,24 @@
+connection.dialect = org.hibernate.dialect.PostgreSQLDialect
+connection.driver_class = org.postgresql.Driver
+connection.url = jdbc:postgresql://db/dhis2
+connection.username = dhis
+connection.password = dhis
+# Database schema behavior, can be validate, update, create, create-drop
+connection.schema = update
+
+encryption.password = xxxx
+metadata.audit.persist = on
+
+# ---------------------------------------------------------------------- { #- } 
+# Azure OIDC Configuration { #azure-oidc-configuration } 
+# ---------------------------------------------------------------------- { #- } 
+# Generic config parameters { #generic-config-parameters } 
+oidc.oauth2.login.enabled = on
+# First provider (0) { #first-provider-0 } 
+oidc.provider.azure.0.tenant = f610c0b7-bd24-4b39-810b-3dc280afb590
+oidc.provider.azure.0.client_id =3bd5ee0c-9c92-4898-bcb4-a6c7d658f53f
+oidc.provider.azure.0.client_secret =**********************************
+# Optional, defaults to 'email' { #optional-defaults-to-email } 
+oidc.provider.azure.0.mapping_claim = email
+oidc.provider.azure.0.redirect_url = https://edr.emro.who.int/oauth2/code/f610c0b7-bd24-4b39-810b-3dc280afb590
+#oidc.provider.azure.0.redirect_baseurl = https://edr.emro.who.int/oauth2/code/f610c0b7-bd24-4b39-810b-3dc280afb590

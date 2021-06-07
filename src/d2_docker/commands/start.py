@@ -35,6 +35,7 @@ def setup(parser):
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--db-debug-port", type=int, metavar="N", help="Expose database psql connection on a given port")
     parser.add_argument("--core-debug-port", type=int, metavar="N", help="Expose core JVM debugger on a given port")
+    parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
 
 
 def run(args):
@@ -83,7 +84,7 @@ def start(args, image_name):
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
     )
 
-    deploy_path = ("/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else "")
+    deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
@@ -99,6 +100,7 @@ def start(args, image_name):
             tomcat_server=args.tomcat_server_xml,
             db_debug_port= args.db_debug_port,
             core_debug_port=args.core_debug_port
+            java_opts=args.java_opts,
         )
 
     if args.detach:

@@ -56,10 +56,10 @@ $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/t
 
 ### Create a base DHIS2 data image
 
-Create a dhis2-data image from a .sql.gz SQL file and the apps directory to include:
+Create a dhis2-data image from a .sql.gz SQL file and the apps and documents directory to include:
 
 ```
-$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps]
+$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document]
 ```
 
 ### Start a DHIS2 instance
@@ -82,6 +82,15 @@ Some notes:
 -   Use option `-auth` to pass the instance authentication (`USER:PASS`). It will be used to call post-tomcat scripts.
 -   Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
 -   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
+-   Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
+
+#### Custom DHIS2 dhis.conf
+
+Copy the default [dhis.conf](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/DHIS2_home/dhis.conf) and use it as a template to create your own configuration. Then pass it to the `start` command:
+
+```
+$ d2-docker start --dhis-conf=dhis.conf ...
+```
 
 #### Custom Tomcat server.xml
 
@@ -125,7 +134,7 @@ _If only one d2-docker container is active, you can omit the image name._
 
 ### Commit & push an image
 
-This will update the image from the current container (SQL dump and apps):
+This will update the image from the current container (SQL dump, apps and documents):
 
 ```
 $ d2-docker commit
@@ -193,7 +202,7 @@ $ d2-docker rm eyeseetea/dhis2-data:2.30-sierra
 
 ### Copy Docker images to/from local directories
 
-You can use a Docker image or a data directory (db + apps) as source, that will create a new Docker image _eyeseetea/dhis2-data:2.30-sierra2_ and a `sierra-data/` directory:
+You can use a Docker image or a data directory (db + apps + documents) as source, that will create a new Docker image _eyeseetea/dhis2-data:2.30-sierra2_ and a `sierra-data/` directory:
 
 ```
 $ d2-docker copy eyeseetea/dhis2-data:2.30-sierra eyeseetea/dhis2-data:2.30-sierra2 sierra-data
@@ -202,10 +211,10 @@ $ docker image ls | grep 2.30-sierra2
 eyeseetea/dhis2-data      2.30-sierra2         930aced0d915        1 minutes ago      106MB
 
 $ ls sierra-data/
-apps db.sql.gz
+apps document db.sql.gz
 ```
 
-Alternatively, you can use a data directory (db + apps) as source and create Docker images from it:
+Alternatively, you can use a data directory (db + apps + documents) as source and create Docker images from it:
 
 ```
 $ d2-docker copy sierra-data eyeseetea/dhis2-data:2.30-sierra3 eyeseetea/dhis2-data:2.30-sierra4

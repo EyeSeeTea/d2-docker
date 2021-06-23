@@ -11,6 +11,7 @@ import urllib.request
 from distutils import dir_util
 from pathlib import Path
 
+import d2_docker
 from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
@@ -61,6 +62,14 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
     except subprocess.CalledProcessError as exc:
         msg = "Command {} failed with code {}: {}"
         raise D2DockerError(msg.format(cmd, exc.returncode, exc.stderr))
+
+
+@contextlib.contextmanager
+def possible_errors():
+    try:
+        yield
+    except D2DockerError as exc:
+        pass
 
 
 def get_free_port(start=8080, end=65535):
@@ -202,6 +211,8 @@ def run_docker_compose(
     post_sql_dir=None,
     scripts_dir=None,
     deploy_path=None,
+    dhis_conf=None,
+    java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
     **kwargs,
@@ -228,13 +239,19 @@ def run_docker_compose(
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path or ""),
+        ("JAVA_OPTS", java_opts or ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
-        ("TOMCAT_SERVER", get_abs_file_for_docker_volume(tomcat_server)),
+        ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
+        ("DHIS_CONF", get_config_path("DHIS2_home/dhis.conf", dhis_conf)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
     return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
+
+
+def get_config_path(default_filename, path):
+    return os.path.abspath(path) if path else get_config_file(default_filename)
 
 
 def get_absdir_for_docker_volume(directory):
@@ -248,7 +265,7 @@ def get_absdir_for_docker_volume(directory):
         return os.path.abspath(directory)
 
 
-def get_abs_file_for_docker_volume(file_path):
+def get_absfile_for_docker_volume(file_path):
     """Return absolute path for given file, with fallback to empty file."""
     if not file_path:
         return os.path.join(os.path.dirname(__file__), ".empty", "placeholder")
@@ -315,7 +332,7 @@ def copy_image(docker_dir, source_image, dest_image):
 
 
 def build_image_from_directory(docker_dir, data_dir, dest_image_name):
-    """Build docker image from data (db + apps) directory."""
+    """Build docker image from data (db + apps + documents) directory."""
     with tempfile.TemporaryDirectory() as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
@@ -329,22 +346,29 @@ def build_image_from_directory(docker_dir, data_dir, dest_image_name):
 
 
 def export_data_from_image(source_image, dest_path):
+    logger.info("Export data from image: {} -> {}".format(source_image, dest_path))
     result = run(["docker", "create", source_image], capture_output=True)
     container_id = result.stdout.decode("utf8").splitlines()[0]
     mkdir_p(dest_path)
     try:
         run(["docker", "cp", container_id + ":" + "/data/db", dest_path])
-        run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
+        with possible_errors():
+            run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
+            run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 
 
 def export_data_from_running_containers(image_name, containers, destination):
-    """Export data (db + apps) from a running Docker container to a destination directory."""
+    """Export data (db + apps + documents) from a running Docker container to a destination directory."""
     logger.info("Copy Dhis2 apps")
-    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
     mkdir_p(destination)
+
+    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
     run(["docker", "cp", apps_source, destination])
+
+    documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
+    run(["docker", "cp", documents_source, destination])
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)
@@ -452,7 +476,12 @@ def wait_for_server(port):
 
 
 def create_core(
-    *, docker_dir, image, version=None, war=None, dhis2_home_paths=None,
+    *,
+    docker_dir,
+    image,
+    version=None,
+    war=None,
+    dhis2_home_paths=None,
 ):
     logger.info("Create core image: {}".format(image))
 
@@ -476,6 +505,11 @@ def create_core(
             shutil.copy(source_home_file, dhis2_home_path)
 
         run(["docker", "build", build_dir, "--tag", image])
+
+
+def get_config_file(filename):
+    d2_docker_path = os.path.abspath(d2_docker.__path__[0])
+    return os.path.join(d2_docker_path, "config", filename)
 
 
 logger = get_logger()

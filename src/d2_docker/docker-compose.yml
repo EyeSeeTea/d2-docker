@@ -6,6 +6,7 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - home:/DHIS2_home
+            - ${DHIS_CONF}:/config/DHIS2_home/dhis.conf
             - ./config:/config
             - data:/data
             - "${TOMCAT_SERVER}:/config/override/tomcat/server.xml"
@@ -13,7 +14,7 @@ services:
             - "${POST_SQL_DIR}:/data/db/post"
         environment:
             CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH}"
-            JAVA_OPTS: "-Xmx7500m -Xms4000m"
+            JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"

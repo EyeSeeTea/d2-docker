@@ -239,12 +239,11 @@ def run_docker_compose(
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         ("DB_DEBUG_PORT", str(db_debug_port) if db_debug_port else None),
         ("CORE_DEBUG_PORT", str(core_debug_port) if core_debug_port else None),
-        ("JAVA_OPTS", "-Xdebug -Xrunjdwp:transport=dt_socket,address=%s,server=y,suspend=n" % str(core_debug_port) if core_debug_port else ""),
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path or ""),
-        ("JAVA_OPTS", java_opts or ""),
+        ("JAVA_OPTS", java_opts or "-Xdebug -Xrunjdwp:transport=dt_socket,address=%s,server=y,suspend=n" % str(core_debug_port) if core_debug_port else ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_config_path("DHIS2_home/dhis.conf", dhis_conf)),

@@ -89,8 +89,8 @@ copy_documents() {
 
 setup_tomcat() {
     debug "Setup tomcat"
-    cp -v "$configdir/DHIS2_home/dhis.conf" /DHIS2_home/dhis.conf
     cp -v $homedir/* /DHIS2_home/ || true
+    cp -v "$configdir/DHIS2_home/dhis.conf" /DHIS2_home/dhis.conf
     cp -v "$configdir/server.xml" "$tomcat_conf_dir/server.xml"
     find "$configdir/override/tomcat/" -maxdepth 1 -type f -size +0 -exec cp -v {} "$tomcat_conf_dir/" \;
 }

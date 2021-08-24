@@ -459,19 +459,21 @@ def temporal_build_directory(source_dir):
 
 def wait_for_server(port):
     url = "http://localhost:{}".format(port)
+
     while True:
         try:
             logger.debug("wait_for_server:url={}".format(url))
             urllib.request.urlopen(url)
             logger.debug("wait_for_server:ok")
             return True
-        except urllib.request.URLError as e:
-            logger.debug("wait_for_server:url-error: {}".format(e.reason))
         except urllib.request.HTTPError as e:
             if e.code == 404:
                 return False
             else:
                 logger.debug("wait_for_server:http-error: {}".format(e.code))
+        except urllib.request.URLError as e:
+            logger.debug("wait_for_server:url-error: {}".format(e.reason))
+
         time.sleep(5)
 
 

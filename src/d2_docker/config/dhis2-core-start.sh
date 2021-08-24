@@ -36,7 +36,7 @@ debug() {
 run_sql_files() {
     base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
     debug "Files in data path"
-    find "$base_db_path" >&2;
+    find "$base_db_path" >&2
 
     find "$base_db_path" -type f \( -name '*.dump' \) |
         sort | while read -r path; do
@@ -87,12 +87,20 @@ copy_documents() {
     fi
 }
 
+copy_non_empty_files() {
+    local from=$1 to=$2
+    find "$from" -maxdepth 1 -type f -size +0 -exec cp -v {} "$to" \;
+}
+
 setup_tomcat() {
     debug "Setup tomcat"
+
+    cp -v $configdir/DHIS2_home/* "/DHIS2_home/"
     cp -v $homedir/* /DHIS2_home/ || true
-    cp -v "$configdir/DHIS2_home/dhis.conf" /DHIS2_home/dhis.conf
+    copy_non_empty_files "$configdir/override/dhis2/" "/DHIS2_home/"
+
     cp -v "$configdir/server.xml" "$tomcat_conf_dir/server.xml"
-    find "$configdir/override/tomcat/" -maxdepth 1 -type f -size +0 -exec cp -v {} "$tomcat_conf_dir/" \;
+    copy_non_empty_files "$configdir/override/tomcat/" "$tomcat_conf_dir/"
 }
 
 wait_for_postgres() {

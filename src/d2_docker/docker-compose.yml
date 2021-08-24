@@ -6,7 +6,7 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - home:/DHIS2_home
-            - ${DHIS_CONF}:/config/DHIS2_home/dhis.conf
+            - ${DHIS_CONF}:/config/override/dhis2/dhis.conf
             - ./config:/config
             - data:/data
             - "${TOMCAT_SERVER}:/config/override/tomcat/server.xml"

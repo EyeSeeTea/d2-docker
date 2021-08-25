@@ -1,14 +1,12 @@
 import os
 import re
 
-import d2_docker
 from d2_docker import utils
 
 DESCRIPTION = "Start a container from an existing dhis2-data Docker image or from an exported file"
 
 
 def setup(parser):
-    d2_docker_path = os.path.abspath(d2_docker.__path__[0])
     server_xml_path = utils.get_config_file("server.xml")
     server_xml_help = "Use a custom Tomcat server.xml file. Template: {0}".format(server_xml_path)
     dhis_conf_path = utils.get_config_file("DHIS2_home/dhis.conf")
@@ -31,7 +29,7 @@ def setup(parser):
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
-        help="Run shell scripts in directory (default: PRE tomcat; if filename starts with 'post': POST tomcat)",
+        help="Run shell scripts in folder (PRE-Tomcat; if filename ~ '^post' -> POST-Tomcat)",
     )
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")

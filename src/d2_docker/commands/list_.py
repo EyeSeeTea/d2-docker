@@ -4,11 +4,11 @@ DESCRIPTION = "List d2-docker data images"
 NAME = "list"
 
 
-def setup(parser):
+def setup(_parser):
     pass
 
 
-def run(args):
+def run(_args):
     utils.logger.debug("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
     running_containers = get_running_containers()
     images_info = get_images_info(running_containers)
@@ -17,7 +17,6 @@ def run(args):
 
 
 def get_images_info(running_containers):
-    """Get a list of images info: "{NAME} STOPPED" or "{NAME} RUNNING[port={N},deploy_path={PATH}]"."""
     cmd_image = ["docker", "image", "ls", "--format={{.Repository}} {{.Tag}}"]
     result_image = utils.run(cmd_image, capture_output=True)
     lines_parts = [line.split() for line in result_image.stdout.decode("utf-8").splitlines()]
@@ -38,10 +37,15 @@ def get_images_info(running_containers):
 
             if port:
                 deploy_path = info.get("deploy_path", None)
-                extra_info = ",".join(filter(bool, [
-                    "port={}".format(port),
-                    "deploy_path={}".format(deploy_path) if deploy_path else None,
-                ]))
+                extra_info = ",".join(
+                    filter(
+                        bool,
+                        [
+                            "port={}".format(port),
+                            "deploy_path={}".format(deploy_path) if deploy_path else None,
+                        ],
+                    )
+                )
                 state = "RUNNING[{}]".format(extra_info)
             else:
                 state = "STOPPED"
@@ -56,7 +60,8 @@ def get_images_info(running_containers):
 
 def get_running_containers():
     """Return dictionary of {DATA_IMAGE_NAME: PORT} of active d2-docker instances."""
-    lines = utils.run_docker_ps(['--format={{.Label "com.eyeseetea.image-name"}} {{.Ports}} {{.Label "com.eyeseetea.deploy-path"}}'])
+    fmt = '{{.Label "com.eyeseetea.image-name"}} {{.Ports}} {{.Label "com.eyeseetea.deploy-path"}}'
+    lines = utils.run_docker_ps(["--format=" + fmt])
     lines_parts_ps = [line.split(None, 2) for line in lines]
 
     running_containers = {}

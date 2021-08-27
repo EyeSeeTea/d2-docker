@@ -18,7 +18,21 @@ PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
-RELEASES_BASEURL = "https://releases.dhis2.org"
+
+
+def get_dhis2_war(version):
+    match = re.match(r"^(\d+.\d+)", version)
+    if not match:
+        raise D2DockerError("Invalid version: {}".format(version))
+    short_version = match[1]
+    has_no_patch_version = version == short_version
+    releases_base_url = "https://releases.dhis2.org"
+    path = (
+        "{}/dhis.war".format(short_version)
+        if has_no_patch_version
+        else "{}/dhis2-stable-{}.war".format(short_version, version)
+    )
+    return releases_base_url + "/" + path
 
 
 def get_logger():
@@ -497,7 +511,7 @@ def create_core(
             logger.debug("Copy WAR file: {} -> {}".format(war, war_path))
             shutil.copy(war, war_path)
         elif version:
-            war_url = "{}/{}/dhis.war".format(RELEASES_BASEURL, version)
+            war_url = get_dhis2_war(version)
             logger.info("Download file: {}".format(war_url))
             urllib.request.urlretrieve(war_url, war_path)
         else:

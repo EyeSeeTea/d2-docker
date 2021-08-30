@@ -1,6 +1,6 @@
 import collections
 
-Parts = collections.namedtuple("Parts", ["organisation", "type", "version", "name"])
+Parts = collections.namedtuple("Parts", ["registry", "organisation", "type", "version", "name"])
 
 
 class ImageName:
@@ -10,11 +10,9 @@ class ImageName:
     def get(self):
         p = self.parts
         string_parts = [
-            p.organisation,
-            "/",
-            p.type,
-            ":",
-            "-".join(filter(bool, [p.version, p.name])),
+            ((p.registry + "/") if p.registry else ""),
+            p.organisation + "/",
+            p.type + ":" + "-".join(filter(bool, [p.version, p.name])),
         ]
         return "".join(string_parts)
 
@@ -39,10 +37,13 @@ class ImageName:
 
     @staticmethod
     def from_string(s):
-        organisation, rest1 = split(s, "/", 2)
+        parts = split(s, "/", max_length=3, min_length=2)
+        registry, organisation, rest1 = parts if len(parts) == 3 else (None, parts[0], parts[1])
         type_, rest2 = split(rest1, ":", 2)
         version, name = split(rest2, "-", 2, min_length=1)
-        parts = Parts(organisation=organisation, type=type_, version=version, name=name)
+        parts = Parts(
+            registry=registry, organisation=organisation, type=type_, version=version, name=name
+        )
         return ImageName(parts)
 
 

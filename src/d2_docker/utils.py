@@ -197,7 +197,9 @@ def get_project_name(image_name):
 def get_core_image_name(data_image_name):
     """Return core image name from the data image.
 
-    Example: eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
+    Examples:
+        eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
+        some-registry.com/eyeseetea/dhis2-data:2.30-sierra -> some-registry.com/eyeseetea/dhis2-core:2.30
     """
     return ImageName.from_string(data_image_name).core().get()
 
@@ -275,14 +277,17 @@ def get_absfile_for_docker_volume(file_path):
 
 def get_item_type(name):
     """
-    Return "docker-image" if name matches the pattern 'ORG/{DHIS2_DATA_IMAGE}:TAG',
+    Return "docker-image" if name matches the pattern '[REGISTRY_URL/]ORG/{DHIS2_DATA_IMAGE}:TAG',
     otherwise assume it's a folder.
     """
     namespace_split = name.split("/")
-    if len(namespace_split) != 2:
+    parts_count = len(namespace_split)
+
+    if parts_count < 2 or parts_count > 3:
         return "folder"
     else:
-        name_tag_split = namespace_split[1].split(":")
+        image_name = namespace_split[-1]
+        name_tag_split = image_name.split(":")
         if len(name_tag_split) == 2 and name_tag_split[0] == DHIS2_DATA_IMAGE:
             return "docker-image"
         else:
@@ -459,19 +464,21 @@ def temporal_build_directory(source_dir):
 
 def wait_for_server(port):
     url = "http://localhost:{}".format(port)
+
     while True:
         try:
             logger.debug("wait_for_server:url={}".format(url))
             urllib.request.urlopen(url)
             logger.debug("wait_for_server:ok")
             return True
-        except urllib.request.URLError as e:
-            logger.debug("wait_for_server:url-error: {}".format(e.reason))
         except urllib.request.HTTPError as e:
             if e.code == 404:
                 return False
             else:
                 logger.debug("wait_for_server:http-error: {}".format(e.code))
+        except urllib.request.URLError as e:
+            logger.debug("wait_for_server:url-error: {}".format(e.reason))
+
         time.sleep(5)
 
 

@@ -1,7 +1,5 @@
-import contextlib
 import os
 import shutil
-import tempfile
 
 from d2_docker import utils
 
@@ -19,7 +17,7 @@ def setup(parser):
 
     data_parser = subparser.add_parser("data", help="Create data image")
     data_parser.add_argument("data_image", metavar="IMAGE", help="Image core name")
-    data_parser.add_argument("--sql", help=".sql (plain text), .sql.gz (gzipped plain text format) or .dump database file (binary format)")
+    data_parser.add_argument("--sql", help="Supported sql / sql.gz / dump formats")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
     data_parser.add_argument("--documents-dir", help="Directory containing Dhis2 documents")
 
@@ -58,7 +56,9 @@ def create_data(args):
             utils.copytree(args.apps_dir, dest_apps_dir)
         if args.documents_dir:
             dest_documents_dir = os.path.join(build_dir, "document")
-            utils.logger.debug("Copy documents: {} -> {}".format(args.documents_dir, dest_documents_dir))
+            utils.logger.debug(
+                "Copy documents: {} -> {}".format(args.documents_dir, dest_documents_dir)
+            )
             utils.copytree(args.documents_dir, dest_documents_dir)
         if args.sql:
             utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))

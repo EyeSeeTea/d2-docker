@@ -1,14 +1,14 @@
-from d2_docker import utils
 import pkg_resources  # part of setuptools
+from d2_docker import utils
 
 DESCRIPTION = "Show version"
 
 
-def setup(parser):
+def setup(_parser):
     pass
 
 
-def run(args):
+def run(_args):
     utils.run(["docker", "-v"])
     utils.run(["docker-compose", "-v"])
     resource = pkg_resources.require("d2-docker")
@@ -17,4 +17,3 @@ def run(args):
         print("d2-docker version {}".format(version))
     else:
         print("Cannot get d2-docker version")
-

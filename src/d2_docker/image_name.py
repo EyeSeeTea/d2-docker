@@ -59,12 +59,22 @@ def split(s, splitchar, max_length, min_length=None):
 
 
 def iter_versions(start, end):
-    start_major, start_minor = split(start, ".", 2)
-    end_major, end_minor = split(end, ".", 2)
+    start_major, start_minor, *_start_rest = map(int, start.split("."))
+    end_major, end_minor, *_end_rest = map(int, end.split("."))
+
+    def get_version(major, minor):
+        """Return version using full start/end, and only major.minor for intermediate."""
+        if major == start_major and minor == start_minor:
+            return start
+        elif major == end_major and minor == end_minor:
+            return end
+        else:
+            return "{}.{}".format(major, minor)
+
     if start_major != end_major:
         raise ValueError("Only same major versions supported")
     else:
         return [
-            "{}.{}".format(start_major, minor_version)
-            for minor_version in range(int(start_minor), int(end_minor) + 1)
+            get_version(start_major, minor_version)
+            for minor_version in range(start_minor, end_minor + 1)
         ]

@@ -1,7 +1,7 @@
 import glob
 import os
 
-from d2_docker import utils, iter_versions, ImageName
+from d2_docker import utils, iter_versions
 
 DESCRIPTION = "Upgrade DHIS2 version on core+data containers/images"
 

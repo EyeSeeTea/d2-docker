@@ -22,12 +22,12 @@ RELEASES_BASEURL = "https://releases.dhis2.org"
 
 
 def get_logger():
-    logger = logging.getLogger("root")
+    logger_ = logging.getLogger("root")
     formatter = logging.Formatter("[d2-docker:%(levelname)s] %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
+    logger_.addHandler(handler)
+    return logger_
 
 
 class D2DockerError(Exception):
@@ -68,7 +68,7 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
 def possible_errors():
     try:
         yield
-    except D2DockerError as exc:
+    except D2DockerError:
         pass
 
 
@@ -121,7 +121,7 @@ def run_docker_ps(args):
     return result.stdout.decode("utf-8").splitlines()
 
 
-def get_image_status(image_name, first_port=8080):
+def get_image_status(image_name):
     """
     If the container for the image is not running, return:
 
@@ -144,7 +144,6 @@ def get_image_status(image_name, first_port=8080):
     If it's already running, return Result(status=False, error=error).
     """
     final_image_name = image_name or get_running_image_name()
-    project_name = get_project_name(final_image_name)
     output_lines = run_docker_ps(
         [
             "--filter",
@@ -199,7 +198,7 @@ def get_core_image_name(data_image_name):
 
     Examples:
         eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
-        some-registry.com/eyeseetea/dhis2-data:2.30-sierra -> some-registry.com/eyeseetea/dhis2-core:2.30
+        registry.com/eyeseetea/dhis2-data:2.30-sierra -> registry.com/eyeseetea/dhis2-core:2.30
     """
     return ImageName.from_string(data_image_name).core().get()
 
@@ -298,10 +297,10 @@ def get_item_type(name):
             return "folder"
 
 
-def get_docker_directory(type, args=None):
+def get_docker_directory(image_type, args=None):
     """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    subdir = "images/dhis2-core" if type == "core" else "images/dhis2-data"
+    subdir = "images/dhis2-core" if image_type == "core" else "images/dhis2-data"
     basedir = args and args.dhis2_docker_images_directory or script_dir
     docker_dir = os.path.join(basedir, subdir)
 
@@ -369,7 +368,7 @@ def export_data_from_image(source_image, dest_path):
 
 
 def export_data_from_running_containers(image_name, containers, destination):
-    """Export data (db + apps + documents) from a running Docker container to a destination directory."""
+    """Export data (db + apps + documents) from a running Docker container to some folder."""
     logger.info("Copy Dhis2 apps")
     mkdir_p(destination)
 
@@ -443,7 +442,7 @@ def noop(value):
     """Do nothing with-statament context."""
 
     @contextlib.contextmanager
-    def _yielder(*args, **kwargs):
+    def _yielder(*_args, **_kwargs):
         yield value
 
     return _yielder
@@ -475,13 +474,13 @@ def wait_for_server(port):
             urllib.request.urlopen(url)
             logger.debug("wait_for_server:ok")
             return True
-        except urllib.request.HTTPError as e:
-            if e.code == 404:
+        except urllib.request.HTTPError as exc:
+            if exc.code == 404:
                 return False
             else:
-                logger.debug("wait_for_server:http-error: {}".format(e.code))
-        except urllib.request.URLError as e:
-            logger.debug("wait_for_server:url-error: {}".format(e.reason))
+                logger.debug("wait_for_server:http-error: {}".format(exc.code))
+        except urllib.request.URLError as exc:
+            logger.debug("wait_for_server:url-error: {}".format(exc.reason))
 
         time.sleep(5)
 

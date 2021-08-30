@@ -242,7 +242,7 @@ def run_docker_compose(
         ("JAVA_OPTS", java_opts or ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
-        ("DHIS_CONF", get_config_path("DHIS2_home/dhis.conf", dhis_conf)),
+        ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

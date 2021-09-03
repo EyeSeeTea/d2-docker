@@ -1,6 +1,6 @@
 import collections
 
-Parts = collections.namedtuple("Parts", ["organisation", "type", "version", "name"])
+Parts = collections.namedtuple("Parts", ["registry", "organisation", "type", "version", "name"])
 
 
 class ImageName:
@@ -10,11 +10,9 @@ class ImageName:
     def get(self):
         p = self.parts
         string_parts = [
-            p.organisation,
-            "/",
-            p.type,
-            ":",
-            "-".join(filter(bool, [p.version, p.name])),
+            ((p.registry + "/") if p.registry else ""),
+            p.organisation + "/",
+            p.type + ":" + "-".join(filter(bool, [p.version, p.name])),
         ]
         return "".join(string_parts)
 
@@ -39,10 +37,13 @@ class ImageName:
 
     @staticmethod
     def from_string(s):
-        organisation, rest1 = split(s, "/", 2)
+        parts = split(s, "/", max_length=3, min_length=2)
+        registry, organisation, rest1 = parts if len(parts) == 3 else (None, parts[0], parts[1])
         type_, rest2 = split(rest1, ":", 2)
         version, name = split(rest2, "-", 2, min_length=1)
-        parts = Parts(organisation=organisation, type=type_, version=version, name=name)
+        parts = Parts(
+            registry=registry, organisation=organisation, type=type_, version=version, name=name
+        )
         return ImageName(parts)
 
 
@@ -58,12 +59,22 @@ def split(s, splitchar, max_length, min_length=None):
 
 
 def iter_versions(start, end):
-    start_major, start_minor = split(start, ".", 2)
-    end_major, end_minor = split(end, ".", 2)
+    start_major, start_minor, *_start_rest = map(int, start.split("."))
+    end_major, end_minor, *_end_rest = map(int, end.split("."))
+
+    def get_version(major, minor):
+        """Return version using full start/end, and only major.minor for intermediate."""
+        if major == start_major and minor == start_minor:
+            return start
+        elif major == end_major and minor == end_minor:
+            return end
+        else:
+            return "{}.{}".format(major, minor)
+
     if start_major != end_major:
         raise ValueError("Only same major versions supported")
     else:
         return [
-            "{}.{}".format(start_major, minor_version)
-            for minor_version in range(int(start_minor), int(end_minor) + 1)
+            get_version(start_major, minor_version)
+            for minor_version in range(start_minor, end_minor + 1)
         ]

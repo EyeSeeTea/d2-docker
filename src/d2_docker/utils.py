@@ -18,16 +18,30 @@ PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
-RELEASES_BASEURL = "https://releases.dhis2.org"
+
+
+def get_dhis2_war(version):
+    match = re.match(r"^(\d+.\d+)", version)
+    if not match:
+        raise D2DockerError("Invalid version: {}".format(version))
+    short_version = match[1]
+    has_no_patch_version = version == short_version
+    releases_base_url = "https://releases.dhis2.org"
+    path = (
+        "{}/dhis.war".format(short_version)
+        if has_no_patch_version
+        else "{}/dhis2-stable-{}.war".format(short_version, version)
+    )
+    return releases_base_url + "/" + path
 
 
 def get_logger():
-    logger = logging.getLogger("root")
+    logger_ = logging.getLogger("root")
     formatter = logging.Formatter("[d2-docker:%(levelname)s] %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
+    logger_.addHandler(handler)
+    return logger_
 
 
 class D2DockerError(Exception):
@@ -68,7 +82,7 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
 def possible_errors():
     try:
         yield
-    except D2DockerError as exc:
+    except D2DockerError:
         pass
 
 
@@ -121,7 +135,7 @@ def run_docker_ps(args):
     return result.stdout.decode("utf-8").splitlines()
 
 
-def get_image_status(image_name, first_port=8080):
+def get_image_status(image_name):
     """
     If the container for the image is not running, return:
 
@@ -144,7 +158,6 @@ def get_image_status(image_name, first_port=8080):
     If it's already running, return Result(status=False, error=error).
     """
     final_image_name = image_name or get_running_image_name()
-    project_name = get_project_name(final_image_name)
     output_lines = run_docker_ps(
         [
             "--filter",
@@ -197,7 +210,9 @@ def get_project_name(image_name):
 def get_core_image_name(data_image_name):
     """Return core image name from the data image.
 
-    Example: eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
+    Examples:
+        eyeseetea/dhis2-data:2.30-sierra -> eyeseetea/dhis2-core:2.30
+        registry.com/eyeseetea/dhis2-data:2.30-sierra -> registry.com/eyeseetea/dhis2-core:2.30
     """
     return ImageName.from_string(data_image_name).core().get()
 
@@ -242,7 +257,7 @@ def run_docker_compose(
         ("JAVA_OPTS", java_opts or ""),
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
-        ("DHIS_CONF", get_config_path("DHIS2_home/dhis.conf", dhis_conf)),
+        ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -275,24 +290,27 @@ def get_absfile_for_docker_volume(file_path):
 
 def get_item_type(name):
     """
-    Return "docker-image" if name matches the pattern 'ORG/{DHIS2_DATA_IMAGE}:TAG',
+    Return "docker-image" if name matches the pattern '[REGISTRY_URL/]ORG/{DHIS2_DATA_IMAGE}:TAG',
     otherwise assume it's a folder.
     """
     namespace_split = name.split("/")
-    if len(namespace_split) != 2:
+    parts_count = len(namespace_split)
+
+    if parts_count < 2 or parts_count > 3:
         return "folder"
     else:
-        name_tag_split = namespace_split[1].split(":")
+        image_name = namespace_split[-1]
+        name_tag_split = image_name.split(":")
         if len(name_tag_split) == 2 and name_tag_split[0] == DHIS2_DATA_IMAGE:
             return "docker-image"
         else:
             return "folder"
 
 
-def get_docker_directory(type, args=None):
+def get_docker_directory(image_type, args=None):
     """Return docker directory for dhis2-data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    subdir = "images/dhis2-core" if type == "core" else "images/dhis2-data"
+    subdir = "images/dhis2-core" if image_type == "core" else "images/dhis2-data"
     basedir = args and args.dhis2_docker_images_directory or script_dir
     docker_dir = os.path.join(basedir, subdir)
 
@@ -360,7 +378,7 @@ def export_data_from_image(source_image, dest_path):
 
 
 def export_data_from_running_containers(image_name, containers, destination):
-    """Export data (db + apps + documents) from a running Docker container to a destination directory."""
+    """Export data (db + apps + documents) from a running Docker container to some folder."""
     logger.info("Copy Dhis2 apps")
     mkdir_p(destination)
 
@@ -434,7 +452,7 @@ def noop(value):
     """Do nothing with-statament context."""
 
     @contextlib.contextmanager
-    def _yielder(*args, **kwargs):
+    def _yielder(*_args, **_kwargs):
         yield value
 
     return _yielder
@@ -459,19 +477,21 @@ def temporal_build_directory(source_dir):
 
 def wait_for_server(port):
     url = "http://localhost:{}".format(port)
+
     while True:
         try:
             logger.debug("wait_for_server:url={}".format(url))
             urllib.request.urlopen(url)
             logger.debug("wait_for_server:ok")
             return True
-        except urllib.request.URLError as e:
-            logger.debug("wait_for_server:url-error: {}".format(e.reason))
-        except urllib.request.HTTPError as e:
-            if e.code == 404:
+        except urllib.request.HTTPError as exc:
+            if exc.code == 404:
                 return False
             else:
-                logger.debug("wait_for_server:http-error: {}".format(e.code))
+                logger.debug("wait_for_server:http-error: {}".format(exc.code))
+        except urllib.request.URLError as exc:
+            logger.debug("wait_for_server:url-error: {}".format(exc.reason))
+
         time.sleep(5)
 
 
@@ -491,7 +511,7 @@ def create_core(
             logger.debug("Copy WAR file: {} -> {}".format(war, war_path))
             shutil.copy(war, war_path)
         elif version:
-            war_url = "{}/{}/dhis.war".format(RELEASES_BASEURL, version)
+            war_url = get_dhis2_war(version)
             logger.info("Download file: {}".format(war_url))
             urllib.request.urlretrieve(war_url, war_path)
         else:

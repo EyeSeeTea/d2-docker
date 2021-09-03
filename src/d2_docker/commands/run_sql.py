@@ -29,7 +29,8 @@ def run(args):
         cmd = ["docker", "exec", ("-i" if sql_file else "-it"), db_container, *psql_cmd]
         if sql_file:
             utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
-        result = utils.run(cmd, stdin=(open(sql_file) if sql_file else None), raise_on_error=False)
+        stdin = open(sql_file, encoding="utf-8") if sql_file else None
+        result = utils.run(cmd, stdin=stdin, raise_on_error=False)
 
         if result.returncode != 0:
             utils.logger.error("Could not execute SQL")

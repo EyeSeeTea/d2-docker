@@ -188,7 +188,7 @@ def get_image_status(image_name):
 
 
 def get_port_from_docker_ports(info):
-    port_re = r"0\.0\.0\.0:(\d+)->"
+    port_re = r"0\.0\.0\.0:(\d+)->80"
     match = re.match(port_re, info)
     port = int(match.group(1)) if match else None
     return port
@@ -224,6 +224,7 @@ def run_docker_compose(
     port=None,
     load_from_data=True,
     post_sql_dir=None,
+    db_port=None,
     scripts_dir=None,
     deploy_path=None,
     dhis_conf=None,
@@ -258,6 +259,7 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
+        ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

@@ -230,6 +230,7 @@ def run_docker_compose(
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
+    postgis_version=None,
     **kwargs,
 ):
     """
@@ -258,6 +259,7 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
+        ("POSTGIS_VERSION", postgis_version),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

@@ -35,6 +35,7 @@ def setup(parser):
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
+    parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
 
 
 def run(args):
@@ -99,6 +100,7 @@ def start(args, image_name):
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
+            postgis_version=args.postgis_version,
         )
 
     if args.detach:

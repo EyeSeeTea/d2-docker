@@ -10,6 +10,10 @@ def setup(parser):
 
 
 def run(args):
-    image_name = args.image or utils.get_running_image_name()
-    utils.logger.info("Push image: {}".format(image_name))
-    utils.push_image(image_name)
+    data_image_name = args.image or utils.get_running_image_name()
+    utils.logger.info("Push data image: {}".format(data_image_name))
+    utils.push_image(data_image_name)
+
+    core_image_name = utils.get_core_image_name(data_image_name)
+    utils.logger.info("Push core image: {}".format(core_image_name))
+    utils.push_image(core_image_name)

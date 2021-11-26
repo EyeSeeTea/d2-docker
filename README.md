@@ -16,7 +16,9 @@ On Windows 10:
 
 -   Install Python: https://www.python.org/downloads
 -   Install Docker Desktop: https://docs.docker.com/docker-for-windows/install
--   Configure Docker Desktop to give more memory to instance: Settings -> Advanced -> Memory: 6400 Mb (modify to meet your needs)
+-   Activate WSL2 (this may require to install some other dependencies):
+![image (20)](https://user-images.githubusercontent.com/6850223/138077958-3fb8a9a8-e829-495a-9b25-f0e347e411d1.png)
+
 
 ## Install
 

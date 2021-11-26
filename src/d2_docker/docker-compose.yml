@@ -24,7 +24,7 @@ services:
         depends_on:
             - "db"
     db:
-        image: "mdillon/postgis:10-alpine"
+        image: "postgis/postgis:${POSTGIS_VERSION:-10-2.5-alpine}"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:

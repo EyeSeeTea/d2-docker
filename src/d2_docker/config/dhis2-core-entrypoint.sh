@@ -6,10 +6,14 @@
 #  - Make files in TOMCATDIR group-writable (so we can change tomcat files in pre/post scripts)
 #  - Install some dependencies: curl, postgresql-client
 #
-set -e -u -o pipefail
+SHELL=/bin/bash
+set -e -u 
+#-o 
+#| grep pipefail
+#set -e -u -o pipefail
 
 WARFILE=/usr/local/tomcat/webapps/ROOT.war
-TOMCATDIR=/usr/local/tomcat
+TOMCATDIR=/usr/local/tomcat/
 DHIS2HOME=/DHIS2_home
 PACKAGES="curl postgresql-client"
 
@@ -18,19 +22,19 @@ install_packages() {
     if test "$(apk list -I $PACKAGES | wc -l)" -ne 2; then
         # Previous core images did not have package pre-installed, install from static files
         echo "Packages not found, installing"
-        apk add --no-network /config/apk/*.apk
+        #apk add --no-network /config/apk/*.apk
     else
         echo "Packages found"
     fi
 }
 
 if [ "$(id -u)" = "0" ]; then
-    install_packages
+    #install_packages
 
     if [ -f $WARFILE ]; then
         # Custom: mkdir + add -q to avoid noise in the console
         mkdir -p $TOMCATDIR/webapps/ROOT
-        unzip -n -q $WARFILE -d $TOMCATDIR/webapps/ROOT
+        /usr/bin/unzip -n -q $WARFILE -d $TOMCATDIR/webapps/ROOT
         rm $WARFILE
     fi
 
@@ -45,7 +49,7 @@ if [ "$(id -u)" = "0" ]; then
             $TOMCATDIR/logs
         chown -R tomcat:tomcat $DHIS2HOME
         chmod +x "$0" || true
-        exec su-exec tomcat "$0" "$@"
+        exec su tomcat "$0" "$@"
     fi
 fi
 

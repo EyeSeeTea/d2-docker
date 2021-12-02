@@ -1,6 +1,5 @@
 #!/bin/bash -x
 set -e -u 
-#-o pipefail
 #
 # Tasks:
 #

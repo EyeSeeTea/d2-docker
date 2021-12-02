@@ -32,7 +32,7 @@
             port="8009"
             redirectPort="8443"
 	    secretRequired="false"
-	    />
+	/>
 
         <Engine name="Catalina" defaultHost="localhost">
             <Realm className="org.apache.catalina.realm.LockOutRealm">

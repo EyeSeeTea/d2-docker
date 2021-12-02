@@ -8,9 +8,6 @@
 #
 SHELL=/bin/bash
 set -e -u 
-#-o 
-#| grep pipefail
-#set -e -u -o pipefail
 
 WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat/

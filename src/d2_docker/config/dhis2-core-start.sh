@@ -1,5 +1,5 @@
 #!/bin/bash -x
-set -e -u 
+set -e -u
 #
 # Tasks:
 #

@@ -7,12 +7,17 @@
 #  - Install some dependencies: curl, postgresql-client
 #
 SHELL=/bin/bash
-set -e -u 
-
+set -e -u
+ 
 WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat/
 DHIS2HOME=/DHIS2_home
 PACKAGES="curl postgresql-client"
+
+debug() {
+    echo "[dhis2-core-start] $*" >&2
+}
+
 
 # Custom
 install_packages() {
@@ -27,7 +32,6 @@ install_packages() {
 
 if [ "$(id -u)" = "0" ]; then
     #install_packages
-
     if [ -f $WARFILE ]; then
         # Custom: mkdir + add -q to avoid noise in the console
         mkdir -p $TOMCATDIR/webapps/ROOT
@@ -36,7 +40,6 @@ if [ "$(id -u)" = "0" ]; then
     fi
 
     # dhis2/core 2.31 images do not have user tomcat, don't fail in this case
-
     if getent group tomcat; then
         chown -R root:tomcat $TOMCATDIR
         # Custom. Before: u+rwX,g+rX,o-rwx
@@ -46,7 +49,7 @@ if [ "$(id -u)" = "0" ]; then
             $TOMCATDIR/logs
         chown -R tomcat:tomcat $DHIS2HOME
         chmod +x "$0" || true
-        exec su tomcat "$0" "$@"
+        su -s /bin/bash tomcat  "$0" "$@"
     fi
 fi
 

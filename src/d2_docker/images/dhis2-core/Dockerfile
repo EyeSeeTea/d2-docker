@@ -10,7 +10,7 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     mkdir $DHIS2_HOME && \
     addgroup --system tomcat && \
     addgroup root tomcat && \
-    adduser --system --disabled-password --shell /bin/bash --uid 101 --ingroup tomcat tomcat
+    adduser --disabled-password --shell /bin/bash --uid 101 --ingroup tomcat tomcat
 
 RUN apt-get update
 RUN apt-get install postgresql-client -y

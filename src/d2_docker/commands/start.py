@@ -26,6 +26,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
+    parser.add_argument("--db-port", metavar="PORT", help="Export DB Postgres port")
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
@@ -37,6 +38,7 @@ def setup(parser):
     parser.add_argument("--db-debug-port", type=int, metavar="N", help="Expose database psql connection on a given port")
     parser.add_argument("--core-debug-port", type=int, metavar="N", help="Expose core JVM debugger on a given port")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
+    parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
 
 
 def run(args):
@@ -95,6 +97,7 @@ def start(args, image_name):
             core_image=core_image,
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
+            db_port=args.db_port,
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,
             dhis2_auth=args.auth,
@@ -103,6 +106,7 @@ def start(args, image_name):
             core_debug_port=args.core_debug_port,
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
+            postgis_version=args.postgis_version,
         )
 
     if args.detach:

@@ -231,7 +231,6 @@ def run_docker_compose(
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
-    db_debug_port=None,
     core_debug_port=None,
     postgis_version=None,
     **kwargs,
@@ -254,8 +253,6 @@ def run_docker_compose(
         ("DHIS2_CORE_PORT", str(port) if port else None),
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
-        ("DB_DEBUG_PORT", str(db_debug_port) if db_debug_port else None),
-        ("CORE_DEBUG_PORT", str(core_debug_port) if core_debug_port else None),
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
         ("SCRIPTS_DIR", scripts_dir_abs),
@@ -266,6 +263,7 @@ def run_docker_compose(
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
+        ("CORE_DEBUG_PORT", str(core_debug_port) if core_debug_port else None),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

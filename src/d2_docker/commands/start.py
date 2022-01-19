@@ -35,7 +35,6 @@ def setup(parser):
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
-    parser.add_argument("--db-debug-port", type=int, metavar="N", help="Expose database psql connection on a given port")
     parser.add_argument("--core-debug-port", type=int, metavar="N", help="Expose core JVM debugger on a given port")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
@@ -102,7 +101,6 @@ def start(args, image_name):
             deploy_path=deploy_path,
             dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml,
-            db_debug_port= args.db_debug_port,
             core_debug_port=args.core_debug_port,
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,

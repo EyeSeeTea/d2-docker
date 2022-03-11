@@ -34,6 +34,7 @@ def setup(parser):
     )
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
+    parser.add_argument("--bind-ip", type=str, metavar="IP", help="Bind Dhis2 instance to IP")
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
@@ -92,6 +93,7 @@ def start(args, image_name):
             ["up", *up_args],
             image_name,
             port=port,
+            bind_ip=args.bind_ip,
             core_image=core_image,
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,

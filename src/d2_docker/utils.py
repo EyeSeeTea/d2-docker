@@ -188,8 +188,8 @@ def get_image_status(image_name):
 
 
 def get_port_from_docker_ports(info):
-    port_re = r"0\.0\.0\.0:(\d+)->80"
-    match = re.match(port_re, info)
+    port_re = r":(\d+)->80/tcp"
+    match = re.search(port_re, info)
     port = int(match.group(1)) if match else None
     return port
 

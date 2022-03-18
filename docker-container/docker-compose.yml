@@ -1,0 +1,13 @@
+version: "3"
+services:
+    d2-docker:
+        image: eyeseetea/d2-docker-container:latest
+        restart: unless-stopped
+        ports:
+            - 5000:5000
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./shared:/app/shared
+        environment:
+            ROOT_PATH: $PWD/shared/d2-docker
+            VOLUMES_OWNERSHIP: ${HOST_UID}:${HOST_GID}

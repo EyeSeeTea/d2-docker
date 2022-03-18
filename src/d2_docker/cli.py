@@ -4,6 +4,7 @@ import argparse
 
 from d2_docker import utils
 from d2_docker.commands import (
+    api,
     start,
     logs,
     stop,
@@ -22,6 +23,7 @@ from d2_docker.commands import (
 )
 
 COMMAND_MODULES = [
+    api,
     start,
     logs,
     stop,

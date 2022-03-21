@@ -303,3 +303,24 @@ $ docker image prune
 ```
 $ docker system prune -a --volumes
 ```
+
+## Development
+
+### Run d2-docker from sources
+
+```
+$ ./d2-docker-dev.sh
+```
+
+### Create a dockerized d2-docker
+
+```
+$ bash build-docker-container.sh
+```
+
+### Start flask server in development mode from sources
+
+```
+$ FLASK_ENV=development FLASK_APP=src/d2_docker/api/main.py flask run
+```
+

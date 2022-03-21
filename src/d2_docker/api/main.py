@@ -1,42 +1,44 @@
-from flask import Flask, json, request, render_template
 from collections import namedtuple
 
+from flask import Flask, json, request, render_template
+
+from d2_docker import utils
+from d2_docker.commands import version, list_, start, stop, logs
+from .api_utils import get_args_from_request, get_container
+
+utils.logger.setLevel("DEBUG")
 api = Flask(__name__)
 
-class Struct(object):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
 
-    def __getattr__(self, item):
-        return None
+@api.route('/version', methods=['GET'])
+def get_version():
+    versions = version.get_versions()
+    return json.dumps(versions)
 
 @api.route('/instances', methods=['GET'])
 def get_instances():
-    from d2_docker.commands.list_ import get_running_containers, get_images_info
-    running_containers = get_running_containers()
-    images_info = get_images_info(running_containers)
-    sorted_values = sorted(images_info, key=lambda val: val["port"] or 1e9)
-    containers = list(val for val in sorted_values)
+    containers = list_.get_containers()
     return json.dumps({"containers": containers})
-
-@api.route('/instances/stop', methods=['POST'])
-def stop_instance():
-    from d2_docker.commands.stop import run
-    body = request.get_json()
-    image_name = body["image"]
-    get_args = namedtuple("args", ["image"])
-    args = get_args(image=image_name)
-    run(args)
-    return json.dumps({"status": "ok"})
 
 @api.route('/instances/start', methods=['POST'])
 def start_instance():
-    from d2_docker.commands.start import start
-    body = request.get_json()
-    image_name = body["image"]
-    args = Struct(port=body.get("port"), detach=True)
-    start(args, image_name)
-    return json.dumps({"status": "ok"})
+    args = get_args_from_request(request)
+    start.run(args)
+    container = get_container(args.image)
+    return json.dumps(dict(status="SUCCESS", container=container))
+
+@api.route('/instances/stop', methods=['POST'])
+def stop_instance():
+    args = get_args_from_request(request)
+    stop.run(args)
+    container = get_container(args.image)
+    return json.dumps(dict(status="SUCCESS", container=container))
+
+@api.route('/instances/logs', methods=['POST'])
+def logs_instance():
+    args = get_args_from_request(request)
+    last_logs = logs.get_logs(args)
+    return json.dumps(dict(logs=last_logs))
 
 @api.route('/', methods=['GET'])
 def landing_page():

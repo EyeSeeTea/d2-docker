@@ -13,7 +13,7 @@ def setup(parser):
     dhis_conf_help = "Use a custom dhis.conf file. Template: {0}".format(dhis_conf_path)
 
     parser.add_argument(
-        "image_or_file", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
+        "image", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
     )
     utils.add_core_image_arg(parser)
     parser.add_argument("--auth", metavar="USER:PASSWORD", help="Dhis2 instance authentication")
@@ -40,13 +40,15 @@ def setup(parser):
 
 
 def run(args):
-    image_or_file = args.image_or_file
+    image_or_file = args.image
 
     if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
-        image_name = import_from_file(image_or_file)
-        start(args, image_name)
+        image2 = import_from_file(image_or_file)
     else:
-        start(args, image_or_file)
+        image2 = args.image
+
+    args.image = image2
+    start(args)
 
 
 def import_from_file(images_path):
@@ -64,7 +66,8 @@ def import_from_file(images_path):
         raise utils.D2DockerError(msg)
 
 
-def start(args, image_name):
+def start(args):
+    image_name = args.image
     utils.logger.info("Start image: {}".format(image_name))
     result = utils.get_image_status(image_name)
     if result["state"] == "running":

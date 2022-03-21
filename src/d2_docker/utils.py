@@ -537,5 +537,7 @@ def get_config_file(filename):
     d2_docker_path = os.path.abspath(d2_docker.__path__[0])
     return os.path.join(d2_docker_path, "config", filename)
 
+def dict_clean(**d):
+    return dict((k, v) for (k, v) in d.items() if v)
 
 logger = get_logger()

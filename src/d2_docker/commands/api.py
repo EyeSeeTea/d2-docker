@@ -13,7 +13,6 @@ def setup(parser):
     stop_parser = subparsers.add_parser("stop")
     start_parser.add_argument("--host", type=int, help="Listen host")
     start_parser.add_argument("-p", "--port", type=int, help="Listen port")
-    print(start_parser)
 
 
 def run(args):

@@ -23,22 +23,22 @@ from d2_docker.commands import (
 )
 
 COMMAND_MODULES = [
-    api,
+    version,
+    list_,
     start,
-    logs,
     stop,
-    rm,
+    logs,
     commit,
     push,
     pull,
+    rm,
     copy,
     export,
     import_,
-    list_,
     run_sql,
     create,
     upgrade,
-    version,
+    api,
 ]
 
 def get_parser():

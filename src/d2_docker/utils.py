@@ -174,9 +174,9 @@ def get_image_status(image_name):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        indexed_service = container_name.split("_", 2)[-2:]
-        if image_name_part == final_image_name and indexed_service:
-            service = indexed_service[0]
+        service = container_name.split("-")[-2]
+
+        if image_name_part == final_image_name and service:
             containers[service] = container_name
             if service == "gateway":
                 port = get_port_from_docker_ports(ports)

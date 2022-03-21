@@ -321,6 +321,5 @@ $ bash build-docker-container.sh
 ### Start flask server in development mode from sources
 
 ```
-$ FLASK_ENV=development FLASK_APP=src/d2_docker/api/main.py flask run
+$ FLASK_ENV=development flask run
 ```
-

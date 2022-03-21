@@ -54,12 +54,12 @@ def get_images_info(running_containers):
                 extra_info = ""
                 status = "STOPPED"
             full_state = ((status + "[" + extra_info + "]") if extra_info else status)
-            value = utils.dict_clean(
+            value = utils.dict_clean(dict(
                 port=port,
                 name=image_name,
                 status=status,
                 description="{} {}".format(image_name, full_state),
-            )
+            ))
             data_image_names.append(value)
 
     return data_image_names

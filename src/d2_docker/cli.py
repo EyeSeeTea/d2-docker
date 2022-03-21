@@ -31,8 +31,9 @@ COMMAND_MODULES = [
     commit,
     push,
     pull,
-    rm,
     copy,
+    rm,
+    # Currently not to be implemented in the API:
     export,
     import_,
     run_sql,

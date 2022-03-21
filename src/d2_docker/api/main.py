@@ -1,6 +1,8 @@
 from collections import namedtuple
+import requests
 
 from flask import Flask, json, request, render_template
+from flask import Response, stream_with_context
 
 from d2_docker import utils
 from d2_docker.commands import version, list_, start, stop, logs
@@ -44,9 +46,22 @@ def logs_instance():
 def landing_page():
     return render_template('index.html')
 
-#@api.route('/cors/...', methods=['GET'])
-#def cors():
-#    return request(*args, cors, authentication)
+@api.route('/cors/<path:url>', methods=["GET", "POST", "PUT", "DELETE"])
+def proxy(url):
+    method = request.method.lower()
+    http_request = getattr(requests, method)
+    headers = dict((k, v) for (k, v) in dict(request.headers).items() if k != "Host")
+
+    if request.json:
+        forward_request = http_request(url, json=request.json, headers=headers)
+    elif request.form:
+        forward_request = http_request(url, data=request.form.to_dict(), headers=headers)
+    else:
+        forward_request = http_request(url, headers=headers)
+
+    response = stream_with_context(forward_request.iter_content())
+    return Response(response, content_type=request.content_type)
+
 
 def run(args):
     api.run(

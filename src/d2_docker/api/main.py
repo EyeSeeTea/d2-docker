@@ -11,6 +11,7 @@ from dotenv import dotenv_values
 
 from d2_docker import utils
 from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull
+from d2_docker.commands import copy, rm
 from .api_utils import get_args_from_request, get_container
 
 utils.logger.setLevel("DEBUG")
@@ -65,6 +66,17 @@ def push_instance():
     push.run(args)
     return success()
 
+@api.route('/instances/copy', methods=['POST'])
+def copy_instance():
+    args = get_args_from_request(request)
+    copy.run(args)
+    return success()
+
+@api.route('/instances/rm', methods=['POST'])
+def rm_instance():
+    args = get_args_from_request(request)
+    rm.run(args)
+    return success()
 
 @api.route('/harbor/<path:url>', methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(url):

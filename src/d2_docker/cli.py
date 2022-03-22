@@ -23,6 +23,7 @@ from d2_docker.commands import (
 )
 
 COMMAND_MODULES = [
+    # Implemented in the API:
     version,
     list_,
     start,
@@ -33,7 +34,7 @@ COMMAND_MODULES = [
     pull,
     copy,
     rm,
-    # Currently not to be implemented in the API:
+    # Not to be implemented in the API:
     export,
     import_,
     run_sql,

@@ -12,12 +12,14 @@ def run(_args):
     sorted_values = get_containers()
     print("\n".join(val["description"] for val in sorted_values))
 
+
 def get_containers():
     utils.logger.debug("Listing docker images with pattern: {}".format(utils.DHIS2_DATA_IMAGE))
     running_containers = get_running_containers()
     images_info = get_images_info(running_containers)
     sorted_values = sorted(images_info, key=lambda val: (val.get("port") or 1e9, val["name"]))
     return sorted_values
+
 
 def get_images_info(running_containers):
     cmd_image = ["docker", "image", "ls", "--format={{.Repository}} {{.Tag}}"]
@@ -53,13 +55,15 @@ def get_images_info(running_containers):
             else:
                 extra_info = ""
                 status = "STOPPED"
-            full_state = ((status + "[" + extra_info + "]") if extra_info else status)
-            value = utils.dict_clean(dict(
-                port=port,
-                name=image_name,
-                status=status,
-                description="{} {}".format(image_name, full_state),
-            ))
+            full_state = (status + "[" + extra_info + "]") if extra_info else status
+            value = utils.dict_clean(
+                dict(
+                    port=port,
+                    name=image_name,
+                    status=status,
+                    description="{} {}".format(image_name, full_state),
+                )
+            )
             data_image_names.append(value)
 
     return data_image_names

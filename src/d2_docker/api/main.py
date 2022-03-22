@@ -1,11 +1,9 @@
 import base64
-import traceback
 import os
-from collections import namedtuple
 import requests
-from requests.auth import HTTPBasicAuth
+from codecs import decode
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 from flask import Response, stream_with_context
 from dotenv import dotenv_values
 
@@ -23,10 +21,12 @@ def get_version():
     versions = version.get_versions()
     return jsonify(versions)
 
+
 @api.route('/instances', methods=['GET'])
 def get_instances():
     containers = list_.get_containers()
     return jsonify({"containers": containers})
+
 
 @api.route('/instances/start', methods=['POST'])
 def start_instance():
@@ -35,6 +35,7 @@ def start_instance():
     container = get_container(args.image)
     return jsonify(dict(status="SUCCESS", container=container))
 
+
 @api.route('/instances/stop', methods=['POST'])
 def stop_instance():
     args = get_args_from_request(request)
@@ -42,11 +43,13 @@ def stop_instance():
     container = get_container(args.image)
     return jsonify(dict(status="SUCCESS", container=container))
 
+
 @api.route('/instances/logs', methods=['POST'])
 def logs_instance():
     args = get_args_from_request(request)
     last_logs = logs.get_logs(args)
     return jsonify(dict(logs=last_logs))
+
 
 @api.route('/instances/commit', methods=['POST'])
 def commit_instance():
@@ -54,11 +57,13 @@ def commit_instance():
     commit.run(args)
     return success()
 
+
 @api.route('/instances/pull', methods=['POST'])
 def pull_instance():
     args = get_args_from_request(request)
     pull.run(args)
     return success()
+
 
 @api.route('/instances/push', methods=['POST'])
 def push_instance():
@@ -66,17 +71,20 @@ def push_instance():
     push.run(args)
     return success()
 
+
 @api.route('/instances/copy', methods=['POST'])
 def copy_instance():
     args = get_args_from_request(request)
     copy.run(args)
     return success()
 
+
 @api.route('/instances/rm', methods=['POST'])
 def rm_instance():
     args = get_args_from_request(request)
     rm.run(args)
     return success()
+
 
 @api.route('/harbor/<path:url>', methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(url):
@@ -102,18 +110,21 @@ def proxy(url):
     response = stream_with_context(forward_request.iter_content())
     return Response(response, content_type=request.content_type)
 
+
 @api.errorhandler(Exception)
 def internal_error(error):
-    from codecs import encode, decode
     contents = decode(str(error), "unicode-escape")
     return server_error(contents)
+
 
 def success():
     return jsonify(dict(status="SUCCESS"))
 
+
 def server_error(message, status=500):
     body = jsonify(dict(status="ERROR", error=message))
     return (body, status)
+
 
 def get_config():
     return {
@@ -123,11 +134,12 @@ def get_config():
     }
 
 
-
 config = get_config()
+
 
 def run(args):
     api.run(host=args.host or "0.0.0.0", port=args.port or 5000)
+
 
 if __name__ == '__main__':
     run()

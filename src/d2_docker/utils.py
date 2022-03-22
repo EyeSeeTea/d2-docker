@@ -174,9 +174,9 @@ def get_image_status(image_name):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        # Depending on the docker version, the container name may be stringfromimage_service-1 OR 
+        # Depending on the docker version, the container name may be stringfromimage_service-1 OR
         # stringfromimage_service_1. Split by all posible character separators.
-        service = re.split(r'[-_]', container_name)[-2]
+        service = re.split(r"[-_]", container_name)[-2]
 
         if image_name_part == final_image_name and service:
             containers[service] = container_name
@@ -265,7 +265,7 @@ def run_docker_compose(
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)
-        ("ROOT_PATH", os.environ.get("ROOT_PATH", "."))
+        ("ROOT_PATH", os.environ.get("ROOT_PATH", ".")),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -539,13 +539,17 @@ def get_config_file(filename):
     d2_docker_path = os.path.abspath(d2_docker.__path__[0])
     return os.path.join(d2_docker_path, "config", filename)
 
+
 def dict_clean(d):
     return dict((k, v) for (k, v) in d.items() if v)
+
 
 def dict_remove(d, key):
     return dict((k, v) for (k, v) in d.items() if k != key)
 
+
 def dict_merge(d1, d2):
     return {**d1, **d2}
+
 
 logger = get_logger()

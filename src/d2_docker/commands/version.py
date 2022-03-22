@@ -18,6 +18,7 @@ def run(_args):
     else:
         print("Cannot get d2-docker version")
 
+
 def get_field(command, field_index):
     lines = utils.run(command, capture_output=True).stdout.splitlines()
     if not lines:
@@ -26,7 +27,8 @@ def get_field(command, field_index):
     fields = line.split()
     if len(fields) > field_index:
         word = fields[field_index].decode("utf-8")
-        return re.sub('[,]', '', word)
+        return re.sub("[,]", "", word)
+
 
 def get_versions():
     docker = get_field(["docker", "-v"], 2)
@@ -34,6 +36,7 @@ def get_versions():
     d2_docker = get_d2_docker_version()
     return dict({"docker": docker, "docker-compose": docker_compose, "d2-docker": d2_docker})
 
+
 def get_d2_docker_version():
     resources = pkg_resources.require("d2-docker")
-    return (resources[0].version if resources else None)
+    return resources[0].version if resources else None

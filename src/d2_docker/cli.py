@@ -19,7 +19,7 @@ from d2_docker.commands import (
     run_sql,
     create,
     upgrade,
-    version
+    version,
 )
 
 COMMAND_MODULES = [
@@ -42,6 +42,7 @@ COMMAND_MODULES = [
     upgrade,
     api,
 ]
+
 
 def get_parser():
     parser = argparse.ArgumentParser(prog="d2-docker")

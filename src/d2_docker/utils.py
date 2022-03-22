@@ -174,7 +174,9 @@ def get_image_status(image_name):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        service = container_name.split("-")[-2]
+        # Depending on the docker version, the container name may be stringfromimage_service-1 OR 
+        # stringfromimage_service_1. Split by all posible character separators.
+        service = re.split(r'[-_]', container_name)[-2]
 
         if image_name_part == final_image_name and service:
             containers[service] = container_name

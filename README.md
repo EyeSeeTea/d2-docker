@@ -336,6 +336,8 @@ $ curl  -H "Content-Type: application/json" -sS http://localhost:5000/instances/
     -d '{"image": "docker.eyeseetea.com/samaritans/dhis2-data:2.36.8-sp-ip-training", "port": 8080, "detach": true}'
 ```
 
+Currently, there are no API docs nor params validations. For each command `src/d2_docker/commands/COMMAND.py`, check function `setup` to see the supported parameters.
+
 The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file (`.flaskenv.secret`):
 
 ```

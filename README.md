@@ -1,10 +1,10 @@
 ## Requirements
 
--   Operating System: GNU/Linux or Windows 10.
--   Python >= 3.5 (with setuptools)
--   Docker >= 18
--   Docker compose >= 1.17
--   RAM memory: At least 4Gb for instance, preferrably 8Gb.
+- Operating System: GNU/Linux or Windows 10.
+- Python >= 3.5 (with setuptools)
+- Docker >= 18
+- Docker compose >= 1.17
+- RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
 On Ubuntu 18.04:
 
@@ -14,11 +14,10 @@ $ sudo apt install docker.io docker-compose python3 python3-setuptools
 
 On Windows 10:
 
--   Install Python: https://www.python.org/downloads
--   Install Docker Desktop: https://docs.docker.com/docker-for-windows/install
--   Activate WSL2 (this may require to install some other dependencies):
-![image (20)](https://user-images.githubusercontent.com/6850223/138077958-3fb8a9a8-e829-495a-9b25-f0e347e411d1.png)
-
+- Install Python: https://www.python.org/downloads
+- Install Docker Desktop: https://docs.docker.com/docker-for-windows/install
+- Activate WSL2 (this may require to install some other dependencies):
+  ![image (20)](https://user-images.githubusercontent.com/6850223/138077958-3fb8a9a8-e829-495a-9b25-f0e347e411d1.png)
 
 ## Install
 
@@ -74,18 +73,18 @@ $ d2-docker start eyeseetea/dhis2-data:2.30-sierra
 
 Some notes:
 
--   A d2-docker instance is composed of 4 containers: `dhis2-data` (database + apps), `dhis2-core` (tomcat + dhis.war), `postgis` (postgres with postgis support) and `nginx` (web server).
--   By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, use `--core-image= eyeseetea/dhis2-core:2.30-custom`.
--   Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
--   Use option `--pull` to overwrite the local images with the images in the hub.
--   Use option `--detach` to run the container in the background.
--   Use option `--deploy-path` to run the container with a deploy path namespace (i.e: `--deploy-path=dhis2` serves `http://localhost:8080/dhis2`)
--   Use option `-k`/`--keep-containers` to re-use existing docker containers, so data from the previous run will be kept.
--   Use option `-auth` to pass the instance authentication (`USER:PASS`). It will be used to call post-tomcat scripts.
--   Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
--   Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
--   Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
--   Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
+- A d2-docker instance is composed of 4 containers: `dhis2-data` (database + apps), `dhis2-core` (tomcat + dhis.war), `postgis` (postgres with postgis support) and `nginx` (web server).
+- By default, the image `dhis2-core` from the same organisation will be used, keeping the first part of the tag (using `-` as separator). For example: `eyeseetea/dhis2-data:2.30-sierra` will use core `eyeseetea/dhis2-core:2.30`. If you need a custom image to be used, use `--core-image= eyeseetea/dhis2-core:2.30-custom`.
+- Once started, you can connect to the DHIS2 instance (`http://localhost:PORT`) where _PORT_ is the first available port starting from 8080. You can run many images at the same time, but not the same image more than once. You can specify the port with option `-p PORT`.
+- Use option `--pull` to overwrite the local images with the images in the hub.
+- Use option `--detach` to run the container in the background.
+- Use option `--deploy-path` to run the container with a deploy path namespace (i.e: `--deploy-path=dhis2` serves `http://localhost:8080/dhis2`)
+- Use option `-k`/`--keep-containers` to re-use existing docker containers, so data from the previous run will be kept.
+- Use option `-auth` to pass the instance authentication (`USER:PASS`). It will be used to call post-tomcat scripts.
+- Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
+- Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
+- Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
+- Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
 
 #### Custom DHIS2 dhis.conf
 
@@ -258,11 +257,11 @@ $ d2-docker upgrade \
 
 Migration folder `upgrade-sierra` should then contain data to be used in each intermediate upgrade version. Supported migration data:
 
--   DHIS2 war file: `dhis.war` (if not specified, it will be download from the releases page)
--   DHIS2 home files: `dhis2-home/`
--   Shell scripts (pre-tomcat): `*.sh`
--   Shell scripts (post-tomcat): `post-*.sh`
--   SQL files: `*.sql`
+- DHIS2 war file: `dhis.war` (if not specified, it will be download from the releases page)
+- DHIS2 home files: `dhis2-home/`
+- Shell scripts (pre-tomcat): `*.sh`
+- Shell scripts (post-tomcat): `post-*.sh`
+- SQL files: `*.sql`
 
 A full example might look:
 
@@ -312,14 +311,36 @@ $ docker system prune -a --volumes
 $ ./d2-docker-dev.sh
 ```
 
-### Create a dockerized d2-docker
+### Dockerized d2-docker (d2-container)
+
+Create a dockerized d2-docker:
 
 ```
 $ bash build-docker-container.sh
 ```
 
-### Start flask server in development mode from sources
+### API Server
+
+Start Flask server in development mode:
 
 ```
 $ FLASK_ENV=development flask run
+```
+
+Usage examples:
+
+```
+$ curl http://localhost:5000/version
+
+$ curl  -H "Content-Type: application/json" -sS http://localhost:5000/instances/start -X POST \
+    -d '{"image": "docker.eyeseetea.com/samaritans/dhis2-data:2.36.8-sp-ip-training", "port": 8080, "detach": true}'
+```
+
+The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file (`.flaskenv.secret`):
+
+```
+$ cp .flaskenv.secret.template .flaskenv.secret
+$ # edit .flaskenv.secret and restart flask server
+
+$ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/quotas/1' | jq
 ```

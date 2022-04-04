@@ -3,6 +3,8 @@ from codecs import decode
 
 from flask import Flask, jsonify, request
 from flask import Response, stream_with_context
+from flask_cors import CORS
+
 from werkzeug.exceptions import HTTPException
 
 from d2_docker import utils
@@ -11,8 +13,10 @@ from d2_docker.commands import copy, rm
 from .api_utils import get_args_from_request, get_container, success, server_error
 from .api_utils import get_auth_headers, get_config
 
+
 utils.logger.setLevel("DEBUG")
 api = Flask(__name__)
+CORS(api)
 
 
 @api.route("/version", methods=["GET"])

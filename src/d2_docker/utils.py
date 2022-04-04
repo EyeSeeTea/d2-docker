@@ -18,6 +18,7 @@ PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
+ROOT_PATH = os.environ.get("ROOT_PATH")
 
 
 def get_dhis2_war(version):
@@ -265,7 +266,7 @@ def run_docker_compose(
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)
-        ("ROOT_PATH", os.environ.get("ROOT_PATH", ".")),
+        ("ROOT_PATH", ROOT_PATH or "."),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -280,7 +281,7 @@ def get_config_path(default_filename, path):
 def get_absdir_for_docker_volume(directory):
     """Return absolute path for given directory, with fallback to empty directory."""
     if not directory:
-        empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
+        empty_directory = os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty")
         return empty_directory
     elif not Path(directory).is_dir():
         raise D2DockerError("Should be a directory: {}".format(directory))
@@ -291,7 +292,7 @@ def get_absdir_for_docker_volume(directory):
 def get_absfile_for_docker_volume(file_path):
     """Return absolute path for given file, with fallback to empty file."""
     if not file_path:
-        return os.path.join(os.path.dirname(__file__), ".empty", "placeholder")
+        return os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty", "placeholder")
     else:
         return os.path.abspath(file_path)
 

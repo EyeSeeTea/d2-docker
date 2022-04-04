@@ -188,8 +188,8 @@ def get_image_status(image_name):
 
 
 def get_port_from_docker_ports(info):
-    port_re = r"0\.0\.0\.0:(\d+)->80"
-    match = re.match(port_re, info)
+    port_re = r":(\d+)->80/tcp"
+    match = re.search(port_re, info)
     port = int(match.group(1)) if match else None
     return port
 
@@ -225,6 +225,7 @@ def run_docker_compose(
     load_from_data=True,
     post_sql_dir=None,
     db_port=None,
+    bind_ip=None,
     scripts_dir=None,
     deploy_path=None,
     dhis_conf=None,
@@ -250,6 +251,7 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
+        ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section

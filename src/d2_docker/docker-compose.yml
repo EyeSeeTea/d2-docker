@@ -43,7 +43,7 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
             - "com.eyeseetea.deploy-path=${DEPLOY_PATH}"
         ports:
-            - "${DHIS2_CORE_PORT:-8080}:80"
+            - "${DHIS2_CORE_IP:-}${DHIS2_CORE_PORT:-8080}:80"
         volumes:
             - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./config/50x.html:/usr/share/nginx/html/50x.html:ro

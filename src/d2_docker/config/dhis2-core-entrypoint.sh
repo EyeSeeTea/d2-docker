@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Taken from https://github.com/dhis2/dhis2-core/blob/master/docker-entrypoint.sh.
 #
@@ -8,7 +8,7 @@
 #
 SHELL=/bin/bash
 set -e -u
- 
+
 WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat/
 DHIS2HOME=/DHIS2_home

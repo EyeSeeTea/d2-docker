@@ -188,8 +188,8 @@ def get_image_status(image_name):
 
 
 def get_port_from_docker_ports(info):
-    port_re = r"0\.0\.0\.0:(\d+)->"
-    match = re.match(port_re, info)
+    port_re = r":(\d+)->80/tcp"
+    match = re.search(port_re, info)
     port = int(match.group(1)) if match else None
     return port
 
@@ -224,12 +224,15 @@ def run_docker_compose(
     port=None,
     load_from_data=True,
     post_sql_dir=None,
+    db_port=None,
+    bind_ip=None,
     scripts_dir=None,
     deploy_path=None,
     dhis_conf=None,
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
+    postgis_version=None,
     **kwargs,
 ):
     """
@@ -248,6 +251,7 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
+        ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section
@@ -258,6 +262,8 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
+        ("POSTGIS_VERSION", postgis_version),
+        ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

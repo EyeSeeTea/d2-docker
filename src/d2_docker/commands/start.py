@@ -26,6 +26,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
+    parser.add_argument("--db-port", metavar="PORT", help="Export DB Postgres port")
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
@@ -33,8 +34,10 @@ def setup(parser):
     )
     parser.add_argument("--pull", action="store_true", help="Force a pull from docker hub")
     parser.add_argument("-p", "--port", type=int, metavar="N", help="Set Dhis2 instance port")
+    parser.add_argument("--bind-ip", type=str, metavar="IP", help="Bind Dhis2 instance to IP")
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
+    parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
 
 
 def run(args):
@@ -90,15 +93,18 @@ def start(args, image_name):
             ["up", *up_args],
             image_name,
             port=port,
+            bind_ip=args.bind_ip,
             core_image=core_image,
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
+            db_port=args.db_port,
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,
             dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
+            postgis_version=args.postgis_version,
         )
 
     if args.detach:

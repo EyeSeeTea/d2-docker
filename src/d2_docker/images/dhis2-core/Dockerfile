@@ -20,7 +20,6 @@ COPY dhis.war /usr/local/tomcat/webapps/ROOT.war
 COPY dhis2-home-files /dhis2-home-files
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["catalina.sh", "run"]

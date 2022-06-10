@@ -1,5 +1,5 @@
 #!/bin/bash -x
-set -e -u
+set -e -u -o pipefail
 #
 # Tasks:
 #
@@ -112,7 +112,7 @@ wait_for_postgres() {
 
 start_tomcat() {
     debug "Start Tomcat catalina"
-    bin/catalina.sh run
+    catalina.sh run
 }
 
 wait_for_tomcat() {

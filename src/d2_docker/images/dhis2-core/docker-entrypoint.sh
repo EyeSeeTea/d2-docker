@@ -1,23 +1,23 @@
 #!/bin/bash
-set -e
+#
+# This file should be basically the same as config/dhis2-core-entrypoint.sh
+#
+set -e  # exit on errors
 
 WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat
 DHIS2HOME=/DHIS2_home
-DATA_DIR="/data/"
+DATA_DIR=/data
 
 if [ "$(id -u)" = "0" ]; then
     if [ -f $WARFILE ]; then
-        unzip $WARFILE -d $TOMCATDIR/webapps/ROOT
-        rm $WARFILE
+        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
+        rm -v $WARFILE  # just to save space
     fi
-    
-    chown -R tomcat:tomcat $DATA_DIR $TOMCATDIR
-    chmod -R u+rwX,g+rX,o-rwx $DATA_DIR $TOMCATDIR
-    chown -R tomcat:tomcat $DATA_DIR $TOMCATDIR/temp $TOMCATDIR/work $TOMCATDIR/logs
-    
-    chown -R tomcat:tomcat $DHIS2HOME
-    exec su-exec tomcat "$0" "$@"
+
+    chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR $DHIS2HOME
+    chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR $DHIS2HOME
+    exec setpriv --reuid=tomcat --regid=tomcat --init-groups "$0" "$@"
 fi
 
 exec "$@"

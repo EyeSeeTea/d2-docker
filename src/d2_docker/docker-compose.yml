@@ -18,8 +18,8 @@ services:
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"
-        entrypoint: sh /config/dhis2-core-entrypoint.sh
-        command: sh /config/dhis2-core-start.sh
+        entrypoint: bash /config/dhis2-core-entrypoint.sh
+        command: bash /config/dhis2-core-start.sh
         restart: unless-stopped
         depends_on:
             - "db"

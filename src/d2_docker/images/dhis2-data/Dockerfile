@@ -8,4 +8,4 @@ COPY run.sh /usr/local/bin/
 COPY apps/ /data/apps
 COPY document/ /data/document
 
-CMD ["bash", "/usr/local/bin/run.sh"]
+CMD ["sh", "/usr/local/bin/run.sh"]

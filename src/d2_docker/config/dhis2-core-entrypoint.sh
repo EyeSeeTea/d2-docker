@@ -21,7 +21,15 @@ if [ "$(id -u)" = "0" ]; then
 
     chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR $DHIS2HOME
     chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR $DHIS2HOME
-    exec setpriv --reuid=tomcat --regid=tomcat --init-groups "$0" "$@"
+
+    # Launch the given command as tomcat, in two ways for backwards compatibility:
+    if [ "$(grep '^ID=' /etc/os-release)" = "ID=alpine" ]; then
+        # The alpine linux way (for old images).
+        exec su-exec tomcat "$0" "$@"
+    else
+        # The ubuntu way (for new images).
+        exec setpriv --reuid=tomcat --regid=tomcat --init-groups "$0" "$@"
+    fi
 fi
 
 exec "$@"

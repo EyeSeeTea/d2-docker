@@ -18,6 +18,7 @@ PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
+ROOT_PATH = os.environ.get("ROOT_PATH")
 
 
 def get_dhis2_war(version):
@@ -71,7 +72,7 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
 
     try:
         logger.debug("Run: {}".format(cmd))
-        env2 = dict(os.environ, **env) if env else os.environ
+        env2 = dict(os.environ, **(env or {}))
         return subprocess.run(command_parts, check=raise_on_error, env=env2, **kwargs)
     except subprocess.CalledProcessError as exc:
         msg = "Command {} failed with code {}: {}"
@@ -174,9 +175,11 @@ def get_image_status(image_name):
         if len(parts) != 3:
             continue
         image_name_part, container_name, ports = parts
-        indexed_service = container_name.split("_", 2)[-2:]
-        if image_name_part == final_image_name and indexed_service:
-            service = indexed_service[0]
+        # Depending on the docker version, the container name may be stringfromimage_service-1 OR
+        # stringfromimage_service_1. Split by all posible character separators.
+        service = re.split(r"[-_]", container_name)[-2]
+
+        if image_name_part == final_image_name and service:
             containers[service] = container_name
             if service == "gateway":
                 port = get_port_from_docker_ports(ports)
@@ -264,6 +267,8 @@ def run_docker_compose(
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
+        # Add ROOT_PATH from environment (required when run inside a docker)
+        ("ROOT_PATH", ROOT_PATH or "."),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -278,7 +283,7 @@ def get_config_path(default_filename, path):
 def get_absdir_for_docker_volume(directory):
     """Return absolute path for given directory, with fallback to empty directory."""
     if not directory:
-        empty_directory = os.path.join(os.path.dirname(__file__), ".empty")
+        empty_directory = os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty")
         return empty_directory
     elif not Path(directory).is_dir():
         raise D2DockerError("Should be a directory: {}".format(directory))
@@ -289,7 +294,7 @@ def get_absdir_for_docker_volume(directory):
 def get_absfile_for_docker_volume(file_path):
     """Return absolute path for given file, with fallback to empty file."""
     if not file_path:
-        return os.path.join(os.path.dirname(__file__), ".empty", "placeholder")
+        return os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty", "placeholder")
     else:
         return os.path.abspath(file_path)
 
@@ -536,6 +541,18 @@ def create_core(
 def get_config_file(filename):
     d2_docker_path = os.path.abspath(d2_docker.__path__[0])
     return os.path.join(d2_docker_path, "config", filename)
+
+
+def dict_clean(d):
+    return dict((k, v) for (k, v) in d.items() if v)
+
+
+def dict_remove(d, key):
+    return dict((k, v) for (k, v) in d.items() if k != key)
+
+
+def dict_merge(d1, d2):
+    return {**d1, **d2}
 
 
 logger = get_logger()

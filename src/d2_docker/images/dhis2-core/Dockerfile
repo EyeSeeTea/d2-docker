@@ -1,4 +1,4 @@
-FROM tomcat:9-jre11-temurin
+FROM tomcat:9.0.64-jre11-openjdk-slim-bullseye
 
 ENV DHIS2_HOME=/DHIS2_home
 ENV DHIS2_CERT=/DHIS2_home/who_pub_cert.cert
@@ -16,7 +16,7 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
 
 COPY who_pub_cert.cert $DHIS2_CERT
 RUN  chmod +rx $DHIS2_CERT
-RUN keytool -importcert -alias who_mail_ichigoout -file $DHIS2_CERT -keystore /opt/java/openjdk/lib/security/cacerts -storepass changeit -noprompt
+RUN keytool -importcert -alias who_mail_ichigoout -file $DHIS2_CERT -keystore /usr/local/openjdk-11/lib/security/cacerts -storepass changeit -noprompt
 
 
 RUN apt-get update

@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request
 from flask import Response, stream_with_context
 from flask_cors import CORS
 
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, BadRequest
 
 from d2_docker import utils
 from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull
@@ -89,14 +89,22 @@ def rm_instance():
     return success()
 
 
+def get_request_json(request):
+    try:
+        return request.json
+    except BadRequest:
+        return None
+
+
 def proxy_request_to_url(request, url, new_headers=None):
     base_headers = utils.dict_remove(dict(request.headers), "Host")
     headers = utils.dict_merge(base_headers, new_headers or {})
     method = request.method.lower()
     http_request = getattr(requests, method)
+    request_json = get_request_json(request)
 
-    if request.json:
-        forward_request = http_request(url, json=request.json, headers=headers)
+    if request_json:
+        forward_request = http_request(url, json=request_json, headers=headers)
     elif request.form:
         forward_request = http_request(url, data=request.form.to_dict(), headers=headers)
     else:

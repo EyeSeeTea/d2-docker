@@ -44,7 +44,7 @@ def server_error(message, status=500):
 
 def get_config():
     return {
-        **dotenv_values(".flaskenv"),
-        **dotenv_values(".flaskenv.secret"),
+        **dotenv_values(".flaskenv", verbose=True),
+        **dotenv_values(".flaskenv.secret", verbose=True),
         **os.environ,
     }

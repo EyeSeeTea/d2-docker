@@ -103,7 +103,7 @@ def proxy_request_to_url(request, url, new_headers=None):
         forward_request = http_request(url, headers=headers)
 
     response = stream_with_context(forward_request.iter_content())
-    return Response(response, content_type=request.content_type)
+    return Response(response, content_type=forward_request.headers.get("Content-Type"))
 
 
 @api.route("/harbor/<path:url>", methods=["GET", "POST", "PUT", "DELETE"])

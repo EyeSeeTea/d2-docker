@@ -116,6 +116,7 @@ def proxy_request_to_url(request, url, new_headers=None):
 
 @api.route("/harbor/<path:url>", methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(url):
+    config = get_config()
     user = config.get("HARBOR_USER")
     password = config.get("HARBOR_PASSWORD")
     if not user or not password:
@@ -137,12 +138,6 @@ def internal_error(error):
     return server_error(contents, status=status)
 
 
-config = get_config()
-
-
 def run(args):
-    api.run(host=args.host or "0.0.0.0", port=args.port or 5000)
-
-
-if __name__ == "__main__":
-    run()
+    get_config()
+    api.run(host=args.host or "127.0.0.1", port=args.port or 5000)

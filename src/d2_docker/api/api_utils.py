@@ -1,7 +1,6 @@
 import os
 import base64
 from d2_docker.commands import list_
-from d2_docker import utils
 from flask import jsonify
 from dotenv import dotenv_values
 
@@ -48,17 +47,22 @@ def get_from_dotenv(name, directories):
     for directory in directories:
         path1 = os.path.join(directory, name)
         path2 = os.path.expanduser(path1)
-        utils.logger.info("Try config path: {}".format(path2))
         value = dotenv_values(path2, verbose=True)
         output.update(value)
     return output
 
 
-def get_config():
-    directories = ["~/.config/d2-docker"]
+config = None
 
-    return {
-        **get_from_dotenv(".flaskenv", directories),
-        **get_from_dotenv(".flaskenv.secret", directories),
+
+def get_config():
+    global config
+    if config:
+        return config
+
+    directories = ["~/.config/d2-docker"]
+    config = {
+        **get_from_dotenv("flaskenv.secret", directories),
         **os.environ,
     }
+    return config

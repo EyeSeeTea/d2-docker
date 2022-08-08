@@ -122,14 +122,33 @@ wait_for_tomcat() {
     done
 }
 
+INIT_DONE_FILE="/tmp/dhis2-core-start.done"
+
+is_init_done() {
+    test -e "$INIT_DONE_FILE"
+}
+
+init_done() {
+    touch "$INIT_DONE_FILE"
+}
+
 run() {
     local host=$1 psql_port=$2
+
     setup_tomcat
     copy_apps
     copy_documents
-    wait_for_postgres
-    run_sql_files || true
-    run_pre_scripts || true
+
+    if is_init_done; then
+        debug "Container: already configured. Skip DB load"
+    else
+        debug "Container: clean. Load DB"
+        wait_for_postgres
+        run_sql_files || true
+        run_pre_scripts || true
+        init_done
+    fi
+
     start_tomcat &
     wait_for_tomcat
     run_post_scripts || true

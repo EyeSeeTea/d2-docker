@@ -26,6 +26,7 @@ root_db_path="/data/db"
 post_db_path="/data/db/post"
 source_apps_path="/data/apps"
 source_documents_path="/data/document"
+source_datavalues_path="/data/dataValue"
 files_path="/DHIS2_home/files/"
 tomcat_conf_dir="/usr/local/tomcat/conf"
 
@@ -87,6 +88,15 @@ copy_documents() {
     fi
 }
 
+copy_datavalues() {
+    debug "Copy Dhis2 dataValues: $source_datavalues_path -> $files_path"
+    mkdir -p "$files_path/dataValue"
+    if test -e "$source_datavalues_path"; then
+        cp -Rv "$source_datavalues_path" "$files_path"
+    fi
+}
+
+
 copy_non_empty_files() {
     local from=$1 to=$2
     find "$from" -maxdepth 1 -type f -size +0 -exec cp -v {} "$to" \;
@@ -138,6 +148,7 @@ run() {
     setup_tomcat
     copy_apps
     copy_documents
+    copy_datavalues
 
     if is_init_done; then
         debug "Container: already configured. Skip DB load"

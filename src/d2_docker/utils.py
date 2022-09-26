@@ -379,6 +379,7 @@ def export_data_from_image(source_image, dest_path):
         with possible_errors():
             run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
             run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
+            run(["docker", "cp", container_id + ":" + "/data/dataValue", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 

@@ -19,6 +19,7 @@ if [ "$(id -u)" = "0" ]; then
         rm -v $WARFILE  # just to save space
     fi
 
+    mkdir -p $DATA_DIR/apps
     chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
     chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
 

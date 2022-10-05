@@ -379,6 +379,7 @@ def export_data_from_image(source_image, dest_path):
         with possible_errors():
             run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
             run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
+            run(["docker", "cp", container_id + ":" + "/data/dataValue", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 
@@ -393,6 +394,9 @@ def export_data_from_running_containers(image_name, containers, destination):
 
     documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
     run(["docker", "cp", documents_source, destination])
+
+    datavalues_source = "{}:/DHIS2_home/files/dataValue/".format(containers["core"])
+    run(["docker", "cp", datavalues_source, destination])
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)

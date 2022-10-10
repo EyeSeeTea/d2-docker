@@ -20,6 +20,7 @@ def setup(parser):
     data_parser.add_argument("--sql", help="Supported sql / sql.gz / dump formats")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
     data_parser.add_argument("--documents-dir", help="Directory containing Dhis2 documents")
+    data_parser.add_argument("--datavalues-dir", help="Directory containing Dhis2 datavalues(file resources)")
 
 
 def run(args):
@@ -60,6 +61,12 @@ def create_data(args):
                 "Copy documents: {} -> {}".format(args.documents_dir, dest_documents_dir)
             )
             utils.copytree(args.documents_dir, dest_documents_dir)
+        if args.datavalues_dir:
+            dest_datavalues_dir = os.path.join(build_dir, "dataValue")
+            utils.logger.debug(
+                "Copy datavalues: {} -> {}".format(args.datavalues_dir, dest_datavalues_dir)
+            )
+            utils.copytree(args.datavalues_dir, dest_datavalues_dir)
         if args.sql:
             utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))
             shutil.copy(args.sql, db_path)

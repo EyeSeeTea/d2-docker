@@ -18,13 +18,13 @@ services:
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"
-        entrypoint: sh /config/dhis2-core-entrypoint.sh
-        command: sh /config/dhis2-core-start.sh
+        entrypoint: bash /config/dhis2-core-entrypoint.sh
+        command: bash /config/dhis2-core-start.sh
         restart: unless-stopped
         depends_on:
             - "db"
     db:
-        image: "postgis/postgis:${POSTGIS_VERSION:-10-2.5-alpine}"
+        image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
@@ -33,7 +33,7 @@ services:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
-        command: "postgres -c max_locks_per_transaction=100"
+        command: "postgres -c max_locks_per_transaction=100 -c max_connections=200"
         restart: unless-stopped
         ports:
             - "${DB_PORT}"
@@ -43,7 +43,7 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
             - "com.eyeseetea.deploy-path=${DEPLOY_PATH}"
         ports:
-            - "${DHIS2_CORE_PORT:-8080}:80"
+            - "${DHIS2_CORE_IP:-}${DHIS2_CORE_PORT:-8080}:80"
         volumes:
             - ${ROOT_PATH}/config/nginx.conf:/etc/nginx/nginx.conf:ro
             - ${ROOT_PATH}/config/50x.html:/usr/share/nginx/html/50x.html:ro

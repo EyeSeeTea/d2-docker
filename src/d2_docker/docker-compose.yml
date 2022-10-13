@@ -25,6 +25,7 @@ services:
             - "db"
     db:
         image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
+        shm_size: 1gb
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:

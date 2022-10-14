@@ -12,6 +12,8 @@ services:
             - "${TOMCAT_SERVER}:/config/override/tomcat/server.xml"
             - "${SCRIPTS_DIR}:/data/scripts"
             - "${POST_SQL_DIR}:/data/db/post"
+            - "/etc/timezone:/etc/timezone:ro"
+            - "/etc/localtime:/etc/localtime:ro"
         environment:
             CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH}"
             JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
@@ -29,6 +31,8 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - "/etc/timezone:/etc/timezone:ro"
+            - "/etc/localtime:/etc/localtime:ro"
         environment:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
@@ -48,6 +52,8 @@ services:
             - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./config/50x.html:/usr/share/nginx/html/50x.html:ro
             - /var/run/docker.sock:/tmp/docker.sock:ro
+            - "/etc/timezone:/etc/timezone:ro"
+            - "/etc/localtime:/etc/localtime:ro"
         restart: unless-stopped
         depends_on:
             - "core"

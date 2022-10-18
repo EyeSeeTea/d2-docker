@@ -4,24 +4,7 @@ import argparse
 
 from d2_docker import utils
 from d2_docker.commands import (
-    start,
-    logs,
-    stop,
-    rm,
-    commit,
-    push,
-    pull,
-    copy,
-    export,
-    import_,
-    list_,
-    run_sql,
-    create,
-    upgrade,
-    version
-)
-
-COMMAND_MODULES = [
+    api,
     start,
     logs,
     stop,
@@ -37,7 +20,29 @@ COMMAND_MODULES = [
     create,
     upgrade,
     version,
+)
+
+COMMAND_MODULES = [
+    # Implemented in the API:
+    version,
+    list_,
+    start,
+    stop,
+    logs,
+    commit,
+    push,
+    pull,
+    copy,
+    rm,
+    # Not to be implemented in the API:
+    export,
+    import_,
+    run_sql,
+    create,
+    upgrade,
+    api,
 ]
+
 
 def get_parser():
     parser = argparse.ArgumentParser(prog="d2-docker")

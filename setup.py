@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="d2_docker",
-    version="1.9.0",
+    version="1.10.0",
     description="Dockers for DHIS2 instances",
     long_description=open("README.md", encoding="utf-8").read(),
     keywords=["python"],
@@ -25,5 +25,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    entry_points={"console_scripts": ["d2-docker=d2_docker.cli:main"]},
+    entry_points={"console_scripts": [
+        "d2-docker=d2_docker.cli:main",
+    ]},
 )

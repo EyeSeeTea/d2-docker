@@ -96,7 +96,6 @@ copy_datavalues() {
     fi
 }
 
-
 copy_non_empty_files() {
     local from=$1 to=$2
     find "$from" -maxdepth 1 -type f -size +0 -exec cp -v {} "$to" \;

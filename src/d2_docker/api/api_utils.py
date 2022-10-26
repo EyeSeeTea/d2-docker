@@ -42,9 +42,27 @@ def server_error(message, status=500):
     return (body, status)
 
 
+def get_from_dotenv(name, directories):
+    output = {}
+    for directory in directories:
+        path1 = os.path.join(directory, name)
+        path2 = os.path.expanduser(path1)
+        value = dotenv_values(path2, verbose=True)
+        output.update(value)
+    return output
+
+
+config = None
+
+
 def get_config():
-    return {
-        **dotenv_values(".flaskenv"),
-        **dotenv_values(".flaskenv.secret"),
+    global config
+    if config:
+        return config
+
+    directories = ["~/.config/d2-docker"]
+    config = {
+        **get_from_dotenv("flaskenv.secret", directories),
         **os.environ,
     }
+    return config

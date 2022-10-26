@@ -338,11 +338,13 @@ $ curl  -H "Content-Type: application/json" -sS http://localhost:5000/instances/
 
 Currently, there are no API docs nor params validations. For each command `src/d2_docker/commands/COMMAND.py`, check function `setup` to see the supported parameters.
 
-The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file (`.flaskenv.secret`):
+The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file:
 
 ```
-$ cp .flaskenv.secret.template .flaskenv.secret
-$ # edit .flaskenv.secret and restart flask server
+$ cp flaskenv.secret.template flaskenv.secret
+$ # Edit flaskenv.secret
+$ mkdir -p ~/.config/d2-docker/
+$ cp flaskenv.secret ~/.config/d2-docker/
 
 $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/quotas/1' | jq
 ```

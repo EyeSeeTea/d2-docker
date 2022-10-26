@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request
 from flask import Response, stream_with_context
 from flask_cors import CORS
 
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, BadRequest
 
 from d2_docker import utils
 from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull
@@ -89,25 +89,34 @@ def rm_instance():
     return success()
 
 
+def get_request_json(request):
+    try:
+        return request.json
+    except BadRequest:
+        return None
+
+
 def proxy_request_to_url(request, url, new_headers=None):
     base_headers = utils.dict_remove(dict(request.headers), "Host")
     headers = utils.dict_merge(base_headers, new_headers or {})
     method = request.method.lower()
     http_request = getattr(requests, method)
+    request_json = get_request_json(request)
 
-    if request.json:
-        forward_request = http_request(url, json=request.json, headers=headers)
+    if request_json:
+        forward_request = http_request(url, json=request_json, headers=headers)
     elif request.form:
         forward_request = http_request(url, data=request.form.to_dict(), headers=headers)
     else:
         forward_request = http_request(url, headers=headers)
 
     response = stream_with_context(forward_request.iter_content())
-    return Response(response, content_type=request.content_type)
+    return Response(response, content_type=forward_request.headers.get("Content-Type"))
 
 
 @api.route("/harbor/<path:url>", methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(url):
+    config = get_config()
     user = config.get("HARBOR_USER")
     password = config.get("HARBOR_PASSWORD")
     if not user or not password:
@@ -129,12 +138,6 @@ def internal_error(error):
     return server_error(contents, status=status)
 
 
-config = get_config()
-
-
 def run(args):
-    api.run(host=args.host or "0.0.0.0", port=args.port or 5000)
-
-
-if __name__ == "__main__":
-    run()
+    get_config()
+    api.run(host=args.host or "127.0.0.1", port=args.port or 5000)

@@ -177,7 +177,8 @@ def get_image_status(image_name):
         image_name_part, container_name, ports = parts
         # Depending on the docker version, the container name may be stringfromimage_service-1 OR
         # stringfromimage_service_1. Split by all posible character separators.
-        service = re.split(r"[-_]", container_name)[-2]
+        parts = re.split(r"[-_]", container_name)
+        service = parts[-2] if len(parts) >= 2 else None
 
         if image_name_part == final_image_name and service:
             containers[service] = container_name
@@ -384,6 +385,7 @@ def export_data_from_image(source_image, dest_path):
         with possible_errors():
             run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
             run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
+            run(["docker", "cp", container_id + ":" + "/data/dataValue", dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 
@@ -398,6 +400,9 @@ def export_data_from_running_containers(image_name, containers, destination):
 
     documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
     run(["docker", "cp", documents_source, destination])
+
+    datavalues_source = "{}:/DHIS2_home/files/dataValue/".format(containers["core"])
+    run(["docker", "cp", datavalues_source, destination])
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)

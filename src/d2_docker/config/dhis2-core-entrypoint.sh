@@ -19,8 +19,9 @@ if [ "$(id -u)" = "0" ]; then
         rm -v $WARFILE  # just to save space
     fi
 
-    chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR $DHIS2HOME
-    chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR $DHIS2HOME
+    mkdir -p $DATA_DIR/apps
+    chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
+    chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
 
     # Launch the given command as tomcat, in two ways for backwards compatibility:
     if [ "$(grep '^ID=' /etc/os-release)" = "ID=alpine" ]; then

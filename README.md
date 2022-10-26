@@ -57,10 +57,10 @@ $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/t
 
 ### Create a base DHIS2 data image
 
-Create a dhis2-data image from a .sql.gz SQL file and the apps and documents directory to include:
+Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or datavalue fileresources) directory to include:
 
 ```
-$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document]
+$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
 
 ### Start a DHIS2 instance

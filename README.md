@@ -124,6 +124,12 @@ Note that you should not change the catalina connector port (8080, by default). 
 />
 ```
 
+### Run terminal shell in DHIS2 core container
+
+```
+$ d2-docker shell eyeseetea/dhis2-data:2.30-sierra
+```
+
 ### Show logs for running containers
 
 Check logs of a running container:

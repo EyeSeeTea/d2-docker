@@ -246,6 +246,12 @@ Run a SQL file or open an interactive postgres session in a running Dhis2 instan
 $ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
 ```
 
+### Dump current database to SQL file in container
+
+```
+$ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] --dump
+```
+
 ### Upgrade DHIS2 version
 
 ```

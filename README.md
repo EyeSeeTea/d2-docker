@@ -232,7 +232,7 @@ eyeseetea/dhis2-data 2.30-sierra4 d3a374301234 1 minutes ago 106MB
 Lists _dhis2-data_ images present in the local repository and the container status:
 
 ```
-$ d2-docker.py list
+$ d2-docker list
 eyeseetea/dhis2-data:2.30-sierra RUNNING[port=8080]
 eyeseetea/dhis2-data:2.30-vietnam STOPPED
 eyeseetea/dhis2-data:2.30-cambodia STOPPED
@@ -243,13 +243,13 @@ eyeseetea/dhis2-data:2.30-cambodia STOPPED
 Run a SQL file or open an interactive postgres session in a running Dhis2 instance:
 
 ```
-$ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
+$ d2-docker run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
 ```
 
 ### Dump current database to SQL file in container
 
 ```
-$ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] --dump
+$ d2-docker run-sql [-i eyeseetea/dhis2-data:2.30-sierra] --dump
 ```
 
 ### Upgrade DHIS2 version

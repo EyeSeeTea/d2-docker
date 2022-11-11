@@ -395,14 +395,15 @@ def export_data_from_running_containers(image_name, containers, destination):
     logger.info("Copy Dhis2 apps")
     mkdir_p(destination)
 
+    # Note: source files/ folders may not exists
     apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
-    run(["docker", "cp", apps_source, destination])
+    run(["docker", "cp", apps_source, destination], raise_on_error=False)
 
     documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
-    run(["docker", "cp", documents_source, destination])
+    run(["docker", "cp", documents_source, destination], raise_on_error=False)
 
     datavalues_source = "{}:/DHIS2_home/files/dataValue/".format(containers["core"])
-    run(["docker", "cp", datavalues_source, destination])
+    run(["docker", "cp", datavalues_source, destination], raise_on_error=False)
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)

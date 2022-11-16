@@ -59,7 +59,16 @@ def copytree(source, dest):
     dir_util.copy_tree(source, dest)
 
 
-def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kwargs):
+def run(
+    command_parts,
+    raise_on_error=True,
+    env=None,
+    capture_output=False,
+    return_popen=False,
+    universal_newlines=True,
+    shell=False,
+    **kwargs,
+):
     """Run command and return the result subprocess object."""
     cmd = subprocess.list2cmdline(command_parts)
     if capture_output:  # Option not available for python <= 3.6, emulate
@@ -73,7 +82,12 @@ def run(command_parts, raise_on_error=True, env=None, capture_output=False, **kw
     try:
         logger.debug("Run: {}".format(cmd))
         env2 = dict(os.environ, **(env or {}))
-        return subprocess.run(command_parts, check=raise_on_error, env=env2, **kwargs)
+        if return_popen:
+            kwargs["universal_newlines"] = universal_newlines
+            popen_cmd = cmd if shell else command_parts
+            return subprocess.Popen(popen_cmd, env=env2, shell=shell, **kwargs)  # nosec
+        else:
+            return subprocess.run(command_parts, check=raise_on_error, env=env2, **kwargs)
     except subprocess.CalledProcessError as exc:
         msg = "Command {} failed with code {}: {}"
         raise D2DockerError(msg.format(cmd, exc.returncode, exc.stderr))
@@ -497,7 +511,7 @@ def wait_for_server(port):
     while True:
         try:
             logger.debug("wait_for_server:url={}".format(url))
-            urllib.request.urlopen(url)
+            urllib.request.urlopen(url)  # nosec
             logger.debug("wait_for_server:ok")
             return True
         except urllib.request.HTTPError as exc:
@@ -529,7 +543,7 @@ def create_core(
         elif version:
             war_url = get_dhis2_war(version)
             logger.info("Download file: {}".format(war_url))
-            urllib.request.urlretrieve(war_url, war_path)
+            urllib.request.urlretrieve(war_url, war_path)  # nosec
         else:
             raise D2DockerError("One option is required: --version | --war")
 
@@ -558,6 +572,32 @@ def dict_remove(d, key):
 
 def dict_merge(d1, d2):
     return {**d1, **d2}
+
+
+def stream_from_popen(popen):
+    for stdout_line in iter(popen.stdout.readline, ""):
+        yield stdout_line
+    popen.stdout.close()
+    popen.stderr.close()
+    return_code = popen.wait()
+
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, "command")
+
+
+def stream_binary_from_popen(popen):
+    while True:
+        data = popen.stdout.read(100_000)
+        if not data:
+            break
+        yield data
+
+    popen.stdout.close()
+    popen.stderr.close()
+    return_code = popen.wait()
+
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, "command")
 
 
 logger = get_logger()

@@ -25,10 +25,13 @@ def run(args):
     utils.run_docker_compose(filter(bool, args), image_name)
 
 
-def get_logs(args):
+def get_stream_logs(args):
     image_name = args.image
     tail_count = args.limit or 10_000
-    res = utils.run_docker_compose(
-        ["logs", "--tail={}".format(tail_count)], data_image=image_name, capture_output=True
+    popen = utils.run_docker_compose(
+        ["logs", "--tail={}".format(tail_count)],
+        data_image=image_name,
+        capture_output=True,
+        return_popen=True,
     )
-    return res.stdout.decode("utf-8")
+    return utils.stream_from_popen(popen)

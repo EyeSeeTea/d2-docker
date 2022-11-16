@@ -8,9 +8,17 @@ from flask_cors import CORS
 from werkzeug.exceptions import HTTPException, BadRequest
 
 from d2_docker import utils
-from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull
+from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull, run_sql
 from d2_docker.commands import copy, rm
-from .api_utils import get_args_from_request, get_container, success, server_error
+from .api_utils import (
+    get_args_from_query_strings,
+    get_args_from_request,
+    get_container,
+    get_timestamp,
+    stream_response,
+    success,
+    server_error,
+)
 from .api_utils import get_auth_headers, get_config
 
 
@@ -47,11 +55,20 @@ def stop_instance():
     return jsonify(dict(status="SUCCESS", container=container))
 
 
-@api.route("/instances/logs", methods=["POST"])
+@api.route("/instances/logs", methods=["GET"])
 def logs_instance():
-    args = get_args_from_request(request)
-    last_logs = logs.get_logs(args)
-    return jsonify(dict(logs=last_logs))
+    args = get_args_from_query_strings(request)
+    logs_stream = logs.get_stream_logs(args)
+    filename = "{}.{}.log".format(args.image, get_timestamp())
+    return stream_response(logs_stream, mimetype="text/plain", filename=filename)
+
+
+@api.route("/instances/db", methods=["GET"])
+def dump_db_instance():
+    args = get_args_from_query_strings(request)
+    db_stream = run_sql.get_stream_db(args.image)
+    filename = "{}.{}.sql.gz".format(args.image, get_timestamp())
+    return stream_response(db_stream, mimetype="application/gzip", filename=filename)
 
 
 @api.route("/instances/commit", methods=["POST"])

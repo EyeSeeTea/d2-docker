@@ -578,7 +578,6 @@ def stream_from_popen(popen):
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line
     popen.stdout.close()
-    popen.stderr.close()
     return_code = popen.wait()
 
     if return_code:
@@ -593,7 +592,6 @@ def stream_binary_from_popen(popen):
         yield data
 
     popen.stdout.close()
-    popen.stderr.close()
     return_code = popen.wait()
 
     if return_code:

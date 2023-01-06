@@ -40,19 +40,19 @@ $ python setup.py install
 First we need to create a core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org](https://releases.dhis2.org/)):
 
 ```
-$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.30 --version=2.30
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --version=2.37.9
 ```
 
 Alternatively, you may directly specify the WAR file:
 
 ```
-$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.30 --war=dhis.war
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --war=dhis.war
 ```
 
 You can add configuration files to folder DHIS2_HOME. A typical example is to add the GEE (Google Earth Engine) credentials:
 
 ```
-$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/tmp/dhis-google-auth.json
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --war=dhis.war --dhis2-home=/tmp/dhis-google-auth.json
 ```
 
 ### Create a base DHIS2 data image
@@ -60,7 +60,7 @@ $ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.30 --war=dhi
 Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or datavalue fileresources) directory to include:
 
 ```
-$ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
+$ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
 
 ### Start a DHIS2 instance
@@ -68,7 +68,7 @@ $ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.30-sierra --
 Start a new container from a _dhis2-data_ base image:
 
 ```
-$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.30-sierra
+$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra
 ```
 
 Some notes:

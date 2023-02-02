@@ -20,6 +20,7 @@ from d2_docker.commands import (
     create,
     upgrade,
     version,
+    shell,
 )
 
 COMMAND_MODULES = [
@@ -40,6 +41,7 @@ COMMAND_MODULES = [
     run_sql,
     create,
     upgrade,
+    shell,
     api,
 ]
 

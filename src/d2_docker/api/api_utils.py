@@ -1,7 +1,8 @@
 import os
 import base64
+from datetime import datetime
 from d2_docker.commands import list_
-from flask import jsonify
+from flask import jsonify, Response
 from dotenv import dotenv_values
 
 
@@ -19,8 +20,11 @@ class Struct(object):
 
 def get_args_from_request(request):
     body = request.get_json()
-    args = Struct(body)
-    return args
+    return Struct(body)
+
+
+def get_args_from_query_strings(request):
+    return Struct(request.args.to_dict())
 
 
 def get_auth_headers(user, password):
@@ -40,6 +44,16 @@ def success():
 def server_error(message, status=500):
     body = jsonify(dict(status="ERROR", error=message))
     return (body, status)
+
+
+def stream_response(iterator, mimetype, filename):
+    response = Response(iterator, mimetype=mimetype)
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
+    return response
+
+
+def get_timestamp():
+    return datetime.today().replace(microsecond=0).isoformat()
 
 
 def get_from_dotenv(name, directories):

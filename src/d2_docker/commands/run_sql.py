@@ -1,3 +1,4 @@
+import subprocess
 from d2_docker import utils
 
 DESCRIPTION = "Run SQL or open interactive session in a d2-docker container"
@@ -43,3 +44,25 @@ def run(args):
             if result.returncode != 0:
                 utils.logger.error("Could not execute SQL")
                 return 1
+
+
+def get_stream_db(image):
+    image_name = image or utils.get_running_image_name()
+    status = utils.get_image_status(image_name)
+
+    if status["state"] != "running":
+        raise utils.D2DockerError("Container must be running to dump database")
+
+    db_container = status["containers"]["db"]
+    cmd_parts = ["docker", "exec", db_container, "pg_dump", "-U", "dhis", "dhis2", "|", "gzip"]
+    cmd = subprocess.list2cmdline(cmd_parts)
+    utils.logger.info("Dump SQL for image: {}".format(cmd))
+
+    popen = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,  # nosec
+    )
+
+    return utils.stream_binary_from_popen(popen)

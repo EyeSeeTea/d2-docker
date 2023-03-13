@@ -27,6 +27,11 @@ On GNU/Linux:
 $ sudo python3 setup.py install
 ```
 
+If you are behind a proxy you must execute the following line to make proxy running installing pip packages:
+```
+sudo -E python3 setup.py install
+```
+
 For Windows, open a terminal as an Administrator and run:
 
 ```

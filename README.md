@@ -27,6 +27,11 @@ On GNU/Linux:
 $ sudo python3 setup.py install
 ```
 
+If you are behind a proxy you must execute the following line to make proxy running installing pip packages:
+```
+sudo -E python3 setup.py install
+```
+
 For Windows, open a terminal as an Administrator and run:
 
 ```
@@ -40,19 +45,19 @@ $ python setup.py install
 First we need to create a core image for a specific version of DHIS2 we want to use (check available versions at [releases.dhis2.org](https://releases.dhis2.org/)):
 
 ```
-$ d2-docker create core eyeseetea/dhis2-core:2.30 --version=2.30
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --version=2.37.9
 ```
 
 Alternatively, you may directly specify the WAR file:
 
 ```
-$ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --war=dhis.war
 ```
 
 You can add configuration files to folder DHIS2_HOME. A typical example is to add the GEE (Google Earth Engine) credentials:
 
 ```
-$ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/tmp/dhis-google-auth.json
+$ d2-docker create core docker.eyeseetea.com/eyeseetea/dhis2-core:2.37.9 --war=dhis.war --dhis2-home=/tmp/dhis-google-auth.json
 ```
 
 ### Create a base DHIS2 data image
@@ -60,7 +65,7 @@ $ d2-docker create core eyeseetea/dhis2-core:2.30 --war=dhis.war --dhis2-home=/t
 Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or datavalue fileresources) directory to include:
 
 ```
-$ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
+$ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
 
 ### Start a DHIS2 instance
@@ -68,7 +73,7 @@ $ d2-docker create data eyeseetea/dhis2-data:2.30-sierra --sql=sierra-db.sql.gz 
 Start a new container from a _dhis2-data_ base image:
 
 ```
-$ d2-docker start eyeseetea/dhis2-data:2.30-sierra
+$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra
 ```
 
 Some notes:
@@ -122,6 +127,12 @@ Note that you should not change the catalina connector port (8080, by default). 
         />
     ...
 />
+```
+
+### Run terminal shell in DHIS2 core container
+
+```
+$ d2-docker shell eyeseetea/dhis2-data:2.30-sierra
 ```
 
 ### Show logs for running containers
@@ -232,7 +243,7 @@ eyeseetea/dhis2-data 2.30-sierra4 d3a374301234 1 minutes ago 106MB
 Lists _dhis2-data_ images present in the local repository and the container status:
 
 ```
-$ d2-docker.py list
+$ d2-docker list
 eyeseetea/dhis2-data:2.30-sierra RUNNING[port=8080]
 eyeseetea/dhis2-data:2.30-vietnam STOPPED
 eyeseetea/dhis2-data:2.30-cambodia STOPPED
@@ -243,7 +254,13 @@ eyeseetea/dhis2-data:2.30-cambodia STOPPED
 Run a SQL file or open an interactive postgres session in a running Dhis2 instance:
 
 ```
-$ d2-docker.py run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
+$ d2-docker run-sql [-i eyeseetea/dhis2-data:2.30-sierra] some-query.sql
+```
+
+### Dump current database to SQL file in container
+
+```
+$ d2-docker run-sql [-i eyeseetea/dhis2-data:2.30-sierra] --dump
 ```
 
 ### Upgrade DHIS2 version
@@ -338,11 +355,13 @@ $ curl  -H "Content-Type: application/json" -sS http://localhost:5000/instances/
 
 Currently, there are no API docs nor params validations. For each command `src/d2_docker/commands/COMMAND.py`, check function `setup` to see the supported parameters.
 
-The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file (`.flaskenv.secret`):
+The API server provides a proxy to Harbor to bypass CORS issues. Configure first the harbor authentication file:
 
 ```
-$ cp .flaskenv.secret.template .flaskenv.secret
-$ # edit .flaskenv.secret and restart flask server
+$ cp flaskenv.secret.template flaskenv.secret
+$ # Edit flaskenv.secret
+$ mkdir -p ~/.config/d2-docker/
+$ cp flaskenv.secret ~/.config/d2-docker/
 
 $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/quotas/1' | jq
 ```

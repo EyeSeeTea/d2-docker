@@ -5,12 +5,20 @@ from flask import Flask, jsonify, request
 from flask import Response, stream_with_context
 from flask_cors import CORS
 
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, BadRequest
 
 from d2_docker import utils
-from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull
+from d2_docker.commands import version, list_, start, stop, logs, commit, push, pull, run_sql
 from d2_docker.commands import copy, rm
-from .api_utils import get_args_from_request, get_container, success, server_error
+from .api_utils import (
+    get_args_from_query_strings,
+    get_args_from_request,
+    get_container,
+    get_timestamp,
+    stream_response,
+    success,
+    server_error,
+)
 from .api_utils import get_auth_headers, get_config
 
 
@@ -47,11 +55,20 @@ def stop_instance():
     return jsonify(dict(status="SUCCESS", container=container))
 
 
-@api.route("/instances/logs", methods=["POST"])
+@api.route("/instances/logs", methods=["GET"])
 def logs_instance():
-    args = get_args_from_request(request)
-    last_logs = logs.get_logs(args)
-    return jsonify(dict(logs=last_logs))
+    args = get_args_from_query_strings(request)
+    logs_stream = logs.get_stream_logs(args)
+    filename = "{}.{}.log".format(args.image, get_timestamp())
+    return stream_response(logs_stream, mimetype="text/plain", filename=filename)
+
+
+@api.route("/instances/db", methods=["GET"])
+def dump_db_instance():
+    args = get_args_from_query_strings(request)
+    db_stream = run_sql.get_stream_db(args.image)
+    filename = "{}.{}.sql.gz".format(args.image, get_timestamp())
+    return stream_response(db_stream, mimetype="application/gzip", filename=filename)
 
 
 @api.route("/instances/commit", methods=["POST"])
@@ -89,25 +106,34 @@ def rm_instance():
     return success()
 
 
+def get_request_json(request):
+    try:
+        return request.json
+    except BadRequest:
+        return None
+
+
 def proxy_request_to_url(request, url, new_headers=None):
     base_headers = utils.dict_remove(dict(request.headers), "Host")
     headers = utils.dict_merge(base_headers, new_headers or {})
     method = request.method.lower()
     http_request = getattr(requests, method)
+    request_json = get_request_json(request)
 
-    if request.json:
-        forward_request = http_request(url, json=request.json, headers=headers)
+    if request_json:
+        forward_request = http_request(url, json=request_json, headers=headers)
     elif request.form:
         forward_request = http_request(url, data=request.form.to_dict(), headers=headers)
     else:
         forward_request = http_request(url, headers=headers)
 
     response = stream_with_context(forward_request.iter_content())
-    return Response(response, content_type=request.content_type)
+    return Response(response, content_type=forward_request.headers.get("Content-Type"))
 
 
 @api.route("/harbor/<path:url>", methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(url):
+    config = get_config()
     user = config.get("HARBOR_USER")
     password = config.get("HARBOR_PASSWORD")
     if not user or not password:
@@ -129,12 +155,6 @@ def internal_error(error):
     return server_error(contents, status=status)
 
 
-config = get_config()
-
-
 def run(args):
-    api.run(host=args.host or "0.0.0.0", port=args.port or 5000)
-
-
-if __name__ == "__main__":
-    run()
+    get_config()
+    api.run(host=args.host or "127.0.0.1", port=args.port or 5000)

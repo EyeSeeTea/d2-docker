@@ -67,7 +67,7 @@ services:
             - data:/volume-data
 
 volumes:
-  pgdata:
-  home:
-  data:
-  empty:
+    pgdata:
+    home:
+    data:
+    empty:

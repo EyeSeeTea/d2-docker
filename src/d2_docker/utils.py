@@ -36,6 +36,10 @@ def get_dhis2_war(version):
     return releases_base_url + "/" + path
 
 
+def docker_build(directory, tag):
+    return run(["docker", "build", "--platform", "linux/amd64", "--tag", tag, directory])
+
+
 def get_logger():
     logger_ = logging.getLogger("root")
     formatter = logging.Formatter("[d2-docker:%(levelname)s] %(message)s")
@@ -360,7 +364,7 @@ def build_image_from_source(docker_dir, source_image, dest_image):
         logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
         export_data_from_running_containers(source_image, status["containers"], temp_dir)
-        run(["docker", "build", temp_dir, "--tag", dest_image])
+        docker_build(temp_dir, dest_image)
 
 
 def copy_image(docker_dir, source_image, dest_image):
@@ -372,7 +376,7 @@ def copy_image(docker_dir, source_image, dest_image):
         logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
         export_data_from_image(source_image, temp_dir)
-        run(["docker", "build", temp_dir, "--tag", dest_image])
+        docker_build(temp_dir, dest_image)
 
 
 def build_image_from_directory(docker_dir, data_dir, dest_image_name):
@@ -386,7 +390,7 @@ def build_image_from_directory(docker_dir, data_dir, dest_image_name):
 
         logger.info("Copy data: {} -> {}".format(data_dir, temp_dir))
         copytree(data_dir, temp_dir)
-        run(["docker", "build", temp_dir, "--tag", dest_image_name])
+        docker_build(temp_dir, dest_image_name)
 
 
 def export_data_from_image(source_image, dest_path):
@@ -555,7 +559,7 @@ def create_core(
             logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
             shutil.copy(source_home_file, dhis2_home_path)
 
-        run(["docker", "build", build_dir, "--tag", image])
+        docker_build(build_dir, image)
 
 
 def get_config_file(filename):

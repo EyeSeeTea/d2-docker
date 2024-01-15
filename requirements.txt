@@ -1,3 +1,4 @@
 Flask==2.0.3
 python-dotenv
 Flask_Cors==3.0.10
+Werkzeug==2.3.7

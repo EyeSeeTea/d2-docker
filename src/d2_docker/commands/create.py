@@ -20,7 +20,7 @@ def setup(parser):
     data_parser.add_argument("--sql", help="Supported sql / sql.gz / dump formats")
     data_parser.add_argument("--apps-dir", help="Directory containing Dhis2 apps")
     data_parser.add_argument("--documents-dir", help="Directory containing Dhis2 documents")
-    data_parser.add_argument("--datavalues-dir", help="Directory containing Dhis2 datavalues(file resources)")
+    data_parser.add_argument("--datavalues-dir", help="Directory containing Dhis2 data values")
 
 
 def run(args):
@@ -71,4 +71,4 @@ def create_data(args):
             utils.logger.debug("Copy DB file:  {} -> {}".format(args.sql, db_path))
             shutil.copy(args.sql, db_path)
 
-        utils.run(["docker", "build", build_dir, "--tag", image])
+        utils.docker_build(build_dir, image)

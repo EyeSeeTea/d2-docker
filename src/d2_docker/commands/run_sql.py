@@ -47,7 +47,7 @@ def run(args):
             utils.run(cmd, raise_on_error=False)
         else:
             utils.logger.info("Run SQL for image {}".format(image_name))
-            if os.path.isdir(sql_file):
+            if sql_file is not None and os.path.isdir(sql_file):
                 sql_files = [os.path.join(sql_file, f) for f in os.listdir(sql_file) if f.endswith(".sql")]
                 for sql_file in sql_files:
                     run_sql_file(sql_file, db_container, image_name)

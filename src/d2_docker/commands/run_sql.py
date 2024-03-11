@@ -17,7 +17,8 @@ def setup(parser):
     parser.add_argument("--dump", action="store_true", help="Dump SQL")
 
 
-def run_sql_file(sql_file, db_container):
+def run_sql_file(sql_file, db_container, image_name):
+    utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
     psql_cmd = ["psql", "-U", "dhis", "dhis2"]
     cmd = ["docker", "exec", ("-i" if sql_file else "-it"), db_container, *psql_cmd]
     stdin = open(sql_file, encoding="utf-8") if sql_file else None
@@ -45,14 +46,13 @@ def run(args):
             utils.logger.info("Dump SQL for image {}".format(image_name))
             utils.run(cmd, raise_on_error=False)
         else:
-            if sql_file:
-                utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
+            utils.logger.info("Run SQL for image {}".format(image_name))
             if os.path.isdir(sql_file):
                 sql_files = [os.path.join(sql_file, f) for f in os.listdir(sql_file) if f.endswith(".sql")]
                 for sql_file in sql_files:
-                    run_sql_file(sql_file, db_container)
+                    run_sql_file(sql_file, db_container, image_name)
             else:
-                run_sql_file(sql_file, db_container)
+                run_sql_file(sql_file, db_container, image_name)
 
 
 def get_stream_db(image):

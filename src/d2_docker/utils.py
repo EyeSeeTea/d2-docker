@@ -246,6 +246,7 @@ def run_docker_compose(
     port=None,
     load_from_data=True,
     post_sql_dir=None,
+    debug_port=None,
     db_port=None,
     bind_ip=None,
     scripts_dir=None,
@@ -273,7 +274,7 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
-        ("DHIS2_CORE_DEBUG_PORT", str(port - 1000)) if port else None,
+        ("DHIS2_CORE_DEBUG_PORT", "{}:8000".format((debug_port) if debug_port else 0)),
         ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),

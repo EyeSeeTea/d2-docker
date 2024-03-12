@@ -15,7 +15,7 @@ services:
             - "/etc/timezone:/etc/timezone:ro"
             - "/etc/localtime:/etc/localtime:ro"
         environment:
-            CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH}"
+            CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH} -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n"
             JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
@@ -25,6 +25,8 @@ services:
         restart: unless-stopped
         depends_on:
             - "db"
+        ports:
+            - "${DHIS2_CORE_DEBUG_PORT:-7080}:8000"
     db:
         image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
         shm_size: 1gb

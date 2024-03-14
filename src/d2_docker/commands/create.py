@@ -59,8 +59,8 @@ def get_core_build_dir(args):
 
 
 def get_major_version(s):
-    """Return major DHIS2 version. Ex: "2.38.4" -> 38. "40.1.2" -> 40"""
-    match = re.search(r"(\d+\.\d+).", s)
+    """Return major DHIS2 version. Ex: "2.38.4" -> "38". "40.1.2" -> 40."""
+    match = re.search(r"(\d+\.\d+)", s)
     if not match: return None
     parts = [int(s) for s in match.groups()[0].split(".")]
     return parts[1] if parts[0] == 2 else parts[0]

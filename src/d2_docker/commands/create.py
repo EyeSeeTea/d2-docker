@@ -1,5 +1,6 @@
 import os
 import shutil
+import re
 
 from d2_docker import utils
 
@@ -33,14 +34,36 @@ def run(args):
 
 
 def create_core(args):
-    docker_dir = utils.get_docker_directory("core", args)
+    docker_build_dir = get_core_build_dir(args)
+
     utils.create_core(
-        docker_dir=docker_dir,
+        docker_dir=docker_build_dir,
         image=args.core_image,
         version=args.version,
         war=args.war,
         dhis2_home_paths=args.dhis2_home,
     )
+
+def get_core_build_dir(args):
+    base_dir = utils.get_docker_directory("core", args)
+    major_version = get_major_version(args.version or args.war)
+    utils.logger.info("DHIS2 major version: {}".format(major_version or "-"))
+
+    if not major_version:
+        raise utils.D2DockerError("Cannot get version from --version or --war")
+    else:
+        if major_version >= 41:
+            return os.path.join(base_dir, "java-17")
+        else:
+            return os.path.join(base_dir, "java-11")
+
+
+def get_major_version(s):
+    """Return major DHIS2 version. Ex: "2.38.4" -> "38". "40.1.2" -> 40."""
+    match = re.search(r"(\d+\.\d+)", s)
+    if not match: return None
+    parts = [int(s) for s in match.groups()[0].split(".")]
+    return parts[1] if parts[0] == 2 else parts[0]
 
 
 def create_data(args):

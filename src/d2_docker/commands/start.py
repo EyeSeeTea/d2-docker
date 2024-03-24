@@ -26,7 +26,8 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--db-port", metavar="PORT", help="Export DB Postgres port")
+    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
+    parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
@@ -100,6 +101,7 @@ def start(args):
             core_image=core_image,
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
+            debug_port=args.debug_port,
             db_port=args.db_port,
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,

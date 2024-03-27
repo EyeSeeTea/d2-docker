@@ -433,7 +433,7 @@ def export_database(image_name, db_path):
     mkdir_p(os.path.dirname(db_path))
 
     with open(db_path, "wb") as db_file:
-        pg_dump = "pg_dump -U dhis dhis2 | gzip"
+        pg_dump = "set -o pipefail; pg_dump -U dhis dhis2 | gzip"
         # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
         cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
         run_docker_compose(cmd, image_name, stdout=db_file)

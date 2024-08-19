@@ -52,8 +52,8 @@ if [ "$(id -u)" = "0" ]; then
     wait_for_data_container_to_finish_copy
 
     mkdir -p $DATA_DIR/apps
-    chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR $DHIS2HOME
-    chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR $DHIS2HOME
+    chown -R tomcat:tomcat $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
+    chmod -R u=rwX,g=rX,o-rwx $TOMCATDIR $DATA_DIR/apps $DHIS2HOME
 
     # Launch the given command as tomcat, in two ways for backwards compatibility:
     if [ "$(grep '^ID=' /etc/os-release)" = "ID=alpine" ]; then

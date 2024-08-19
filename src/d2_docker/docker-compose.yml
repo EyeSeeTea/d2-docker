@@ -25,6 +25,7 @@ services:
         restart: unless-stopped
         depends_on:
             - "db"
+            - "data"
     db:
         image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
         shm_size: 1gb

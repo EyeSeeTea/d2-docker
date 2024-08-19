@@ -21,8 +21,9 @@ DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 ROOT_PATH = os.environ.get("ROOT_PATH")
 
 
-def get_dhis2_war(version):
-    match = re.match(r"^(\d+.\d+)", version)
+def get_dhis2_war_url(version):
+    match = (re.match(r"^(\d+.\d+)", version) if version.startswith("2.")
+        else re.match(r"^(\d+)", version))
     if not match:
         raise D2DockerError("Invalid version: {}".format(version))
     short_version = match[1]
@@ -546,7 +547,7 @@ def create_core(
             logger.debug("Copy WAR file: {} -> {}".format(war, war_path))
             shutil.copy(war, war_path)
         elif version:
-            war_url = get_dhis2_war(version)
+            war_url = get_dhis2_war_url(version)
             logger.info("Download file: {}".format(war_url))
             urllib.request.urlretrieve(war_url, war_path)  # nosec
         else:

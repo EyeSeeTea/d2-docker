@@ -21,8 +21,9 @@ DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 ROOT_PATH = os.environ.get("ROOT_PATH")
 
 
-def get_dhis2_war(version):
-    match = re.match(r"^(\d+.\d+)", version)
+def get_dhis2_war_url(version):
+    match = (re.match(r"^(\d+.\d+)", version) if version.startswith("2.")
+        else re.match(r"^(\d+)", version))
     if not match:
         raise D2DockerError("Invalid version: {}".format(version))
     short_version = match[1]
@@ -433,7 +434,7 @@ def export_database(image_name, db_path):
     mkdir_p(os.path.dirname(db_path))
 
     with open(db_path, "wb") as db_file:
-        pg_dump = "pg_dump -U dhis dhis2 | gzip"
+        pg_dump = "set -o pipefail; pg_dump -U dhis dhis2 | gzip"
         # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
         cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
         run_docker_compose(cmd, image_name, stdout=db_file)
@@ -546,7 +547,7 @@ def create_core(
             logger.debug("Copy WAR file: {} -> {}".format(war, war_path))
             shutil.copy(war, war_path)
         elif version:
-            war_url = get_dhis2_war(version)
+            war_url = get_dhis2_war_url(version)
             logger.info("Download file: {}".format(war_url))
             urllib.request.urlretrieve(war_url, war_path)  # nosec
         else:

@@ -255,6 +255,7 @@ def run_docker_compose(
     dhis2_auth=None,
     tomcat_server=None,
     postgis_version=None,
+    enable_postgres_queries_logging=False,
     **kwargs,
 ):
     """
@@ -288,6 +289,7 @@ def run_docker_compose(
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH or "."),
+        ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

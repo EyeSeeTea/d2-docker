@@ -1,3 +1,4 @@
+import atexit
 import contextlib
 import subprocess
 import logging
@@ -7,6 +8,7 @@ import shutil
 import socket
 import tempfile
 import time
+import yaml
 import urllib.request
 from distutils import dir_util
 from pathlib import Path
@@ -18,8 +20,8 @@ PROJECT_NAME_PREFIX = "d2-docker"
 DHIS2_DATA_IMAGE = "dhis2-data"
 IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
-ROOT_PATH = os.environ.get("ROOT_PATH")
-
+PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
+ROOT_PATH = os.environ.get("ROOT_PATH") or PROJECT_DIR
 
 def get_dhis2_war_url(version):
     match = (re.match(r"^(\d+.\d+)", version) if version.startswith("2.")
@@ -275,7 +277,7 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
-        ("DHIS2_CORE_DEBUG_PORT", "{}:8000".format((debug_port) if debug_port else 0)),
+        ("DHIS2_CORE_DEBUG_PORT", "{}:8000".format(debug_port)) if debug_port else None,
         ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
@@ -290,13 +292,38 @@ def run_docker_compose(
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)
-        ("ROOT_PATH", ROOT_PATH or "."),
+        ("ROOT_PATH", ROOT_PATH),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
-    yaml_path = os.path.join(os.path.dirname(__file__), "docker-compose.yml")
-    return run(["docker-compose", "-f", yaml_path, "-p", project_name, *args], env=env, **kwargs)
+    def process_yaml(data):
+        if "DHIS2_CORE_DEBUG_PORT" not in env:
+            core = data["services"]["core"]
+            core["ports"] = [port for port in core["ports"] if "DHIS2_CORE_DEBUG_PORT" not in port]
 
+        return data
+
+    temp_compose = build_docker_compose(process_yaml)
+
+    return run(["docker-compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+
+
+def build_docker_compose(process_yaml):
+    docker_compose_path = os.path.join(ROOT_PATH, "docker-compose.yml")
+
+    with open(docker_compose_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    data_processed = process_yaml(data)
+
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as temp_compose:
+        yaml_contents = yaml.dump(data_processed)
+        temp_compose.write(yaml_contents)
+
+    atexit.register(lambda: os.remove(temp_compose.name))
+    logger.debug("Docker compose file: {}".format(temp_compose.name))
+
+    return temp_compose
 
 def get_config_path(default_filename, path):
     return os.path.abspath(path) if path else get_config_file(default_filename)
@@ -305,7 +332,7 @@ def get_config_path(default_filename, path):
 def get_absdir_for_docker_volume(directory):
     """Return absolute path for given directory, with fallback to empty directory."""
     if not directory:
-        empty_directory = os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty")
+        empty_directory = os.path.join(ROOT_PATH, ".empty")
         return empty_directory
     elif not Path(directory).is_dir():
         raise D2DockerError("Should be a directory: {}".format(directory))
@@ -316,7 +343,7 @@ def get_absdir_for_docker_volume(directory):
 def get_absfile_for_docker_volume(file_path):
     """Return absolute path for given file, with fallback to empty file."""
     if not file_path:
-        return os.path.join(ROOT_PATH or os.path.dirname(__file__), ".empty", "placeholder")
+        return os.path.join(ROOT_PATH, ".empty", "placeholder")
     else:
         return os.path.abspath(file_path)
 
@@ -342,9 +369,8 @@ def get_item_type(name):
 
 def get_docker_directory(image_type, args=None):
     """Return docker directory for dhis2-data."""
-    script_dir = os.path.dirname(os.path.realpath(__file__))
     subdir = "images/dhis2-core" if image_type == "core" else "images/dhis2-data"
-    basedir = args and args.dhis2_docker_images_directory or script_dir
+    basedir = args and args.dhis2_docker_images_directory or PROJECT_DIR
     docker_dir = os.path.join(basedir, subdir)
 
     if not Path(docker_dir).is_dir():

@@ -17,10 +17,11 @@ def setup(parser):
 def run(args):
     source = args.source
     docker_dir = utils.get_docker_directory("data", args)
-    copy(source, args.destinations, docker_dir)
+    temp_dir = utils.get_temp_base_directory(args)
+    copy(source, args.destinations, docker_dir, temp_dir)
 
 
-def copy(source, destinations, docker_dir):
+def copy(source, destinations, docker_dir, temp_dir=""):
     logger = utils.logger
     source_type = utils.get_item_type(source)
     logger.debug("Source {} has type: {}".format(source, source_type))
@@ -31,11 +32,11 @@ def copy(source, destinations, docker_dir):
         logger.info("Copying: {}:{} -> {}:{}".format(source_type, source, dest_type, dest))
 
         if source_type == "docker-image" and dest_type == "docker-image":
-            utils.copy_image(docker_dir, source, dest)
+            utils.copy_image(docker_dir, source, dest, temp_dir)
         elif source_type == "docker-image" and dest_type == "folder":
             utils.export_data_from_image(source, dest)
         elif source_type == "folder" and dest_type == "docker-image":
-            utils.build_image_from_directory(docker_dir, source, dest)
+            utils.build_image_from_directory(docker_dir, source, dest, temp_dir)
         elif source_type == "folder" and dest_type == "folder":
             utils.copytree(source, dest)
         else:

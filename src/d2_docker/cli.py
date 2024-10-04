@@ -59,6 +59,11 @@ def get_parser():
         default="INFO",
         help="Run command with the given log level",
     )
+    parser.add_argument(
+        "--temp-directory",
+        metavar="DIRECTORY",
+        help="Directory to store temporary files",
+    )
     subparsers = parser.add_subparsers(help="Subcommands", dest="command")
 
     for command_module in COMMAND_MODULES:

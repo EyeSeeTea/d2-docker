@@ -352,13 +352,32 @@ def get_docker_directory(image_type, args=None):
         return docker_dir
 
 
-def build_image_from_source(docker_dir, source_image, dest_image):
+def get_temp_base_directory(args):
+    """Check if the argument --temp-directory is a valid directory and return its value.
+    Args:
+        args (Namespace): ArgumentParser Namespace.
+    Raises:
+        D2DockerError: If the directory does not exist.
+    Returns:
+        temp_dir_base (str): --temp-directory value.
+    """
+
+    temp_dir_base: str = str(args.temp_directory)
+
+    if not Path(temp_dir_base).is_dir():
+        raise D2DockerError(f"Temporal base directory not found: {temp_dir_base}")
+
+    logger.debug("Temporal directories base: %s", temp_dir_base)
+    return temp_dir_base
+
+
+def build_image_from_source(docker_dir, source_image, dest_image, temp_dir=""):
     """Build a docker image from source local directory."""
     status = get_image_status(source_image)
     if status["state"] != "running":
         raise D2DockerError("Container must be running to build image")
 
-    with tempfile.TemporaryDirectory() as temp_dir_root:
+    with tempfile.TemporaryDirectory(dir=temp_dir) as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
 
@@ -368,9 +387,9 @@ def build_image_from_source(docker_dir, source_image, dest_image):
         docker_build(temp_dir, dest_image)
 
 
-def copy_image(docker_dir, source_image, dest_image):
+def copy_image(docker_dir, source_image, dest_image, temp_dir=""):
     """Build a docker image using another one as template."""
-    with tempfile.TemporaryDirectory() as temp_dir_root:
+    with tempfile.TemporaryDirectory(dir=temp_dir) as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
 
@@ -380,9 +399,9 @@ def copy_image(docker_dir, source_image, dest_image):
         docker_build(temp_dir, dest_image)
 
 
-def build_image_from_directory(docker_dir, data_dir, dest_image_name):
+def build_image_from_directory(docker_dir, data_dir, dest_image_name, temp_dir=""):
     """Build docker image from data (db + apps + documents) directory."""
-    with tempfile.TemporaryDirectory() as temp_dir_root:
+    with tempfile.TemporaryDirectory(dir=temp_dir) as temp_dir_root:
         logger.info("Create temporal directory: {}".format(temp_dir_root))
         temp_dir = os.path.join(temp_dir_root, "contents")
 
@@ -504,8 +523,8 @@ def stop_docker_on_interrupt(data_image, core_image):
 
 
 @contextlib.contextmanager
-def temporal_build_directory(source_dir):
-    with tempfile.TemporaryDirectory() as build_dir:
+def temporal_build_directory(source_dir, temp_dir=""):
+    with tempfile.TemporaryDirectory(dir=temp_dir) as build_dir:
         logger.debug("Temporal directory: {}".format(build_dir))
         copytree(source_dir, build_dir)
         yield build_dir

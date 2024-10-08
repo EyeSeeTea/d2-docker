@@ -21,7 +21,7 @@ def run(args):
     copy(source, args.destinations, docker_dir, temp_dir)
 
 
-def copy(source, destinations, docker_dir, temp_dir=""):
+def copy(source, destinations, docker_dir, temp_dir: str | None = None):
     logger = utils.logger
     source_type = utils.get_item_type(source)
     logger.debug("Source {} has type: {}".format(source, source_type))

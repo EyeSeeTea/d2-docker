@@ -33,6 +33,7 @@ def run(args):
     from_version = args.from_version or source_image.version
     to_version = args.to_version or dest_image.version
     versions = iter_versions(from_version, to_version)
+    temp_dir = utils.get_temp_base_directory(args)
     utils.logger.info("Upgrade versions: {}".format(" -> ".join(versions)))
 
     for version in versions[1:]:
@@ -47,6 +48,7 @@ def run(args):
             dest_image=dest_image_with_version.get(),
             port=args.port,
             keep_running=keep_running,
+            temp_dir=temp_dir,
         )
         source_image = source_image.with_version(version)
 
@@ -54,7 +56,7 @@ def run(args):
 
 
 def upgrade_to_version(
-    *, version, source_image, dest_image, core_image, port, migrations_dir, keep_running
+    *, version, source_image, dest_image, core_image, port, migrations_dir, keep_running, temp_dir
 ):
     utils.logger.info("Upgrade: {} -> {}".format(source_image, dest_image))
     version_path = os.path.join(migrations_dir, version) if migrations_dir else None
@@ -76,7 +78,7 @@ def upgrade_to_version(
 
     # Create data image
     data_docker_dir = utils.get_docker_directory("data")
-    utils.copy_image(data_docker_dir, source_image, dest_image)
+    utils.copy_image(data_docker_dir, source_image, dest_image, temp_dir)
 
     # Start
     final_port = port or utils.get_free_port()
@@ -98,7 +100,7 @@ def upgrade_to_version(
             raise utils.D2DockerError("Error waiting for DHIS2 instance to be active")
 
         # Commit
-        utils.build_image_from_source(data_docker_dir, dest_image, dest_image)
+        utils.build_image_from_source(data_docker_dir, dest_image, dest_image, temp_dir)
 
     # Stop
     if not keep_running:

@@ -54,6 +54,11 @@ def get_parser():
         help="Directory containing dhis2-data docker source code",
     )
     parser.add_argument(
+        "--temp-directory",
+        metavar="DIRECTORY",
+        help="Directory to store temporary files",
+    )
+    parser.add_argument(
         "--log-level",
         metavar="NOTSET | DEBUG | INFO | WARNING | ERROR | CRITICAL",
         default="INFO",

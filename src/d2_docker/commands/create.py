@@ -69,9 +69,10 @@ def get_major_version(s):
 def create_data(args):
     image = args.data_image
     docker_dir = utils.get_docker_directory("data", args)
+    temp_dir = utils.get_temp_base_directory(args)
     utils.logger.info("Create data image: {}".format(image))
 
-    with utils.temporal_build_directory(docker_dir) as build_dir:
+    with utils.temporal_build_directory(docker_dir, temp_dir) as build_dir:
         db_path = os.path.join(build_dir, "db/")
         utils.mkdir_p(db_path)
         if args.apps_dir:

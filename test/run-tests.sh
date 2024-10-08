@@ -38,7 +38,7 @@ d2-docker commit tokland/dhis2-data:2.30-sierra
 d2-docker export image.tgz
 
 d2-docker stop tokland/dhis2-data:2.30-sierra
-d2-docker copy tokland/dhis2-data:2.30-sierra data-sierra tokland/dhis2-data:2.30-sierra2
+d2-docker --temp-directory='./custom-temp-base' copy tokland/dhis2-data:2.30-sierra data-sierra tokland/dhis2-data:2.30-sierra2
 d2-docker import image.tgz
 d2-docker start -d --run-sql=sql image.tgz
 wait_for_dhis2

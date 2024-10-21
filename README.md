@@ -6,7 +6,7 @@
 - Docker compose >= 1.17
 - RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
-On Ubuntu 18.04:
+On Ubuntu 22.04:
 
 ```
 $ sudo apt install docker.io docker-compose python3 python3-setuptools

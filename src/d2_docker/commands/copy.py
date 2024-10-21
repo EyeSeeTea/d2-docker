@@ -1,3 +1,5 @@
+from typing import Optional
+
 from d2_docker import utils
 
 DESCRIPTION = "Copy databases from/to docker containers"
@@ -21,7 +23,7 @@ def run(args):
     copy(source, args.destinations, docker_dir, temp_dir)
 
 
-def copy(source, destinations, docker_dir, temp_dir: str | None = None):
+def copy(source, destinations, docker_dir, temp_dir: Optional[str] = None):
     logger = utils.logger
     source_type = utils.get_item_type(source)
     logger.debug("Source {} has type: {}".format(source, source_type))

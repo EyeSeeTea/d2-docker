@@ -6,7 +6,7 @@
 - Docker compose >= 1.17
 - RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
-On Ubuntu 18.04:
+On Ubuntu 22.04:
 
 ```
 $ sudo apt install docker.io docker-compose python3 python3-setuptools
@@ -91,6 +91,7 @@ Some notes:
 - Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
+- Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
 
 #### Custom DHIS2 dhis.conf
 

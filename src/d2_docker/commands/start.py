@@ -26,7 +26,8 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--db-port", metavar="PORT", help="Export DB Postgres port")
+    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
+    parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
@@ -38,6 +39,8 @@ def setup(parser):
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
+    parser.add_argument("--enable-postgres-queries-logging", action="store_true",
+                        help="Enable Postgres queries logging")
 
 
 def run(args):
@@ -100,6 +103,7 @@ def start(args):
             core_image=core_image,
             load_from_data=override_containers,
             post_sql_dir=args.run_sql,
+            debug_port=args.debug_port,
             db_port=args.db_port,
             scripts_dir=args.run_scripts,
             deploy_path=deploy_path,
@@ -108,6 +112,7 @@ def start(args):
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
+            enable_postgres_queries_logging=args.enable_postgres_queries_logging,
         )
 
     if args.detach:

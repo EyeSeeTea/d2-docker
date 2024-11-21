@@ -338,6 +338,15 @@ Create a dockerized d2-docker:
 $ bash build-docker-container.sh
 ```
 
+## Debug SQL queries
+
+By default, d2-docker logs all SQL queries executed (one file per weekday). Example:
+
+```
+$ db_container="d2-docker-docker-eyeseetea-com-samaritans-40-4-0-sp-cpr-test-db-1"
+$ docker exec -it "$db_container" tail -f /var/lib/postgresql/data/log/queries-Thu.log
+```
+
 ### API Server
 
 Start Flask server in development mode:

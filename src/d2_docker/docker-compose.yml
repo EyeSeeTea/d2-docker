@@ -41,7 +41,7 @@ services:
             POSTGRES_DB: dhis2
             POSTGRES_USER: dhis
             POSTGRES_PASSWORD: dhis
-        command: "postgres -c max_locks_per_transaction=100 -c max_connections=250 -c shared_buffers=3200MB -c work_mem=24MB -c maintenance_work_mem=1024MB -c effective_cache_size=8000MB -c checkpoint_completion_target=0.8 -c synchronous_commit=off -c wal_writer_delay=10000ms -c random_page_cost=1.1 -c max_locks_per_transaction=100 -c temp_buffers=16MB -c track_activity_query_size=8192 -c jit=off"
+        command: "postgres -c max_locks_per_transaction=100 -c max_connections=250 -c shared_buffers=3200MB -c work_mem=24MB -c maintenance_work_mem=1024MB -c effective_cache_size=8000MB -c checkpoint_completion_target=0.8 -c synchronous_commit=off -c wal_writer_delay=10000ms -c random_page_cost=1.1 -c max_locks_per_transaction=100 -c temp_buffers=16MB -c track_activity_query_size=8192 -c jit=off ${PSQL_ENABLE_QUERY_LOGS--c logging_collector=on -c log_statement=all -c log_filename=queries-%a.log}"
         restart: unless-stopped
         ports:
             - "${DB_PORT}"

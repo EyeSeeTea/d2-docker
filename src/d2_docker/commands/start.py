@@ -39,6 +39,8 @@ def setup(parser):
     parser.add_argument("--deploy-path", type=str, help="Set Tomcat context.path")
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
+    parser.add_argument("--enable-postgres-queries-logging", action="store_true",
+                        help="Enable Postgres queries logging")
 
 
 def run(args):
@@ -110,6 +112,7 @@ def start(args):
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
+            enable_postgres_queries_logging=args.enable_postgres_queries_logging,
         )
 
     if args.detach:

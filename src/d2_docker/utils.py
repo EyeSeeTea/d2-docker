@@ -405,7 +405,7 @@ def get_temp_base_directory(args):
     return temp_base_dir
 
 
-def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Optional[str] = None):
+def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Optional[str] = None, folders=None):
     """Build a docker image from source local directory."""
     status = get_image_status(source_image)
     if status["state"] != "running":
@@ -417,7 +417,7 @@ def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Opti
 
         logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
-        export_data_from_running_containers(source_image, status["containers"], temp_dir)
+        export_data_from_running_containers(source_image, status["containers"], temp_dir, folders=folders)
         docker_build(temp_dir, dest_image)
 
 
@@ -461,21 +461,36 @@ def export_data_from_image(source_image, dest_path):
     finally:
         run(["docker", "rm", "-v", container_id])
 
+# https://github.com/dhis2/dhis2-core/blob/master/dhis-2/dhis-api/src/main/java/org/hisp/dhis/fileresource/FileResourceDomain.java#L35
 
-def export_data_from_running_containers(image_name, containers, destination):
+default_folders = [
+    "dataValue",
+    "pushAnalysis",
+    "document",
+    "messageAttachment",
+    "userAvatar",
+    "organisationUnit",
+    "icon",
+    "jobData"
+]
+
+def export_data_from_running_containers(image_name, containers, destination, folders=None):
     """Export data (db + apps + documents) from a running Docker container to some folder."""
     logger.info("Copy Dhis2 apps")
     mkdir_p(destination)
 
+    if folders is None:
+        folders = default_folders
+
     # Note: source files/ folders may not exists
-    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
-    run(["docker", "cp", apps_source, destination], raise_on_error=False)
 
-    documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
-    run(["docker", "cp", documents_source, destination], raise_on_error=False)
+    def copy(folder):
+        logger.info("Include folder: {}".format(folder))
+        source = "{}:/DHIS2_home/files/{}/".format(containers["core"], folder)
+        run(["docker", "cp", source, destination], raise_on_error=False)
 
-    datavalues_source = "{}:/DHIS2_home/files/dataValue/".format(containers["core"])
-    run(["docker", "cp", datavalues_source, destination], raise_on_error=False)
+    for folder in folders:
+        copy(folder)
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)

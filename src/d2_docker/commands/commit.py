@@ -14,7 +14,7 @@ def setup(parser):
         "--folders",
         nargs="+",
         choices=utils.default_folders,
-        help="Folders to include in the image (by default, ALL: apps, document, dataValues)",
+        help="Folders to include in the image",
     )
 
 def run(args):

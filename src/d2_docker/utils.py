@@ -464,6 +464,7 @@ def export_data_from_image(source_image, dest_path):
 # https://github.com/dhis2/dhis2-core/blob/master/dhis-2/dhis-api/src/main/java/org/hisp/dhis/fileresource/FileResourceDomain.java#L35
 
 default_folders = [
+    "apps",
     "dataValue",
     "pushAnalysis",
     "document",

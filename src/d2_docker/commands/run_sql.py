@@ -36,8 +36,8 @@ def run(args):
         else:
             if sql_file:
                 utils.logger.info("Run SQL file {} for image {}".format(sql_file, image_name))
-
-            cmd = ["docker", "exec", ("-i" if sql_file else "-it"), db_container, *get_pg_dump_command(exclude_table=False, compress=False)]
+            psql_cmd = ["psql", "-U", "dhis", "dhis2"]
+            cmd = ["docker", "exec", ("-i" if sql_file else "-it"), db_container, *psql_cmd]
             stdin = open(sql_file, encoding="utf-8") if sql_file else None
             result = utils.run(cmd, stdin=stdin, raise_on_error=False)
 

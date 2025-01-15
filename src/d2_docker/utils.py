@@ -493,7 +493,6 @@ def export_database(image_name, db_path):
         run_docker_compose(cmd, image_name, stdout=db_file)
 
 
-
 def get_pg_dump_command(exclude_table=True, compress=True):
     cmd = ["pg_dump", "-U", "dhis", "dhis2"]
 

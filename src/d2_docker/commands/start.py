@@ -26,7 +26,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--strict-sql", action="store_true", help="Stop the sql script on first fail and show in the log")
+    parser.add_argument("--strict-sql", action="store_true", default=False, help="Stop the sql script on first fail and show in the log")
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
     parser.add_argument(

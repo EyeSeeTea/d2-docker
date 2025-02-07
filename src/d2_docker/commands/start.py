@@ -96,7 +96,7 @@ def start(args):
     deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
     post_strict_sql_dir = None
     post_sql_dir = args.run_sql
-    if args.run_sql and args.args.strict_sql:
+    if args.run_sql and args.strict_sql:
         post_strict_sql_dir = post_sql_dir
         post_sql_dir = None
 

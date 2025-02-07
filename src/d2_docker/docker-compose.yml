@@ -12,6 +12,7 @@ services:
             - "${TOMCAT_SERVER}:/config/override/tomcat/server.xml"
             - "${SCRIPTS_DIR}:/data/scripts"
             - "${POST_SQL_DIR}:/data/db/post"
+            - "${POST_STRICT_SQL_DIR}:/data/db/post_strict_sql"
             - "/etc/timezone:/etc/timezone:ro"
             - "/etc/localtime:/etc/localtime:ro"
         environment:

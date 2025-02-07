@@ -26,6 +26,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
+    parser.add_argument("--strict-sql", action="store_true", help="Stop the sql script on first fail and show in the log")
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
     parser.add_argument(
@@ -93,6 +94,11 @@ def start(args):
     )
 
     deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
+    post_strict_sql_dir = None
+    post_sql_dir = args.run_sql
+    if args.run_sql and args.args.strict_sql:
+        post_strict_sql_dir = post_sql_dir
+        post_sql_dir = None
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
@@ -102,7 +108,8 @@ def start(args):
             bind_ip=args.bind_ip,
             core_image=core_image,
             load_from_data=override_containers,
-            post_sql_dir=args.run_sql,
+            post_sql_dir=post_sql_dir,
+            post_strict_sql_dir=post_strict_sql_dir,
             debug_port=args.debug_port,
             db_port=args.db_port,
             scripts_dir=args.run_scripts,

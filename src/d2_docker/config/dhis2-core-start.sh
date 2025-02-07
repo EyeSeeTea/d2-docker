@@ -17,13 +17,16 @@ export PGPASSWORD="dhis"
 
 dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
-psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
+psql_base_cmd="psql --quiet -h db -U dhis dhis2"
+psql_cmd="$psql_base_cmd -v ON_ERROR_STOP=0"
+psql_strict_cmd="$psql_base_cmd -v ON_ERROR_STOP=1"
 pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
 homedir="/dhis2-home-files"
 scripts_dir="/data/scripts"
 root_db_path="/data/db"
 post_db_path="/data/db/post"
+post_strict_db_path="/data/db/post_strict_sql"
 source_apps_path="/data/apps"
 source_documents_path="/data/document"
 source_datavalues_path="/data/dataValue"
@@ -50,11 +53,21 @@ run_sql_files() {
         echo "Load SQL (compressed): $path"
         zcat "$path" | $psql_cmd || true
     done
-
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
         echo "Load SQL: $path"
         $psql_cmd <"$path" || true
+    done
+    find "$post_strict_db_path" -type f \( -name '*.sql' \) |
+        sort | while read -r path; do
+        echo "Load SQL: $path"
+        $psql_strict_cmd <"$path"
+        exit_code=$?
+        echo "Exit code of psql: $exit_code"
+        if [[ $exit_code -ne 0 ]]; then
+            echo "Error detected while executing SQL file: $path"
+        fi
+        true
     done
 }
 

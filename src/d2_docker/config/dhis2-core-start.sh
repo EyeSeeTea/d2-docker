@@ -52,23 +52,22 @@ run_sql_files() {
         echo "Load SQL (compressed): $path"
         zcat "$path" | $psql_cmd || true
     done
+
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
-
-        if [ "$STRICT_MODE" = "True" ]; then
-          sort | while read -r path; do
-          echo "Load Strict mode SQL: $path"
-          $psql_strict_cmd <"$path"
-          exit_code=$?
-          echo "Exit code of psql: $exit_code"
-          if [[ $exit_code -ne 0 ]]; then
-              echo "Error detected while executing SQL file: $path"
+          if [ "$STRICT_MODE" = "True" ]; then
+            echo "Load Strict mode SQL: $path"
+            $psql_strict_cmd <"$path"
+            exit_code=$?
+            echo "Exit code of psql: $exit_code"
+            if [[ $exit_code -ne 0 ]]; then
+                echo "Error detected while executing SQL file: $path"
+            fi
+            true
+          else
+            echo "Load SQL: $path"
+            $psql_cmd <"$path" || true
           fi
-          true
-        elif
-          echo "Load SQL: $path"
-          $psql_cmd <"$path" || true
-        fi
     done
 }
 

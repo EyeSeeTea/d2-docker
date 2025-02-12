@@ -80,8 +80,6 @@ def main():
     args = parser.parse_args()
     utils.logger.setLevel(args.log_level.upper())
 
-    if getattr(args, "strict_sql", False) and not args.run_sql:
-        parser.error("--strict-sql requires --run-sql to be set")
     if not getattr(args, "func", None):
         parser.print_usage()
         return 1

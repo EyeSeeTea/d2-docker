@@ -1,5 +1,6 @@
 import os
 import re
+import argparse
 
 from d2_docker import utils
 
@@ -45,6 +46,9 @@ def setup(parser):
 
 
 def run(args):
+    if getattr(args, "strict_sql", False) and not args.run_sql:
+        raise argparse.ArgumentError(None, "--strict-sql requires --run-sql to be set")
+
     image_or_file = args.image
 
     if os.path.exists(image_or_file) and os.path.isfile(image_or_file):

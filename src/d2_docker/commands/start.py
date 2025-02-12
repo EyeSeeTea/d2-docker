@@ -98,10 +98,10 @@ def start(args):
     )
 
     deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
-    strict_sql = False
+    strict_sql = ""
     post_sql_dir = args.run_sql
     if args.run_sql and args.strict_sql:
-        strict_sql = True
+        strict_sql = "True"
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(

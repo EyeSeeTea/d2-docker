@@ -55,7 +55,7 @@ run_sql_files() {
 
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
-          if [ "$STRICT_MODE" = "True" ]; then
+          if [ "$STRICT_SQL" = "True" ]; then
             echo "Load Strict mode SQL: $path"
             $psql_strict_cmd <"$path"
             exit_code=$?

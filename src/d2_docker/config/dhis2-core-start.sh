@@ -55,7 +55,7 @@ run_sql_files() {
 
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
-          if [ "$STRICT_SQL" = "True" ]; then
+          if [ "$STRICT_MODE" = "True" ]; then
             echo "Load Strict mode SQL: $path"
             $psql_strict_cmd <"$path"
             exit_code=$?
@@ -75,6 +75,14 @@ run_pre_scripts() {
     find "$scripts_dir" -type f -name '*.sh' ! \( -name 'post*' \) | sort | while read -r path; do
         debug "Run pre-tomcat script: $path"
         (cd "$(dirname "$path")" && bash -x "$path")
+        exit_code=$?
+        if [[ $exit_code -ne 0 ]]; then
+            echo "Error detected in pre-tomcat script: $path (Exit code: $exit_code)"
+
+            if [ "$STRICT_MODE" = "True" ]; then
+              exit 1
+            fi
+        fi
     done
 }
 
@@ -82,6 +90,13 @@ run_post_scripts() {
     find "$scripts_dir" -type f -name '*.sh' -name 'post*' | sort | while read -r path; do
         debug "Run post-tomcat script: $path"
         (cd "$(dirname "$path")" && bash -x "$path" "$dhis2_url_with_auth")
+        exit_code=$?
+        if [[ $exit_code -ne 0 ]]; then
+            echo "Error detected in pre-tomcat script: $path (Exit code: $exit_code)"
+            if [ "$STRICT_MODE" = "True" ]; then
+              exit 1
+            fi
+        fi
     done
 }
 

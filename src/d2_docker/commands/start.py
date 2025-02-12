@@ -27,7 +27,10 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--strict-sql", action="store_true", default=False, help="Stop the sql script on first fail and show in the log")
+    parser.add_argument("--strict-mode", action="store_true", default=False,
+                        help="Stops execution on the first failure in SQL scripts or pre/post Bash scripts.")
+
+
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
     parser.add_argument(
@@ -46,9 +49,6 @@ def setup(parser):
 
 
 def run(args):
-    if getattr(args, "strict_sql", False) and not args.run_sql:
-        raise argparse.ArgumentError(None, "--strict-sql requires --run-sql to be set")
-
     image_or_file = args.image
 
     if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
@@ -98,11 +98,6 @@ def start(args):
     )
 
     deploy_path = "/" + re.sub("^/*", "", args.deploy_path) if args.deploy_path else ""
-    strict_sql = ""
-    post_sql_dir = args.run_sql
-    if args.run_sql and args.strict_sql:
-        strict_sql = "True"
-        utils.logger.info("Strict sql mode activated")
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(
@@ -112,8 +107,8 @@ def start(args):
             bind_ip=args.bind_ip,
             core_image=core_image,
             load_from_data=override_containers,
-            post_sql_dir=post_sql_dir,
-            strict_sql=strict_sql,
+            post_sql_dir=args.post_sql,
+            strict_mode=args.strict_mode,
             debug_port=args.debug_port,
             db_port=args.db_port,
             scripts_dir=args.run_scripts,

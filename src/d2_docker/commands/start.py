@@ -107,7 +107,7 @@ def start(args):
             bind_ip=args.bind_ip,
             core_image=core_image,
             load_from_data=override_containers,
-            post_sql_dir=args.post_sql,
+            post_sql_dir=args.run_sql,
             strict_mode=args.strict_mode,
             debug_port=args.debug_port,
             db_port=args.db_port,

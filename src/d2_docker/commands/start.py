@@ -102,6 +102,7 @@ def start(args):
     post_sql_dir = args.run_sql
     if args.run_sql and args.strict_sql:
         strict_sql = "True"
+        utils.logger.info("Strict sql mode activated")
 
     with utils.stop_docker_on_interrupt(image_name, core_image):
         utils.run_docker_compose(

@@ -286,7 +286,7 @@ def run_docker_compose(
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
-        ("STRICT_MODE", strict_mode),
+        ("STRICT_MODE", strict_mode or ""),
 
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path or ""),

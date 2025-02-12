@@ -78,9 +78,8 @@ run_pre_scripts() {
         exit_code=$?
         if [[ $exit_code -ne 0 ]]; then
             echo "Error detected in pre-tomcat script: $path (Exit code: $exit_code)"
-
             if [ "$STRICT_MODE" = "True" ]; then
-              exit 1
+              echo "Error detected while executing bash file: $path"
             fi
         fi
     done
@@ -94,7 +93,7 @@ run_post_scripts() {
         if [[ $exit_code -ne 0 ]]; then
             echo "Error detected in pre-tomcat script: $path (Exit code: $exit_code)"
             if [ "$STRICT_MODE" = "True" ]; then
-              exit 1
+              echo "Error detected while executing bash file: $path"
             fi
         fi
     done

@@ -250,7 +250,7 @@ def run_docker_compose(
     port=None,
     load_from_data=True,
     post_sql_dir=None,
-    post_strict_sql_dir=None,
+    strict_sql=None,
     debug_port=None,
     db_port=None,
     bind_ip=None,
@@ -275,7 +275,6 @@ def run_docker_compose(
     project_name = get_project_name(final_image_name)
     core_image_name = core_image or get_core_image_name(data_image)
     post_sql_dir_abs = get_absdir_for_docker_volume(post_sql_dir)
-    post_strict_sql_dir_abs= get_absdir_for_docker_volume(post_strict_sql_dir)
     scripts_dir_abs = get_absdir_for_docker_volume(scripts_dir)
 
     env_pairs = [
@@ -287,7 +286,7 @@ def run_docker_compose(
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
         # Set default values for directory, required by docker-compose volumes section
         ("POST_SQL_DIR", post_sql_dir_abs),
-        ("POST_STRICT_SQL_DIR", post_strict_sql_dir_abs),
+        ("STRICT_SQL", strict_sql),
 
         ("SCRIPTS_DIR", scripts_dir_abs),
         ("DEPLOY_PATH", deploy_path or ""),

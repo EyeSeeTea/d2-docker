@@ -11,7 +11,7 @@ def setup(_parser):
 
 def run(_args):
     utils.run(["docker", "-v"])
-    utils.run(["docker-compose", "-v"])
+    utils.run(["docker", "compose", "version"])
     d2_docker = get_d2_docker_version()
     if d2_docker:
         print("d2-docker version {}".format(d2_docker))
@@ -32,7 +32,7 @@ def get_field(command, field_index):
 
 def get_versions():
     docker = get_field(["docker", "-v"], 2)
-    docker_compose = get_field(["docker-compose", "-v"], 3)
+    docker_compose = get_field(["docker", "compose", "version"], 3)
     d2_docker = get_d2_docker_version()
     return dict({"docker": docker, "docker-compose": docker_compose, "d2-docker": d2_docker})
 

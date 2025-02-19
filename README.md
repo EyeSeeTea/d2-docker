@@ -9,7 +9,7 @@
 On Ubuntu 22.04:
 
 ```
-$ sudo apt install docker.io docker-compose python3 python3-setuptools
+$ sudo apt install docker.io docker-compose-v2 python3 python3-setuptools
 ```
 
 On Windows 10:

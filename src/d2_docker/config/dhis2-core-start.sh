@@ -17,7 +17,9 @@ export PGPASSWORD="dhis"
 
 dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
-psql_cmd="psql -v ON_ERROR_STOP=0 --quiet -h db -U dhis dhis2"
+psql_base_cmd="psql --quiet -h db -U dhis dhis2"
+psql_cmd="$psql_base_cmd -v ON_ERROR_STOP=0"
+psql_strict_cmd="$psql_base_cmd -v ON_ERROR_STOP=1"
 pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
 configdir="/config"
 homedir="/dhis2-home-files"
@@ -54,8 +56,24 @@ run_sql_files() {
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
         echo "Load SQL: $path"
-        $psql_cmd <"$path" || true
+        run_psql_cmd "$path"
+        exit_code=$?
+        if [ "$exit_code" -gt 0 ]; then
+            echo "Exit code: $exit_code"
+            exit "$exit_code"
+        fi
     done
+}
+
+run_psql_cmd() {
+    local path=$1
+    if [[ "$path" == *strict* ]]; then
+        echo "Strict mode: $path"
+        $psql_strict_cmd < "$path"
+    else
+        echo "Normal mode: $path"
+        $psql_cmd < "$path"
+    fi
 }
 
 run_pre_scripts() {

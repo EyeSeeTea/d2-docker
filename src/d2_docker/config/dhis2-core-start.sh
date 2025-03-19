@@ -172,7 +172,7 @@ run() {
     else
         debug "Container: clean. Load DB"
         wait_for_postgres
-        run_sql_files || true
+        run_sql_files
         run_pre_scripts || true
         init_done
     fi

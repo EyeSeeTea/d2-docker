@@ -56,8 +56,8 @@ run_sql_files() {
     find "$base_db_path" -type f \( -name '*.sql' \) |
         sort | while read -r path; do
         echo "Load SQL: $path"
-        run_psql_cmd "$path"
-        exit_code=$?
+        exit_code=0
+        run_psql_cmd "$path" || exit_code=$?
         if [ "$exit_code" -gt 0 ]; then
             echo "Exit code: $exit_code"
             exit "$exit_code"

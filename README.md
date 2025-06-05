@@ -87,7 +87,7 @@ Some notes:
 - Use option `--deploy-path` to run the container with a deploy path namespace (i.e: `--deploy-path=dhis2` serves `http://localhost:8080/dhis2`)
 - Use option `-k`/`--keep-containers` to re-use existing docker containers, so data from the previous run will be kept.
 - Use option `-auth` to pass the instance authentication (`USER:PASS`). It will be used to call post-tomcat scripts.
-- Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized.
+- Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized. SQL files containing "strict" in their name will cause `d2-docker start` to stop if an error occurs.
 - Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.

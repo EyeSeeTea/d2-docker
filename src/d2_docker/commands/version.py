@@ -1,4 +1,4 @@
-import pkg_resources  # part of setuptools
+from importlib.metadata import distribution
 import re
 from d2_docker import utils
 
@@ -38,5 +38,5 @@ def get_versions():
 
 
 def get_d2_docker_version():
-    resources = pkg_resources.require("d2-docker")
-    return resources[0].version if resources else None
+    dist = distribution("d2-docker")
+    return dist.version

@@ -1,5 +1,6 @@
 Flask==3.1.0
 python-dotenv
-Flask_Cors
+Flask_Cors==6.0.0
 requests==2.32.3
 PyYAML
+setuptools

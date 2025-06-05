@@ -21,7 +21,7 @@ services:
             DHIS2_AUTH: "${DHIS2_AUTH}"
         entrypoint: bash /config/dhis2-core-entrypoint.sh
         command: bash /config/dhis2-core-start.sh
-        restart: unless-stopped
+        restart: "no"
         depends_on:
             - "db"
             - "data"

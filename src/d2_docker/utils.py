@@ -10,7 +10,7 @@ import tempfile
 import time
 import yaml
 import urllib.request
-from distutils import dir_util
+from setuptools._distutils import dir_util
 from pathlib import Path
 from typing import Optional
 

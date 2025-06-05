@@ -10,7 +10,7 @@ import tempfile
 import time
 import yaml
 import urllib.request
-from distutils import dir_util
+from setuptools._distutils import dir_util
 from pathlib import Path
 from typing import Optional
 
@@ -308,7 +308,7 @@ def run_docker_compose(
 
     temp_compose = build_docker_compose(process_yaml)
 
-    return run(["docker-compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+    return run(["docker", "compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
 
 
 def build_docker_compose(process_yaml):
@@ -553,7 +553,7 @@ def add_core_image_arg(parser):
 
 @contextlib.contextmanager
 def running_containers(image_name, *up_args, **run_docker_compose_kwargs):
-    """Start docker-compose services for an image in a context manager and stop it afterwards."""
+    """Start docker compose services for an image in a context manager and stop it afterwards."""
     try:
         run_docker_compose(["up", "-d", *up_args], image_name, **run_docker_compose_kwargs)
         status = get_image_status(image_name)

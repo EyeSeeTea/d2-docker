@@ -52,7 +52,9 @@ def get_core_build_dir(args):
     if not major_version:
         raise utils.D2DockerError("Cannot get version from --version or --war")
     else:
-        if major_version >= 41:
+        if major_version >= 42:
+            return os.path.join(base_dir, "java-17-tomcat-10")
+        elif major_version >= 41:
             return os.path.join(base_dir, "java-17")
         else:
             return os.path.join(base_dir, "java-11")

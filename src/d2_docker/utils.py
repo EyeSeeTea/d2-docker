@@ -10,7 +10,7 @@ import tempfile
 import time
 import yaml
 import urllib.request
-from distutils import dir_util
+from setuptools._distutils import dir_util
 from pathlib import Path
 from typing import Optional
 
@@ -308,7 +308,7 @@ def run_docker_compose(
 
     temp_compose = build_docker_compose(process_yaml)
 
-    return run(["docker-compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+    return run(["docker", "compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
 
 
 def build_docker_compose(process_yaml):
@@ -405,7 +405,7 @@ def get_temp_base_directory(args):
     return temp_base_dir
 
 
-def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Optional[str] = None):
+def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Optional[str] = None, folders=None):
     """Build a docker image from source local directory."""
     status = get_image_status(source_image)
     if status["state"] != "running":
@@ -417,7 +417,7 @@ def build_image_from_source(docker_dir, source_image, dest_image, temp_dir: Opti
 
         logger.info("Copy base docker files: {}".format(docker_dir))
         copytree(docker_dir, temp_dir)
-        export_data_from_running_containers(source_image, status["containers"], temp_dir)
+        export_data_from_running_containers(source_image, status["containers"], temp_dir, folders=folders)
         docker_build(temp_dir, dest_image)
 
 
@@ -461,21 +461,37 @@ def export_data_from_image(source_image, dest_path):
     finally:
         run(["docker", "rm", "-v", container_id])
 
+# https://github.com/dhis2/dhis2-core/blob/master/dhis-2/dhis-api/src/main/java/org/hisp/dhis/fileresource/FileResourceDomain.java#L35
 
-def export_data_from_running_containers(image_name, containers, destination):
+default_folders = [
+    "apps",
+    "dataValue",
+    "pushAnalysis",
+    "document",
+    "messageAttachment",
+    "userAvatar",
+    "organisationUnit",
+    "icon",
+    "jobData"
+]
+
+def export_data_from_running_containers(image_name, containers, destination, folders=None):
     """Export data (db + apps + documents) from a running Docker container to some folder."""
     logger.info("Copy Dhis2 apps")
     mkdir_p(destination)
 
+    if folders is None:
+        folders = default_folders
+
     # Note: source files/ folders may not exists
-    apps_source = "{}:/DHIS2_home/files/apps/".format(containers["core"])
-    run(["docker", "cp", apps_source, destination], raise_on_error=False)
 
-    documents_source = "{}:/DHIS2_home/files/document/".format(containers["core"])
-    run(["docker", "cp", documents_source, destination], raise_on_error=False)
+    def copy(folder):
+        logger.info("Include folder: {}".format(folder))
+        source = "{}:/DHIS2_home/files/{}/".format(containers["core"], folder)
+        run(["docker", "cp", source, destination], raise_on_error=False)
 
-    datavalues_source = "{}:/DHIS2_home/files/dataValue/".format(containers["core"])
-    run(["docker", "cp", datavalues_source, destination], raise_on_error=False)
+    for folder in folders:
+        copy(folder)
 
     db_path = os.path.join(destination, "db", "db.sql.gz")
     export_database(image_name, db_path)
@@ -487,10 +503,22 @@ def export_database(image_name, db_path):
     mkdir_p(os.path.dirname(db_path))
 
     with open(db_path, "wb") as db_file:
-        pg_dump = "set -o pipefail; pg_dump -U dhis dhis2 | gzip"
+        pg_dump = "set -o pipefail; " + " ".join(get_pg_dump_command())
         # -T: Disable pseudo-tty allocation. Otherwise the compressed output pipe is corrupted.
         cmd = ["exec", "-T", "db", "bash", "-c", pg_dump]
         run_docker_compose(cmd, image_name, stdout=db_file)
+
+
+def get_pg_dump_command(exclude_table=True, compress=True):
+    cmd = ["pg_dump", "-U", "dhis", "dhis2"]
+
+    if exclude_table:
+        cmd += ["--exclude-table", "'analytics*'"]
+
+    if compress:
+        cmd += ["|", "gzip"]
+
+    return cmd
 
 
 def load_images_file(input_file):
@@ -525,7 +553,7 @@ def add_core_image_arg(parser):
 
 @contextlib.contextmanager
 def running_containers(image_name, *up_args, **run_docker_compose_kwargs):
-    """Start docker-compose services for an image in a context manager and stop it afterwards."""
+    """Start docker compose services for an image in a context manager and stop it afterwards."""
     try:
         run_docker_compose(["up", "-d", *up_args], image_name, **run_docker_compose_kwargs)
         status = get_image_status(image_name)

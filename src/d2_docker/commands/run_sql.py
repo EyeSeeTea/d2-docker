@@ -1,5 +1,6 @@
 import subprocess
 from d2_docker import utils
+from d2_docker.utils import get_pg_dump_command
 
 DESCRIPTION = "Run SQL or open interactive session in a d2-docker container"
 NAME = "run-sql"
@@ -29,7 +30,7 @@ def run(args):
         utils.logger.debug("DB container: {}".format(db_container))
 
         if args.dump:
-            cmd = ["docker", "exec", db_container, "pg_dump", "-U", "dhis", "dhis2"]
+            cmd = ["docker", "exec", db_container, *get_pg_dump_command(compress=False)]
             utils.logger.info("Dump SQL for image {}".format(image_name))
             utils.run(cmd, raise_on_error=False)
         else:
@@ -54,7 +55,7 @@ def get_stream_db(image):
         raise utils.D2DockerError("Container must be running to dump database")
 
     db_container = status["containers"]["db"]
-    cmd_parts = ["docker", "exec", db_container, "pg_dump", "-U", "dhis", "dhis2", "|", "gzip"]
+    cmd_parts = ["docker", "exec", db_container, *get_pg_dump_command()]
     cmd = subprocess.list2cmdline(cmd_parts)
     utils.logger.info("Dump SQL for image: {}".format(cmd))
 

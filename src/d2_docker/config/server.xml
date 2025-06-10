@@ -25,6 +25,7 @@
             connectionTimeout="20000"
             URIEncoding="UTF-8"
             relaxedQueryChars='\ { } | [ ]'
+            maxHttpHeaderSize="32768"
         />
 
         <Connector

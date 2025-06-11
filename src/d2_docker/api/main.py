@@ -108,7 +108,8 @@ def rm_instance():
 
 def get_request_json(request):
     try:
-        return request.json
+        # Use force so we don't fail even if the content type JSON is not specified in the request
+        return request.get_json(force=True)
     except BadRequest:
         return None
 

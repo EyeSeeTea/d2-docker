@@ -2,8 +2,8 @@
 
 - Operating System: GNU/Linux or Windows 10.
 - Python >= 3.5 (with setuptools)
-- Docker >= 18
-- Docker compose >= 1.17
+- Docker >= 20.10.13
+- Docker compose >= 2.0
 - RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
 On Ubuntu 22.04:
@@ -69,6 +69,8 @@ Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or
 $ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
 
+There are demo database files at [databases.dhis2.org](https://databases.dhis2.org/) that may be used for testing purposses. The database downloaded should correspond to the core version created; if there is no database file for the created core version, a prior version of the database should work.
+
 ### Start a DHIS2 instance
 
 Start a new container from a _dhis2-data_ base image:
@@ -92,6 +94,9 @@ Some notes:
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
+- Use option `--glowroot-port=PORT` to specify the APM glowroot port of the Tomcat process.
+- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process.
+- Use option `--glowroot-zip=FILE` to specify the zip file with a version of glowroot to run in the Tomcat process.
 
 #### Custom DHIS2 dhis.conf
 

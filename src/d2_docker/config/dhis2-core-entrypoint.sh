@@ -12,6 +12,9 @@ WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat
 DHIS2HOME=/DHIS2_home
 DATA_DIR=/data
+GLOWROOT_ZIP="/opt/glowroot.zip"
+GLOWROOT_DIR="/opt/glowroot"
+
 
 debug() {
     echo "[dhis2-core-entrypoint] $*" >&2
@@ -47,6 +50,18 @@ if [ "$(id -u)" = "0" ]; then
     if [ -f $WARFILE ]; then
         unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
         rm -v $WARFILE # just to save space
+    fi
+
+    if [ -f $GLOWROOT_ZIP ] && [ ! -d $GLOWROOT_DIR ] ; then
+        unzip -q $GLOWROOT_ZIP -d /opt/ || [ $? -le 1 ]
+        if [ -d $GLOWROOT_DIR ] ; then
+            echo '{ "web": { "bindAddress": "0.0.0.0", "port": "4000" }}' > $GLOWROOT_DIR/admin.json
+            chown -R tomcat:tomcat $GLOWROOT_DIR
+            chmod -R u=rwX,g=rX,o-rwx $GLOWROOT_DIR
+            echo 'export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/opt/glowroot/glowroot.jar"' > /usr/local/tomcat/bin/setenv.sh
+            chmod ugo+x /usr/local/tomcat/bin/setenv.sh
+            chown tomcat:tomcat /usr/local/tomcat/bin/setenv.sh
+        fi
     fi
 
     wait_for_data_container_to_finish_copy

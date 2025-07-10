@@ -10,6 +10,8 @@ import tempfile
 import time
 import yaml
 import urllib.request
+import json
+import zipfile
 from setuptools._distutils import dir_util
 from pathlib import Path
 from typing import Optional
@@ -38,6 +40,16 @@ def get_dhis2_war_url(version):
         else "{}/dhis2-stable-{}.war".format(short_version, version)
     )
     return releases_base_url + "/" + path
+
+def get_latest_glowroot_url():
+    glowroot_releases_url = "https://api.github.com/repos/glowroot/glowroot/releases/latest"
+    glowroot_download_url = "https://github.com/glowroot/glowroot/releases/download"
+    with urllib.request.urlopen(glowroot_releases_url) as response:
+        data = response.read().decode()
+        release_info = json.loads(data)
+
+    tag_name = release_info["tag_name"]
+    return "{}/{}/glowroot-{}-dist.zip".format(glowroot_download_url, tag_name, tag_name.lstrip("v"))
 
 
 def docker_build(directory, tag):
@@ -261,6 +273,9 @@ def run_docker_compose(
     tomcat_server=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
+    glowroot=None,
+    glowroot_zip=None,
+    glowroot_port=None,
     **kwargs,
 ):
     """
@@ -270,11 +285,30 @@ def run_docker_compose(
 
     The DHIS2_CORE_IMAGE is inferred from the data repo, if not specified.
     """
+
     final_image_name = data_image or get_running_image_name()
     project_name = get_project_name(final_image_name)
     core_image_name = core_image or get_core_image_name(data_image)
     post_sql_dir_abs = get_absdir_for_docker_volume(post_sql_dir)
     scripts_dir_abs = get_absdir_for_docker_volume(scripts_dir)
+    glowroot_path=None
+
+    if args[0] == "up":
+        glowroot_file = tempfile.NamedTemporaryFile(delete=False, prefix="glowroot_", suffix=".zip", dir="/tmp")
+        glowroot_path = glowroot_file.name
+
+        atexit.register(lambda: os.remove(glowroot_path) if os.path.exists(glowroot_path) else None)
+        if glowroot_zip:
+            logger.debug("Copy zip file: {} -> {}".format(glowroot_zip, glowroot_path))
+            shutil.copy(glowroot_zip, glowroot_path)
+        elif glowroot:
+            glowroot_url = get_latest_glowroot_url()
+            logger.info("Download file: {}".format(glowroot_url))
+            urllib.request.urlretrieve(glowroot_url, glowroot_path)
+        else:
+            # empty zipfile
+            with zipfile.ZipFile(glowroot_path, mode="w") as zf:
+                pass
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
@@ -296,13 +330,18 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
+        ("GLOWROOT_PORT", "{}:4000".format(glowroot_port) if glowroot_port else "4000:4000") if (glowroot or glowroot_zip) else ("GLOWROOT_PORT", None),
+        ("GLOWROOT_ZIP", get_absfile_for_docker_volume(glowroot_path)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
     def process_yaml(data):
-        if "DHIS2_CORE_DEBUG_PORT" not in env:
-            core = data["services"]["core"]
-            core["ports"] = [port for port in core["ports"] if "DHIS2_CORE_DEBUG_PORT" not in port]
+        # Removes ports for "core" service in docker-compose if the environmental variables are not established
+        core = data["services"]["core"]
+        env_ports = ["DHIS2_CORE_DEBUG_PORT", "GLOWROOT_PORT"]
+        for env_port in env_ports:
+            if env_port not in env:
+                core["ports"] = [port for port in core["ports"] if env_port not in port]
 
         return data
 

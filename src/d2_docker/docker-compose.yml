@@ -5,6 +5,7 @@ services:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
         volumes:
             - home:/DHIS2_home
+            - ${GLOWROOT_ZIP}:/opt/glowroot.zip
             - ${DHIS_CONF}:/config/override/dhis2/dhis.conf
             - ${ROOT_PATH}/config:/config
             - data:/data
@@ -27,6 +28,7 @@ services:
             - "data"
         ports:
             - "${DHIS2_CORE_DEBUG_PORT}"
+            - "${GLOWROOT_PORT}"
     db:
         image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
         shm_size: 1gb

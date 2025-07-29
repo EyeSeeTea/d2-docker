@@ -46,26 +46,8 @@ def create_core(args):
 
 def get_core_build_dir(args):
     base_dir = utils.get_docker_directory("core", args)
-    major_version = get_major_version(args.version or args.war)
-    utils.logger.info("DHIS2 major version: {}".format(major_version or "-"))
-
-    if not major_version:
-        raise utils.D2DockerError("Cannot get version from --version or --war")
-    else:
-        if major_version >= 42:
-            return os.path.join(base_dir, "java-17-tomcat-10")
-        elif major_version >= 41:
-            return os.path.join(base_dir, "java-17")
-        else:
-            return os.path.join(base_dir, "java-11")
-
-
-def get_major_version(s):
-    """Return major DHIS2 version. Ex: "2.38.4" -> "38". "40.1.2" -> 40."""
-    match = re.search(r"(\d+\.\d+)", s)
-    if not match: return None
-    parts = [int(s) for s in match.groups()[0].split(".")]
-    return parts[1] if parts[0] == 2 else parts[0]
+    major_version = utils.get_major_version(args.version or args.war)
+    return utils.get_core_java_dir(base_dir, major_version)
 
 
 def create_data(args):

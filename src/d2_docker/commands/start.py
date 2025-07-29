@@ -41,6 +41,7 @@ def setup(parser):
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
+    
     parser.add_argument("--glowroot", action="store_true", help="Enables glowroot in tomcat in latest version")
     parser.add_argument("--glowroot-zip", metavar="FILE", help="ZIP file with glowroot binaries")
     parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")

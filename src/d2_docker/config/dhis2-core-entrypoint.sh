@@ -46,14 +46,14 @@ wait_for_data_container_to_finish_copy() {
 
 }
 
-if [ "$(id -u)" = "0" ]; then
-    if [ -f $WARFILE ]; then
-        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
-        rm -v $WARFILE # just to save space
-    fi
-
+setup_glowroot() {
     if [ -f $GLOWROOT_ZIP ] && [ ! -d $GLOWROOT_DIR ] ; then
-        unzip -q $GLOWROOT_ZIP -d /opt/ || [ $? -le 1 ]
+        status=0
+        unzip -q "$GLOWROOT_ZIP" -d /opt/ || status=$?
+        # Ignore RC=1 that implies only warnings and no errors (like an empty zip file)
+        if [ $status -gt 1 ]; then
+            exit $status
+        fi
         if [ -d $GLOWROOT_DIR ] ; then
             echo '{ "web": { "bindAddress": "0.0.0.0", "port": "4000" }}' > $GLOWROOT_DIR/admin.json
             chown -R tomcat:tomcat $GLOWROOT_DIR
@@ -63,7 +63,15 @@ if [ "$(id -u)" = "0" ]; then
             chown tomcat:tomcat /usr/local/tomcat/bin/setenv.sh
         fi
     fi
+}
 
+if [ "$(id -u)" = "0" ]; then
+    if [ -f $WARFILE ]; then
+        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
+        rm -v $WARFILE # just to save space
+    fi
+
+    setup_glowroot
     wait_for_data_container_to_finish_copy
 
     mkdir -p $DATA_DIR/apps

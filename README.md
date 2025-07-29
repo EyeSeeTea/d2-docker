@@ -94,9 +94,6 @@ Some notes:
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
-- Use option `--glowroot-port=PORT` to specify the APM glowroot port of the Tomcat process.
-- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process.
-- Use option `--glowroot-zip=FILE` to specify the zip file with a version of glowroot to run in the Tomcat process.
 
 #### Custom DHIS2 dhis.conf
 
@@ -380,4 +377,18 @@ $ mkdir -p ~/.config/d2-docker/
 $ cp flaskenv.secret ~/.config/d2-docker/
 
 $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/quotas/1' | jq
+```
+
+## Glowroot
+
+Glowroot is an open-source Java APM (Application Performance Monitoring) tool. It can help detect and diagnose application performance problems, tracing slow requests, errors, response time breakdowns, SQL capture and more.
+When starting a container, there are a few options to enable glowroot on the Tomcat process:
+- Use option `--glowroot-port=PORT` to specify the APM glowroot port of the Tomcat process.
+- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process.
+- Use option `--glowroot-zip=FILE` to specify the zip file with a version of glowroot to run in the Tomcat process.
+
+### Run d2-docker with glowroot enabled in the default port at the latest version available
+
+```
+$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --glowroot
 ```

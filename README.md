@@ -346,6 +346,7 @@ By default, d2-docker logs all SQL queries executed (one file per weekday). Exam
 $ db_container="d2-docker-docker-eyeseetea-com-samaritans-40-4-0-sp-cpr-test-db-1"
 $ docker exec -it "$db_container" tail -f /var/lib/postgresql/data/log/queries-Thu.log
 ```
+To enable this logging, start your instance with the --enable-postgres-queries-logging option.
 
 ### API Server
 

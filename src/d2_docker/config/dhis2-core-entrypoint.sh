@@ -49,7 +49,7 @@ wait_for_data_container_to_finish_copy() {
 setup_glowroot() {
     if [ -f $GLOWROOT_ZIP ] && [ ! -d $GLOWROOT_DIR ] ; then
         status=0
-        output=$(unzip -q "$GLOWROOT_ZIP" -d /opt/ 2>&1 || status=$?)
+	output=$(unzip -q "$GLOWROOT_ZIP" -d /opt/ 2>&1) || status=$?
         # Ignore RC=1 that implies only warnings and no errors (like an empty zip file)
         if [ $status -gt 1 ]; then
             echo "$output"

@@ -302,7 +302,7 @@ def run_docker_compose(
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
         ("GLOWROOT_PORT", get_port_glowroot(glowroot_port, glowroot_zip, glowroot)),
-        ("GLOWROOT_ZIP", get_glowroot_zip(args[0], glowroot_zip, glowroot)),
+        ("GLOWROOT_ZIP", get_glowroot_zip(args, glowroot_zip, glowroot)),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

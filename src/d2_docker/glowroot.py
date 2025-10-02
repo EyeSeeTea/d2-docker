@@ -22,7 +22,7 @@ def get_latest_glowroot_url():
 def get_glowroot_zip(command, glowroot_zip, glowroot):
     logger = utils.logger
     glowroot_path=None
-    if command == "up":
+    if isinstance(command, list) and command[0] == "up":
         glowroot_file = tempfile.NamedTemporaryFile(delete=False, prefix="glowroot_", suffix=".zip", dir="/tmp")
         glowroot_path = glowroot_file.name
 

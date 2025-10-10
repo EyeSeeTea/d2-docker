@@ -162,14 +162,14 @@ init_done() {
 run() {
     local host=$1 psql_port=$2
 
-    setup_tomcat
-    copy_apps
-    copy_documents
-    copy_datavalues
-
     if is_init_done; then
-        debug "Container: already configured. Skip DB load"
+        debug "Container: already configured. Skip DB load and keeping other changes"
     else
+	debug "Container: clean. Copying tomcat files and dhis folders"
+        setup_tomcat
+        copy_apps
+        copy_documents
+        copy_datavalues
         debug "Container: clean. Load DB"
         wait_for_postgres
         run_sql_files

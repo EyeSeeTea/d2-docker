@@ -166,7 +166,7 @@ run() {
     if is_init_done; then
         debug "Container: already configured. Skip DB load and keeping other changes"
     else
-	debug "Container: clean. Copying tomcat files and dhis folders"
+        debug "Container: clean. Copying tomcat files and dhis folders"
         copy_apps
         copy_documents
         copy_datavalues

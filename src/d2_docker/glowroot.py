@@ -21,7 +21,6 @@ def get_latest_glowroot_url():
 
 def get_glowroot_zip(command, glowroot_zip, glowroot):
     logger = utils.logger
-    glowroot_path=None
     if isinstance(command, list) and command[0] == "up":
         glowroot_file = tempfile.NamedTemporaryFile(delete=False, prefix="glowroot_", suffix=".zip", dir="/tmp")
         glowroot_path = glowroot_file.name
@@ -38,6 +37,8 @@ def get_glowroot_zip(command, glowroot_zip, glowroot):
             # empty zipfile
             with zipfile.ZipFile(glowroot_path, mode="w") as zf:
                 pass
+    else:
+        glowroot_path = None
 
     return utils.get_absfile_for_docker_volume(glowroot_path)
 

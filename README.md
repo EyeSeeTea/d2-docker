@@ -382,10 +382,11 @@ $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/q
 ## Glowroot
 
 Glowroot is an open-source Java APM (Application Performance Monitoring) tool. It can help detect and diagnose application performance problems, tracing slow requests, errors, response time breakdowns, SQL capture and more.
-When starting a container, there are a few options to enable glowroot on the Tomcat process:
-- Use option `--glowroot-port=PORT` to specify the APM glowroot port of the Tomcat process.
-- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process.
-- Use option `--glowroot-zip=FILE` to specify the zip file with a version of glowroot to run in the Tomcat process.
+When starting a container, there are two options to enable glowroot on the Tomcat process:
+- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process. This requires internet access to be able to retrieve the file.
+- Use option `--glowroot-zip=FILE` to specify the zip file with the version of glowroot to run in the Tomcat process. This takes precedence over the other option.
+When enabling glowroot, it will start listening on port 4000/tcp so you can connect via browser to its interface. You may override this port with:
+- `--glowroot-port=PORT` to specify the APM glowroot port.
 
 ### Run d2-docker with glowroot enabled in the default port at the latest version available
 

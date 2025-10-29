@@ -29,6 +29,7 @@ services:
         ports:
             - "${DHIS2_CORE_DEBUG_PORT}"
             - "${GLOWROOT_PORT}"
+        dns_search: .
     db:
         image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
         shm_size: 1gb

@@ -261,6 +261,7 @@ def run_docker_compose(
     tomcat_server=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
+    external_db_volume=None,
     **kwargs,
 ):
     """
@@ -296,6 +297,7 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
+        ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -303,6 +305,15 @@ def run_docker_compose(
         if "DHIS2_CORE_DEBUG_PORT" not in env:
             core = data["services"]["core"]
             core["ports"] = [port for port in core["ports"] if "DHIS2_CORE_DEBUG_PORT" not in port]
+        if "EXTERNAL_DB_VOLUME" in env:
+            data["volumes"]["pgdata"] = {
+                'driver': 'local',
+                'driver_opts': {
+                    'type': 'none',
+                    'o': 'bind',
+                    'device': external_db_volume
+                }
+            }
 
         return data
 

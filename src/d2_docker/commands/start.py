@@ -41,6 +41,11 @@ def setup(parser):
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
+    parser.add_argument(
+        "--external-db-volume",
+        metavar="DIRECTORY",
+        help="Directory for external database volume",
+    )
 
 
 def run(args):
@@ -52,7 +57,20 @@ def run(args):
         image2 = args.image
 
     args.image = image2
+
+    if args.external_db_volume:
+        check_db_volume_path(args.external_db_volume)
+
     start(args)
+
+
+def check_db_volume_path(external_db_volume):
+    if not os.path.isabs(external_db_volume):
+        msg = "--external-db-volume must be an absolute path: {}".format(external_db_volume)
+        raise utils.D2DockerError(msg)
+    if not os.path.exists(external_db_volume):
+        msg = "--external-db-volume path does not exist: {}".format(external_db_volume)
+        raise utils.D2DockerError(msg)
 
 
 def import_from_file(images_path):
@@ -83,10 +101,12 @@ def start(args):
     override_containers = not args.keep_containers
 
     if args.pull:
-        utils.run_docker_compose(["pull"], image_name, core_image=core_image)
+        utils.run_docker_compose(["pull"], image_name, core_image=core_image,
+                                 external_db_volume=args.external_db_volume)
 
     if override_containers:
-        utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
+        utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image,
+                                 external_db_volume=args.external_db_volume)
 
     up_args = filter(
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
@@ -113,6 +133,7 @@ def start(args):
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
+            external_db_volume=args.external_db_volume,
         )
 
     if args.detach:

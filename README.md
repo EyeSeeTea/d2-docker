@@ -2,8 +2,8 @@
 
 - Operating System: GNU/Linux or Windows 10.
 - Python >= 3.5 (with setuptools)
-- Docker >= 18
-- Docker compose >= 1.17
+- Docker >= 20.10.13
+- Docker compose >= 2.0
 - RAM memory: At least 4Gb for instance, preferrably 8Gb.
 
 On Ubuntu 22.04:
@@ -68,6 +68,8 @@ Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or
 ```
 $ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
+
+There are demo database files at [databases.dhis2.org](https://databases.dhis2.org/) that may be used for testing purposses. The database downloaded should correspond to the core version created; if there is no database file for the created core version, a prior version of the database should work.
 
 ### Start a DHIS2 instance
 
@@ -340,7 +342,8 @@ $ bash build-docker-container.sh
 
 ## Debug SQL queries
 
-By default, d2-docker logs all SQL queries executed (one file per weekday). Example:
+To enable SQL-query logging, start your instance with the --enable-postgres-queries-logging option.
+d2-docker will log all SQL queries executed to a log named with the weekday. Example:
 
 ```
 $ db_container="d2-docker-docker-eyeseetea-com-samaritans-40-4-0-sp-cpr-test-db-1"
@@ -375,4 +378,19 @@ $ mkdir -p ~/.config/d2-docker/
 $ cp flaskenv.secret ~/.config/d2-docker/
 
 $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/quotas/1' | jq
+```
+
+## Glowroot
+
+Glowroot is an open-source Java APM (Application Performance Monitoring) tool. It can help detect and diagnose application performance problems, tracing slow requests, errors, response time breakdowns, SQL capture and more.
+When starting a container, there are two options to enable glowroot on the Tomcat process:
+- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process. This requires internet access to be able to retrieve the file.
+- Use option `--glowroot-zip=FILE` to specify the zip file with the version of glowroot to run in the Tomcat process. This takes precedence over the other option.
+When enabling glowroot, it will start listening on port 4000/tcp so you can connect via browser to its interface. You may override this port with:
+- `--glowroot-port=PORT` to specify the APM glowroot port.
+
+### Run d2-docker with glowroot enabled in the default port at the latest version available
+
+```
+$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --glowroot
 ```

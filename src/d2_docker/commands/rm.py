@@ -15,7 +15,7 @@ def run(args):
 def remove_image(image):
     utils.logger.info("Delete image/containers: {}".format(image))
     utils.run_docker_compose(["stop"], image)
-    result = utils.run_docker_compose(["ps", "-q"], data_image=image, capture_output=True)
+    result = utils.run_docker_compose(["ps", "-aq"], data_image=image, capture_output=True)
     container_ids = result.stdout.decode("utf-8").splitlines()
     utils.logger.debug("Container IDs: {}".format(container_ids))
     if container_ids:

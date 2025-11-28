@@ -17,6 +17,8 @@ services:
             CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH} -Xdebug -Xrunjdwp:transport=dt_socket,address=0.0.0.0:8000,server=y,suspend=n"
             JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
+            EXTERNAL_DB_URL: "${EXTERNAL_DB_URL}"
+            LOAD_DUMP_FROM_DATA: "${LOAD_DUMP_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"
         entrypoint: bash /config/dhis2-core-entrypoint.sh

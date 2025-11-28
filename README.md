@@ -92,6 +92,9 @@ Some notes:
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
+- Use option `--external-db-volume=VOLUME_ABSOLUTE_PATH` to create or use a persistant volume for the database located at `VOLUME_ABSOLUTE_PATH`.
+- Use option `--external-db-url=POSTGRES_URL` to connect to an external PostgreSQL database instead of using the DB container. The URL should be in the format `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`. Note that you have configure the DB to accept connections from the docker internal network.
+- Use option `--load-dump-from-data` with `--external-db-url` to import the SQL dump to the external database. Equivalent to running without `-k`/`--keep-containers`. The recieving DB should have the appropiate config (DB owner, user permissions, postgis extention).
 
 #### Custom DHIS2 dhis.conf
 

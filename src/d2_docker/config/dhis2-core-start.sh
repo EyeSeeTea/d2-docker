@@ -10,17 +10,23 @@ set -e -u -o pipefail
 #
 
 # Global: LOAD_FROM_DATA="yes" | "no"
+# Global: LOAD_DUMP_FROM_DATA="yes" | "no"
+# Global: EXTERNAL_DB_URL=string (optional)
 # Global: DEPLOY_PATH=string
 # Global: DHIS2_AUTH=string
 
 export PGPASSWORD="dhis"
+db_url=""
+if [[ -n "$EXTERNAL_DB_URL" ]]; then
+    db_url="${EXTERNAL_DB_URL//localhost/host.docker.internal}"
+fi
 
 dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
-psql_base_cmd="psql --quiet -h db -U dhis dhis2"
+psql_base_cmd="psql --quiet ${db_url:-"-h db -U dhis dhis2"}"
 psql_cmd="$psql_base_cmd -v ON_ERROR_STOP=0"
 psql_strict_cmd="$psql_base_cmd -v ON_ERROR_STOP=1"
-pgrestore_cmd="pg_restore -h db -U dhis -d dhis2"
+pgrestore_cmd="pg_restore ${db_url:-"-h db -U dhis dhis2"}"
 configdir="/config"
 homedir="/dhis2-home-files"
 scripts_dir="/data/scripts"
@@ -37,7 +43,12 @@ debug() {
 }
 
 run_sql_files() {
-    base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
+    if { [ -z "$db_url" ] && [ "${LOAD_FROM_DATA}" = "yes" ]; } ||
+        { [ -n "$db_url" ] && [ "${LOAD_FROM_DATA}" = "yes" ] && [ "${LOAD_DUMP_FROM_DATA}" = "yes" ]; }; then
+        base_db_path="$root_db_path"
+    else
+        base_db_path="$post_db_path"
+    fi
     debug "Files in data path"
     find "$base_db_path" >&2
 
@@ -69,10 +80,10 @@ run_psql_cmd() {
     local path=$1
     if [[ "$path" == *strict* ]]; then
         echo "Strict mode: $path"
-        $psql_strict_cmd < "$path"
+        $psql_strict_cmd <"$path"
     else
         echo "Normal mode: $path"
-        $psql_cmd < "$path"
+        $psql_cmd <"$path"
     fi
 }
 

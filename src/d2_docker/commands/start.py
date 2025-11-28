@@ -46,6 +46,17 @@ def setup(parser):
         metavar="DIRECTORY",
         help="Directory for external database volume",
     )
+    parser.add_argument(
+        "--external-db-url",
+        type=str,
+        metavar="postgresql://user:pass@host:port/dbname",
+        help="Use external PostgreSQL database"
+    )
+    parser.add_argument(
+        "--load-dump-from-data",
+        action="store_true",
+        help="Load database dump from data container (only with --external-db-url)",
+    )
 
 
 def run(args):
@@ -60,6 +71,9 @@ def run(args):
 
     if args.external_db_volume:
         check_db_volume_path(args.external_db_volume)
+
+    if args.external_db_url:
+        utils.validate_external_db_connection(args.external_db_url)
 
     start(args)
 
@@ -106,7 +120,8 @@ def start(args):
 
     if override_containers:
         utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image,
-                                 external_db_volume=args.external_db_volume)
+                                 external_db_volume=args.external_db_volume,
+                                 external_db_url=args.external_db_url)
 
     up_args = filter(
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
@@ -134,6 +149,8 @@ def start(args):
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
             external_db_volume=args.external_db_volume,
+            external_db_url=args.external_db_url,
+            load_dump_from_data=args.load_dump_from_data,
         )
 
     if args.detach:

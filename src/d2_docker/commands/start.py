@@ -42,8 +42,6 @@ def setup(parser):
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
     
-    parser.add_argument("--glowroot", action="store_true", help="Enables glowroot in tomcat in latest version")
-    parser.add_argument("--glowroot-zip", metavar="FILE", help="ZIP file with glowroot binaries")
     parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")
 
 
@@ -117,9 +115,7 @@ def start(args):
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
-            glowroot=args.glowroot,
-            glowroot_zip=args.glowroot_zip,
-            glowroot_port=args.glowroot_port,
+            glowroot_port=args.glowroot_port
         )
 
     if args.detach:

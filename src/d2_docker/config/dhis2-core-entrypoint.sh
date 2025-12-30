@@ -57,6 +57,33 @@ setup_glowroot() {
         fi
         if [ -d $GLOWROOT_DIR ] ; then
             echo '{ "web": { "bindAddress": "0.0.0.0", "port": "4000" }}' > $GLOWROOT_DIR/admin.json
+            echo '{"transactions":{"slowThresholdMillis":2000,"profilingIntervalMillis":1000,"captureThreadStats":true},
+        "jvm":{"maskSystemProperties":["*password*","*token*","*access*","*secret*"],"maskMBeanAttributes":["*password*","*token*","*access*","*secret*"]},
+        "uiDefaults":{"defaultTransactionType":"Web","defaultPercentiles":[50,95,99],"defaultGaugeNames":["java.lang:type=Memory:HeapMemoryUsage.used"]},
+        "advanced":{"immediatePartialStoreThresholdSeconds":60,"maxTransactionAggregates":500,"maxQueryAggregates":500,"maxServiceCallAggregates":500,
+        "maxTraceEntriesPerTransaction":2000,"maxProfileSamplesPerTransaction":50000,"mbeanGaugeNotFoundDelaySeconds":60},"gauges":[{"mbeanObjectName":"java.lang:type=Memory",
+        "mbeanAttributes":[{"name":"HeapMemoryUsage.used"}]},{"mbeanObjectName":"java.lang:type=GarbageCollector,name=*","mbeanAttributes":[{"name":"CollectionCount","counter":true},
+        {"name":"CollectionTime","counter":true}]},{"mbeanObjectName":"java.lang:type=MemoryPool,name=*","mbeanAttributes":[{"name":"Usage.used"}]},
+        {"mbeanObjectName":"java.lang:type=OperatingSystem","mbeanAttributes":[{"name":"FreePhysicalMemorySize"},{"name":"ProcessCpuLoad"},{"name":"SystemCpuLoad"}]}],
+        "plugins":[{"properties":{"stackTraceThresholdMillis":1000},"id":"cassandra"},{"properties":{"stackTraceThresholdMillis":1000},"id":"elasticsearch"},
+        {"properties":{"sessionUserAttribute":"","captureSessionAttributes":[],"captureRequestParameters":["*"],"maskRequestParameters":["*password*","*token*","*access*","*secret*"],
+        "captureRequestHeaders":[],"captureResponseHeaders":[],"traceErrorOn4xxResponseCode":false,"captureRequestRemoteAddr":false,"captureRequestRemoteHostname":false,
+        "captureRequestRemotePort":false,"captureRequestLocalAddr":false,"captureRequestLocalHostname":false,"captureRequestLocalPort":false,"captureRequestServerHostname":false,
+        "captureRequestServerPort":false},"id":"jakartaservlet"},{"properties":{"captureRequestHeaders":[],"maskRequestHeaders":["Authorization"],"captureRequestRemoteAddr":false,
+        "captureRequestRemoteHost":false,"captureResponseHeaders":[],"traceErrorOn4xxResponseCode":false},"id":"java-http-server"},{"properties":{"useAltTransactionNaming":false},
+        "id":"jaxrs"},{"properties":{"captureBindParametersIncludes":[".*"],"captureBindParametersExcludes":[],"captureResultSetNavigate":true,"captureResultSetGet":false,
+        "captureConnectionPoolLeaks":false,"captureConnectionPoolLeakDetails":false,"captureGetConnection":true,"captureConnectionClose":false,"capturePreparedStatementCreation":false,
+        "captureStatementClose":false,"captureTransactionLifecycleTraceEntries":false,"captureConnectionLifecycleTraceEntries":false,"stackTraceThresholdMillis":1000},"id":"jdbc"},
+        {"properties":{"traceErrorOnErrorWithThrowable":true,"traceErrorOnErrorWithoutThrowable":false,"traceErrorOnWarningWithThrowable":false,"traceErrorOnWarningWithoutThrowable":false},
+        "id":"logger"},{"properties":{"stackTraceThresholdMillis":1000},"id":"mongodb"},{"properties":{"useAltTransactionNaming":false},"id":"play"},{"properties":{"sessionUserAttribute":"",
+        "captureSessionAttributes":[],"captureRequestParameters":["*"],"maskRequestParameters":["*password*","*token*","*access*","*secret*"],"captureRequestHeaders":[],
+        "captureResponseHeaders":[],"traceErrorOn4xxResponseCode":false,"captureRequestRemoteAddr":false,"captureRequestRemoteHostname":false,"captureRequestRemotePort":false,
+        "captureRequestLocalAddr":false,"captureRequestLocalHostname":false,"captureRequestLocalPort":false,"captureRequestServerHostname":false,"captureRequestServerPort":false},
+        "id":"servlet"},{"properties":{"useAltTransactionNaming":false},"id":"spring"}],"instrumentation":[{"className":"org.hisp.dhis.webapi.controller.event.TrackedEntityInstanceController",
+        "methodName":"getTrackedEntityInstances","methodParameterTypes":[".."],"order":0,"captureKind":"other","transactionType":"Web","transactionNameTemplate":"/api/trackedEntityInstances: GET"},
+        {"className":"org.hisp.dhis.tracker.report.DefaultTrackerImportService","methodName":"importTracker","methodParameterTypes":[".."],"order":0,"captureKind":"transaction",
+        "transactionType":"Web","transactionNameTemplate":"/api/tracker: import","alreadyInTransactionBehavior":"capture-new-transaction","traceEntryMessageTemplate":"{{0}}",
+        "traceEntryStackThresholdMillis":300,"traceEntryCaptureSelfNested":true,"timerName":"Timer"}]}' > $GLOWROOT_DIR/config.json
             chown -R tomcat:tomcat $GLOWROOT_DIR
             chmod -R u=rwX,g=rX,o-rwx $GLOWROOT_DIR
             echo 'export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/opt/glowroot/glowroot.jar"' > /usr/local/tomcat/bin/setenv.sh

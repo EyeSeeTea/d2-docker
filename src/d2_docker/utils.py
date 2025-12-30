@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 import d2_docker
-from d2_docker.glowroot import get_glowroot_zip, get_port_glowroot
+from d2_docker.glowroot import get_port_glowroot
 from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
@@ -262,8 +262,6 @@ def run_docker_compose(
     tomcat_server=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
-    glowroot=None,
-    glowroot_zip=None,
     glowroot_port=None,
     **kwargs,
 ):
@@ -301,8 +299,7 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
-        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port, glowroot_zip, glowroot)),
-        ("GLOWROOT_ZIP", get_glowroot_zip(args, glowroot_zip, glowroot)),
+        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port))
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

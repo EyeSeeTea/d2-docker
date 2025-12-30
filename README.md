@@ -383,14 +383,42 @@ $ curl -sS 'http://localhost:5000/harbor/https://docker.eyeseetea.com/api/v2.0/q
 ## Glowroot
 
 Glowroot is an open-source Java APM (Application Performance Monitoring) tool. It can help detect and diagnose application performance problems, tracing slow requests, errors, response time breakdowns, SQL capture and more.
-When starting a container, there are two options to enable glowroot on the Tomcat process:
-- Use option `--glowroot` to use the latest version of glowroot in the Tomcat process. This requires internet access to be able to retrieve the file.
-- Use option `--glowroot-zip=FILE` to specify the zip file with the version of glowroot to run in the Tomcat process. This takes precedence over the other option.
-When enabling glowroot, it will start listening on port 4000/tcp so you can connect via browser to its interface. You may override this port with:
-- `--glowroot-port=PORT` to specify the APM glowroot port.
+The startup script in the core container expects a `/opt/glowroot.zip` file; if it exists, it will decompress that file and enable a default configuration for glowroot in the tomcat process.
+The only needed parameter to use glowroot is the `--glowroot-port`, as the metrics are exposes through its own http connection, so the port must be opened in the container.
+To use glowroot:
 
-### Run d2-docker with glowroot enabled in the default port at the latest version available
+- start d2-docker with `--glowroot-port=<PORT>` (default port for glowroot is 4000, but any available port can be used)
+- download the latest version of glowroot to the host machine:
 
 ```
-$ d2-docker start docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --glowroot
+lastversion=$(wget -q -O - https://api.github.com/repos/glowroot/glowroot/releases/latest | jq '.tag_name' | sed 's_"__g')
+wget -q https://github.com/glowroot/glowroot/releases/download/$lastversion/glowroot-${lastversion#v}-dist.zip
 ```
+
+- determine the core instance name (note that as there might be several d2-docker instances running, you must pick the one you want manually from the list)
+
+```
+docker ps | awk '/core.1/ {print $NF}'
+```
+
+- copy the zip file to the core container with the filename `/opt/glowroot.zip`:
+
+```
+docker cp glowroot-0.14.4-dist.zip ${core_instance_name}:/opt/glowroot.zip
+```
+
+- restart the core container:
+
+```
+docker restart ${core_instance_name}
+```
+
+Glowroot is configured to store its data for several days, so the size of its folder should be limited to some extent. This size may be further reduced editing the configuration via WebUI, but might require a restart of the container. Configuration (and glowroot historical data) will be kept unless the `/opt/glowroot` folder is deleted from the container and restarted.
+
+To remove glowroot from a container you must:
+
+- connect to the core container (`docker exec -it ${core_instance_name} bash`)
+- inside the core container, remove the `/opt/glowroot.zip` file
+- inside the core container, remove the `/opt/glowroot` folder
+- inside the core container, remove the `/usr/local/tomcat/bin/setenv.sh` file. (This is not extrictly necessary as the jar file will no longer exist and won't be able to start, but if it is not removed, some warnings/errors may be generated upon tomcat start)
+- exit the core container and restart it (`docker restart ${core_instance_name}`)

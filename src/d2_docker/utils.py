@@ -8,15 +8,15 @@ import shutil
 import socket
 import tempfile
 import time
-from urllib.parse import urlparse
+import yaml
 import urllib.request
+from urllib.parse import urlparse
+from setuptools._distutils import dir_util
 from pathlib import Path
 from typing import Dict, Optional
-import yaml
-from setuptools._distutils import dir_util
 
 import d2_docker
-from d2_docker.glowroot import get_glowroot_zip, get_port_glowroot
+from d2_docker.glowroot import get_port_glowroot
 from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
@@ -264,8 +264,6 @@ def run_docker_compose(
     tomcat_server=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
-    glowroot=None,
-    glowroot_zip=None,
     glowroot_port=None,
     external_db_volume=None,
     external_db_url=None,
@@ -319,8 +317,7 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
-        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port, glowroot_zip, glowroot)),
-        ("GLOWROOT_ZIP", get_glowroot_zip(args, glowroot_zip, glowroot)),
+        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port))
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
         ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no") if external_db_url else "no",

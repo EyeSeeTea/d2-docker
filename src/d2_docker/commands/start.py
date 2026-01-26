@@ -40,9 +40,7 @@ def setup(parser):
     parser.add_argument("--java-opts", type=str, help="Set Tomcat JAVA_OPTS")
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
-                        help="Enable Postgres queries logging")    
-    parser.add_argument("--glowroot", action="store_true", help="Enables glowroot in tomcat in latest version")
-    parser.add_argument("--glowroot-zip", metavar="FILE", help="ZIP file with glowroot binaries")
+                        help="Enable Postgres queries logging")
     parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")
     parser.add_argument(
         "--external-db-volume",
@@ -151,8 +149,6 @@ def start(args):
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
-            glowroot=args.glowroot,
-            glowroot_zip=args.glowroot_zip,
             glowroot_port=args.glowroot_port,
             external_db_volume=args.external_db_volume,
             external_db_url=args.external_db_url,

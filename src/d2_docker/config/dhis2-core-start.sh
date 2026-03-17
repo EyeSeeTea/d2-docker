@@ -39,6 +39,10 @@ debug() {
 run_sql_files() {
     base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
     debug "Files in data path"
+    if [[ ! -d "$base_db_path" ]] ; then
+        debug " -- NO FILES -- "
+        return 0
+    fi
     find "$base_db_path" >&2
 
     find "$base_db_path" -type f \( -name '*.dump' \) |
@@ -149,6 +153,27 @@ wait_for_tomcat() {
     done
 }
 
+cleanup() {
+    debug "--- [SIGNAL RECEIVED] ---"
+    debug "Stopping tomcat"
+    catalina.sh stop &
+    STOP_PID=$!
+    count=0
+    # if need more than 10 seconds (default), remember to configure stop_grace_period in docker-compose.yml accordingly
+    while [ $count -lt 10 ]; do
+        if ! kill -0 $STOP_PID 2>/dev/null; then
+            debug "Tomcat has stopped."
+            exit 0
+        fi
+        sleep 1
+        count=$((count + 1))
+    done
+    exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+
+
 INIT_DONE_FILE="/tmp/dhis2-core-start.done"
 
 is_init_done() {
@@ -178,10 +203,11 @@ run() {
     fi
 
     start_tomcat &
+    LAST_PID=$!
     wait_for_tomcat
     run_post_scripts || true
     debug "DHIS2 instance ready"
-    wait
+    wait $LAST_PID || true
 }
 
 env

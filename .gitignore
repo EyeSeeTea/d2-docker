@@ -109,3 +109,4 @@ venv.bak/
 *.war
 
 .flaskenv.secret
+bom.json

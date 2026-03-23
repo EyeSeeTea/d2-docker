@@ -22,7 +22,7 @@ services:
         entrypoint: bash /config/dhis2-core-entrypoint.sh
         command: bash /config/dhis2-core-start.sh
         stop_grace_period: 10s
-        restart: "no"
+        restart: unless-stopped
         depends_on:
             - "db"
             - "data"

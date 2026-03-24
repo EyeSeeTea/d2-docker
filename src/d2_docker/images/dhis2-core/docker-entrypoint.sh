@@ -8,10 +8,18 @@ WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat
 DHIS2HOME=/DHIS2_home
 DATA_DIR=/data
+FLAG_SQL_ERROR=$DHIS2HOME/flag_sql_error
+APPROOT=$TOMCATDIR/webapps/ROOT
 
 if [ "$(id -u)" = "0" ]; then
-    if [ -f $WARFILE ]; then
-        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
+    if [ -f $FLAG_SQL_ERROR ]; then
+        rf -rvf $APPROOT
+        mkdir -p -m 750 $APPROOT
+        chown tomcat:tomcat $APPROOT
+        echo '<!DOCTYPE html><title>Error</title>
+        Error during preparation of the service' > $APPROOT/index.html
+    elif [ -f $WARFILE ]; then
+        unzip -q $WARFILE -d $APPROOT
         rm -v $WARFILE  # just to save space
     fi
 

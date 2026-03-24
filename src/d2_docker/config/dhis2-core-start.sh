@@ -29,8 +29,13 @@ post_db_path="/data/db/post"
 source_apps_path="/data/apps"
 source_documents_path="/data/document"
 source_datavalues_path="/data/dataValue"
-files_path="/DHIS2_home/files/"
-tomcat_conf_dir="/usr/local/tomcat/conf"
+home_path="/DHIS2_home"
+files_path="$home_path/files/"
+tomcatdir=/usr/local/tomcat
+tomcat_conf_dir="$tomcatdir/conf"
+approot="$tomcatdir/webapps/ROOT"
+flag_sql_error="$home_path/flag-sql-error"
+
 
 debug() {
     echo "[dhis2-core-start] $*" >&2
@@ -64,6 +69,12 @@ run_sql_files() {
         run_psql_cmd "$path" || exit_code=$?
         if [ "$exit_code" -gt 0 ]; then
             echo "Exit code: $exit_code"
+            touch "$flag_sql_error"
+            rf -rvf $approot
+            mkdir -p -m 750 $approot
+            chown tomcat:tomcat $approot
+            echo '<!DOCTYPE html><title>Error</title>
+            Error during preparation of the service' > $approot/index.html
             exit "$exit_code"
         fi
     done
@@ -126,9 +137,9 @@ copy_non_empty_files() {
 setup_tomcat() {
     debug "Setup tomcat"
 
-    cp -v $configdir/DHIS2_home/* "/DHIS2_home/"
-    cp -v $homedir/* /DHIS2_home/ || true
-    copy_non_empty_files "$configdir/override/dhis2/" "/DHIS2_home/"
+    cp -v $configdir/DHIS2_home/* "$home_path/"
+    cp -v $homedir/* $home_path/ || true
+    copy_non_empty_files "$configdir/override/dhis2/" "$home_path/"
 
     cp -v "$configdir/server.xml" "$tomcat_conf_dir/server.xml"
     copy_non_empty_files "$configdir/override/tomcat/" "$tomcat_conf_dir/"

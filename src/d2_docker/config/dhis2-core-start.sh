@@ -15,6 +15,9 @@ set -e -u -o pipefail
 
 export PGPASSWORD="dhis"
 
+# Default to 10 seconds
+[[ "$STOP_GRACE_PERIOD" =~ ^[0-9]+$ ]] || STOP_GRACE_PERIOD=10
+
 dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
 psql_base_cmd="psql --quiet -h db -U dhis dhis2"
@@ -70,7 +73,7 @@ run_sql_files() {
         if [ "$exit_code" -gt 0 ]; then
             echo "Exit code: $exit_code"
             touch "$flag_sql_error"
-            rf -rvf $approot
+            rm -rvf $approot
             mkdir -p -m 750 $approot
             chown tomcat:tomcat $approot
             echo '<!DOCTYPE html><title>Error</title>
@@ -170,8 +173,7 @@ cleanup() {
     catalina.sh stop &
     STOP_PID=$!
     count=0
-    # if need more than 10 seconds (default), remember to configure stop_grace_period in docker-compose.yml accordingly
-    while [ $count -lt 10 ]; do
+    while [ $count -lt $STOP_GRACE_PERIOD ]; do
         if ! kill -0 $STOP_PID 2>/dev/null; then
             debug "Tomcat has stopped."
             exit 0

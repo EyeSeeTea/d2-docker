@@ -1,7 +1,6 @@
 FROM tomcat:10.1.36-jre21-temurin
 
 ENV DHIS2_HOME=/DHIS2_home
-ENV DHIS2_CERT=/DHIS2_home/who_pub_cert.cert
 ENV DATA_DIR=/data
 
 COPY docker-entrypoint.sh /usr/local/bin/

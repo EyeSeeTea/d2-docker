@@ -44,6 +44,15 @@ debug() {
     echo "[dhis2-core-start] $*" >&2
 }
 
+setup_error_page() {
+    debug "Setting up error page (application removed)"
+    rm -rvf "$approot"
+    mkdir -p -m 750 "$approot"
+    chown tomcat:tomcat "$approot"
+    echo '<!DOCTYPE html><title>Error</title>
+    Error during preparation of the service' > "$approot/index.html"
+}
+
 run_sql_files() {
     base_db_path=$(test "${LOAD_FROM_DATA}" = "yes" && echo "$root_db_path" || echo "$post_db_path")
     debug "Files in data path"
@@ -65,22 +74,24 @@ run_sql_files() {
         zcat "$path" | $psql_cmd || true
     done
 
-    find "$base_db_path" -type f \( -name '*.sql' \) |
-        sort | while read -r path; do
+    local sql_error=0
+    while read -r path; do
         echo "Load SQL: $path"
         exit_code=0
         run_psql_cmd "$path" || exit_code=$?
         if [ "$exit_code" -gt 0 ]; then
             echo "Exit code: $exit_code"
-            touch "$flag_sql_error"
-            rm -rvf $approot
-            mkdir -p -m 750 $approot
-            chown tomcat:tomcat $approot
-            echo '<!DOCTYPE html><title>Error</title>
-            Error during preparation of the service' > $approot/index.html
-            exit "$exit_code"
+            sql_error=1
+            break
         fi
-    done
+    done < <(find "$base_db_path" -type f \( -name '*.sql' \) | sort)
+
+    if [ "$sql_error" -gt 0 ]; then
+        touch "$flag_sql_error"
+        setup_error_page
+        return 1
+    fi
+    return 0
 }
 
 run_psql_cmd() {
@@ -201,6 +212,18 @@ run() {
     local host=$1 psql_port=$2
 
     setup_tomcat
+
+    # If a previous SQL error was flagged (persisted in named volume), keep showing error page
+    if [ -f "$flag_sql_error" ]; then
+        debug "SQL error flag detected from a previous run. Container will start with error page only."
+        setup_error_page
+        start_tomcat &
+        LAST_PID=$!
+        debug "Container is running with error page. Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
+        wait $LAST_PID || true
+        return
+    fi
+
     if is_init_done; then
         debug "Container: already configured. Skip DB load and keeping other changes"
     else
@@ -210,7 +233,14 @@ run() {
         copy_datavalues
         debug "Container: clean. Load DB"
         wait_for_postgres
-        run_sql_files
+        if ! run_sql_files; then
+            debug "SQL error detected. Container will start with error page only."
+            start_tomcat &
+            LAST_PID=$!
+            debug "Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
+            wait $LAST_PID || true
+            return
+        fi
         run_pre_scripts || true
         init_done
     fi

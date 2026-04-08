@@ -14,10 +14,6 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup root tomcat && \
     useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
 
-COPY who_pub_cert.cert $DHIS2_CERT
-RUN  chmod +rx $DHIS2_CERT
-RUN keytool -importcert -alias who_mail_ichigoout -file $DHIS2_CERT -keystore /usr/local/openjdk-11/lib/security/cacerts -storepass changeit -noprompt
-
 
 RUN apt-get update
 RUN echo 'You can disregard the warning in noninteractive installations:' \

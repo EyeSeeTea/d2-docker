@@ -46,7 +46,7 @@ debug() {
 
 setup_error_page() {
     debug "Setting up error page (application removed)"
-    rm -rvf "$approot"
+    rm -rf "$approot"
     mkdir -p -m 750 "$approot"
     chown tomcat:tomcat "$approot"
     echo '<!DOCTYPE html><title>Error</title>
@@ -171,6 +171,22 @@ start_tomcat() {
     catalina.sh run
 }
 
+manage_tomcat_lifecycle() {
+    local msg="${1:-}"
+    local callback="${2:-}"
+
+    start_tomcat &
+    LAST_PID=$!
+
+    if [ -n "$callback" ]; then
+        $callback
+    fi
+
+    [ -n "$msg" ] && debug "$msg"
+    
+    wait $LAST_PID || true
+}
+
 wait_for_tomcat() {
     debug "Waiting for Tomcat to start: $dhis2_url"
     while ! curl -sS -i "$dhis2_url" 2>/dev/null | grep "^Location"; do
@@ -217,10 +233,8 @@ run() {
     if [ -f "$flag_sql_error" ]; then
         debug "SQL error flag detected from a previous run. Container will start with error page only."
         setup_error_page
-        start_tomcat &
-        LAST_PID=$!
-        debug "Container is running with error page. Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
-        wait $LAST_PID || true
+        manage_tomcat_lifecycle \
+            "Container is running with error page. Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
         return
     fi
 
@@ -235,22 +249,22 @@ run() {
         wait_for_postgres
         if ! run_sql_files; then
             debug "SQL error detected. Container will start with error page only."
-            start_tomcat &
-            LAST_PID=$!
-            debug "Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
-            wait $LAST_PID || true
+            manage_tomcat_lifecycle \
+                "Fix the SQL issue and remove the flag ($flag_sql_error) to recover."
             return
         fi
         run_pre_scripts || true
         init_done
     fi
 
-    start_tomcat &
-    LAST_PID=$!
-    wait_for_tomcat
-    run_post_scripts || true
-    debug "DHIS2 instance ready"
-    wait $LAST_PID || true
+    post_start_actions() {
+        wait_for_tomcat
+        run_post_scripts || true
+    }
+
+    manage_tomcat_lifecycle \
+        "DHIS2 instance ready" \
+        post_start_actions
 }
 
 env

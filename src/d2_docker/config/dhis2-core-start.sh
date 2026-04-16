@@ -80,10 +80,10 @@ run_psql_cmd() {
     local path=$1
     if [[ "$path" == *strict* ]]; then
         echo "Strict mode: $path"
-        $psql_strict_cmd <"$path"
+        $psql_strict_cmd < "$path"
     else
         echo "Normal mode: $path"
-        $psql_cmd <"$path"
+        $psql_cmd < "$path"
     fi
 }
 

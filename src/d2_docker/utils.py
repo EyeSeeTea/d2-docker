@@ -320,7 +320,7 @@ def run_docker_compose(
         ("GLOWROOT_PORT", get_port_glowroot(glowroot_port))
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
-        ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no") if external_db_url else "no",
+        ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

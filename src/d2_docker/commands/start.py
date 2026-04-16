@@ -70,6 +70,8 @@ def run(args):
 
     args.image = image2
 
+    check_conflicting_external_params(args)
+
     if args.external_db_volume:
         check_db_volume_path(args.external_db_volume)
 
@@ -77,6 +79,15 @@ def run(args):
         utils.validate_external_db_connection(args.external_db_url)
 
     start(args)
+
+
+def check_conflicting_external_params(args):
+    if args.external_db_volume and args.external_db_url:
+        msg = "--external-db-volume and --external-db-url are mutually exclusive"
+        raise utils.D2DockerError(msg)
+    if args.load_dump_from_data and not args.external_db_url:
+        msg = "--load-dump-from-data can only be used with --external-db-url"
+        raise utils.D2DockerError(msg)
 
 
 def check_db_volume_path(external_db_volume):

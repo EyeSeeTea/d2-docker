@@ -317,7 +317,7 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
-        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port))
+        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port)),
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
         ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
@@ -376,8 +376,8 @@ def validate_external_db_connection(db_url):
     """Validate connection to external PostgreSQL database."""
     logger.info("Validating external database connection...")
     try:
-        psql_cmd = ["psql", "-d", db_url, "-c", "SELECT now();", "&> /dev/null"]
-        run(psql_cmd, capture_output=False)
+        psql_cmd = ["psql", "-d", db_url, "-c", "SELECT now();"]
+        run(psql_cmd, capture_output=True)
         logger.info("External database validation successful")
     except Exception as e:
         raise D2DockerError(f"External database validation failed: {e}")
@@ -406,10 +406,7 @@ def parse_postgres_url(url: str) -> Optional[Dict[str, str]]:
         if None in [parsed.username, parsed.password, parsed.hostname, parsed.path]:
             raise D2DockerError(f"Missing components in PostgreSQL URL: {url}")
 
-        if parsed.hostname == "localhost":
-            hostname = "host.docker.internal"
-        else:
-            hostname = parsed.hostname
+        hostname = "host.docker.internal" if parsed.hostname == "localhost" else parsed.hostname
 
         port = ":"+str(parsed.port) if parsed.port else ""
 

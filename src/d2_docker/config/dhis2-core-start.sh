@@ -18,6 +18,8 @@ export PGPASSWORD="dhis"
 # Default to 10 seconds
 [[ "$STOP_GRACE_PERIOD" =~ ^[0-9]+$ ]] || STOP_GRACE_PERIOD=10
 
+DEPLOY_PATH=${DEPLOY_PATH#/}
+
 dhis2_url="http://localhost:8080/$DEPLOY_PATH"
 dhis2_url_with_auth="http://$DHIS2_AUTH@localhost:8080/$DEPLOY_PATH"
 psql_base_cmd="psql --quiet -h db -U dhis dhis2"

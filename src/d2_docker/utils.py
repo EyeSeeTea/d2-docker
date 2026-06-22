@@ -68,6 +68,28 @@ def copytree(source, dest):
     dir_util.copy_tree(source, dest)
 
 
+def get_core_java_dir(base_dir, major_version):
+    logger.info("DHIS2 major version: {}".format(major_version or "-"))
+
+    if not major_version:
+        raise D2DockerError("Cannot get version from --version or --war")
+    else:
+        if major_version >= 42:
+            return os.path.join(base_dir, "java-17-tomcat-10")
+        elif major_version >= 41:
+            return os.path.join(base_dir, "java-17")
+        else:
+            return os.path.join(base_dir, "java-11")
+        
+
+def get_major_version(s):
+    """Return major DHIS2 version. Ex: "2.38.4" -> "38". "40.1.2" -> 40."""
+    match = re.search(r"(\d+\.\d+)", s)
+    if not match: return None
+    parts = [int(s) for s in match.groups()[0].split(".")]
+    return parts[1] if parts[0] == 2 else parts[0]
+
+
 def run(
     command_parts,
     raise_on_error=True,
@@ -603,6 +625,9 @@ def wait_for_server(port):
     url = "http://localhost:{}".format(port)
 
     while True:
+        # This functions is called right after a "docker up", which takes a little to be able to start the nginx (and way longer for the tomcat to be ready),
+        # so to avoid calling before nginx can accept connections (and raising an exception) just move the sleep to be the first step
+        time.sleep(5)
         try:
             logger.debug("wait_for_server:url={}".format(url))
             urllib.request.urlopen(url)  # nosec
@@ -616,7 +641,6 @@ def wait_for_server(port):
         except urllib.request.URLError as exc:
             logger.debug("wait_for_server:url-error: {}".format(exc.reason))
 
-        time.sleep(5)
 
 
 def create_core(

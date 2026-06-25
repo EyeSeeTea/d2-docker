@@ -14,7 +14,7 @@ DHIS2HOME=/DHIS2_home
 DATA_DIR=/data
 GLOWROOT_ZIP="/opt/glowroot.zip"
 GLOWROOT_DIR="/opt/glowroot"
-
+APPROOT=$TOMCATDIR/webapps/ROOT
 
 debug() {
     echo "[dhis2-core-entrypoint] $*" >&2
@@ -95,8 +95,8 @@ setup_glowroot() {
 
 if [ "$(id -u)" = "0" ]; then
     if [ -f $WARFILE ]; then
-        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
-        rm -v $WARFILE # just to save space
+        unzip -q $WARFILE -d $APPROOT
+        rm -v $WARFILE  # just to save space
     fi
 
     setup_glowroot

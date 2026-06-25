@@ -19,9 +19,11 @@ services:
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             DEPLOY_PATH: "${DEPLOY_PATH}"
             DHIS2_AUTH: "${DHIS2_AUTH}"
+            STOP_GRACE_PERIOD: 10  # This MUST be equal to the stop_grace_period, but without units
+        stop_grace_period: 10s
+        restart: unless-stopped
         entrypoint: bash /config/dhis2-core-entrypoint.sh
         command: bash /config/dhis2-core-start.sh
-        restart: "no"
         depends_on:
             - "db"
             - "data"

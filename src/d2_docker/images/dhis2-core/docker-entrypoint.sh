@@ -8,10 +8,11 @@ WARFILE=/usr/local/tomcat/webapps/ROOT.war
 TOMCATDIR=/usr/local/tomcat
 DHIS2HOME=/DHIS2_home
 DATA_DIR=/data
+APPROOT=$TOMCATDIR/webapps/ROOT
 
 if [ "$(id -u)" = "0" ]; then
     if [ -f $WARFILE ]; then
-        unzip -q $WARFILE -d $TOMCATDIR/webapps/ROOT
+        unzip -q $WARFILE -d $APPROOT
         rm -v $WARFILE  # just to save space
     fi
 

@@ -10,6 +10,8 @@ main() { local volume=$1
         chmod -R u+rwX,go+rX,go-w $volume
     else
         rm -rf /$volume/*
+        # To avoid leaving dhis2-core without a path to /data/db/post after clearing up all /data
+        mkdir /$volume/db
     fi
 }
 

@@ -1,0 +1,6 @@
+# shfmt options
+binary_next_line = false
+switch_case_indent = false
+space_redirects = false
+keep_padding = false
+function_next_line = false

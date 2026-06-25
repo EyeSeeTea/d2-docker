@@ -41,8 +41,23 @@ def setup(parser):
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
-    
     parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")
+    parser.add_argument(
+        "--external-db-volume",
+        metavar="DIRECTORY",
+        help="Directory for external database volume",
+    )
+    parser.add_argument(
+        "--external-db-url",
+        type=str,
+        metavar="postgresql://user:pass@host:port/dbname",
+        help="Use external PostgreSQL database"
+    )
+    parser.add_argument(
+        "--load-dump-from-data",
+        action="store_true",
+        help="Load database dump from data container (only with --external-db-url)",
+    )
 
 
 def run(args):
@@ -54,7 +69,34 @@ def run(args):
         image2 = args.image
 
     args.image = image2
+
+    check_conflicting_external_params(args)
+
+    if args.external_db_volume:
+        check_db_volume_path(args.external_db_volume)
+
+    if args.external_db_url:
+        utils.validate_external_db_connection(args.external_db_url)
+
     start(args)
+
+
+def check_conflicting_external_params(args):
+    if args.external_db_volume and args.external_db_url:
+        msg = "--external-db-volume and --external-db-url are mutually exclusive"
+        raise utils.D2DockerError(msg)
+    if args.load_dump_from_data and not args.external_db_url:
+        msg = "--load-dump-from-data can only be used with --external-db-url"
+        raise utils.D2DockerError(msg)
+
+
+def check_db_volume_path(external_db_volume):
+    if not os.path.isabs(external_db_volume):
+        msg = "--external-db-volume must be an absolute path: {}".format(external_db_volume)
+        raise utils.D2DockerError(msg)
+    if not os.path.exists(external_db_volume):
+        msg = "--external-db-volume path does not exist: {}".format(external_db_volume)
+        raise utils.D2DockerError(msg)
 
 
 def import_from_file(images_path):
@@ -85,10 +127,13 @@ def start(args):
     override_containers = not args.keep_containers
 
     if args.pull:
-        utils.run_docker_compose(["pull"], image_name, core_image=core_image)
+        utils.run_docker_compose(["pull"], image_name, core_image=core_image,
+                                 external_db_volume=args.external_db_volume)
 
     if override_containers:
-        utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image)
+        utils.run_docker_compose(["down", "--volumes"], image_name, core_image=core_image,
+                                 external_db_volume=args.external_db_volume,
+                                 external_db_url=args.external_db_url)
 
     up_args = filter(
         bool, ["--force-recreate" if override_containers else None, "-d" if args.detach else None]
@@ -115,7 +160,10 @@ def start(args):
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
-            glowroot_port=args.glowroot_port
+            glowroot_port=args.glowroot_port,
+            external_db_volume=args.external_db_volume,
+            external_db_url=args.external_db_url,
+            load_dump_from_data=args.load_dump_from_data,
         )
 
     if args.detach:

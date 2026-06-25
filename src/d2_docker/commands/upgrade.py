@@ -68,7 +68,7 @@ def upgrade_to_version(
     )
     war_exists = dhis_war_path and os.path.exists(dhis_war_path)
     create_core_kwargs = dict(war=dhis_war_path) if war_exists else dict(version=version)
-    core_docker_dir = utils.get_docker_directory("core")
+    core_docker_dir = utils.get_core_java_dir(utils.get_docker_directory("core"), utils.get_major_version(version))
     utils.create_core(
         docker_dir=core_docker_dir,
         image=core_image,

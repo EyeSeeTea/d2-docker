@@ -4,7 +4,7 @@
 - Python >= 3.5 (with setuptools)
 - Docker >= 20.10.13
 - Docker compose >= 2.0
-- RAM memory: At least 4Gb for instance, preferrably 8Gb.
+- RAM memory: At least 4Gb for instance, preferably 8Gb.
 
 On Ubuntu 22.04:
 
@@ -69,7 +69,7 @@ Create a dhis2-data image from a .sql.gz SQL file and the apps and documents (or
 $ d2-docker create data docker.eyeseetea.com/eyeseetea/dhis2-data:2.37.9-sierra --sql=sierra-db.sql.gz [--apps-dir=path/to/apps] [--documents-dir=path/to/document] [--datavalues-dir=path/to/dataValue]
 ```
 
-There are demo database files at [databases.dhis2.org](https://databases.dhis2.org/) that may be used for testing purposses. The database downloaded should correspond to the core version created; if there is no database file for the created core version, a prior version of the database should work.
+There are demo database files at [databases.dhis2.org](https://databases.dhis2.org/) that may be used for testing purposes. The database downloaded should correspond to the core version created; if there is no database file for the created core version, a prior version of the database should work.
 
 ### Start a DHIS2 instance
 
@@ -94,6 +94,10 @@ Some notes:
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
 - Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
+- Use option `--external-db-volume=VOLUME_ABSOLUTE_PATH` to create or use a persistent volume for the database located at `VOLUME_ABSOLUTE_PATH`.
+- Use option `--external-db-url=POSTGRES_URL` to connect to an external PostgreSQL database instead of using the DB container. The URL should be in the format `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`. Note that you have to configure the DB to accept connections from the docker internal network.
+- The previous `--external-db-volume` and `--external-db-url` options are mutually exclusive.
+- Use option `--load-dump-from-data` with `--external-db-url` to import the SQL dump to the external database. Equivalent to running without `-k`/`--keep-containers`. The receiving DB should have the appropriate config (DB owner, user permissions, postgis extension).
 
 #### Custom DHIS2 dhis.conf
 
@@ -420,5 +424,5 @@ To remove glowroot from a container you must:
 - connect to the core container (`docker exec -it ${core_instance_name} bash`)
 - inside the core container, remove the `/opt/glowroot.zip` file
 - inside the core container, remove the `/opt/glowroot` folder
-- inside the core container, remove the `/usr/local/tomcat/bin/setenv.sh` file. (This is not extrictly necessary as the jar file will no longer exist and won't be able to start, but if it is not removed, some warnings/errors may be generated upon tomcat start)
+- inside the core container, remove the `/usr/local/tomcat/bin/setenv.sh` file. (This is not strictly necessary as the jar file will no longer exist and won't be able to start, but if it is not removed, some warnings/errors may be generated upon tomcat start)
 - exit the core container and restart it (`docker restart ${core_instance_name}`)

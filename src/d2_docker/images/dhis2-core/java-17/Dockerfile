@@ -1,7 +1,6 @@
 FROM tomcat:9.0.85-jre17-temurin-jammy
 
 ENV DHIS2_HOME=/DHIS2_home
-ENV DHIS2_CERT=/DHIS2_home/who_pub_cert.cert
 ENV DATA_DIR=/data
 
 COPY docker-entrypoint.sh /usr/local/bin/
@@ -13,10 +12,6 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup --system tomcat && \
     addgroup root tomcat && \
     useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
-
-COPY who_pub_cert.cert $DHIS2_CERT
-RUN  chmod +rx $DHIS2_CERT
-RUN keytool -importcert -alias who_mail_ichigoout -file $DHIS2_CERT -keystore /opt/java/openjdk/lib/security/cacerts -storepass changeit -noprompt
 
 
 RUN apt-get update

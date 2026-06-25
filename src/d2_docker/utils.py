@@ -10,9 +10,10 @@ import tempfile
 import time
 import yaml
 import urllib.request
+from urllib.parse import urlparse
 from setuptools._distutils import dir_util
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import d2_docker
 from d2_docker.glowroot import get_port_glowroot
@@ -24,6 +25,7 @@ IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_PATH = os.environ.get("ROOT_PATH") or PROJECT_DIR
+
 
 def get_dhis2_war_url(version):
     match = (re.match(r"^(\d+.\d+)", version) if version.startswith("2.")
@@ -66,6 +68,28 @@ def mkdir_p(path):
 def copytree(source, dest):
     """Copy full tree path from source to dest, create dest if it does not exists."""
     dir_util.copy_tree(source, dest)
+
+
+def get_core_java_dir(base_dir, major_version):
+    logger.info("DHIS2 major version: {}".format(major_version or "-"))
+
+    if not major_version:
+        raise D2DockerError("Cannot get version from --version or --war")
+    else:
+        if major_version >= 42:
+            return os.path.join(base_dir, "java-17-tomcat-10")
+        elif major_version >= 41:
+            return os.path.join(base_dir, "java-17")
+        else:
+            return os.path.join(base_dir, "java-11")
+        
+
+def get_major_version(s):
+    """Return major DHIS2 version. Ex: "2.38.4" -> "38". "40.1.2" -> 40."""
+    match = re.search(r"(\d+\.\d+)", s)
+    if not match: return None
+    parts = [int(s) for s in match.groups()[0].split(".")]
+    return parts[1] if parts[0] == 2 else parts[0]
 
 
 def run(
@@ -263,6 +287,9 @@ def run_docker_compose(
     postgis_version=None,
     enable_postgres_queries_logging=False,
     glowroot_port=None,
+    external_db_volume=None,
+    external_db_url=None,
+    load_dump_from_data=False,
     **kwargs,
 ):
     """
@@ -278,6 +305,19 @@ def run_docker_compose(
     core_image_name = core_image or get_core_image_name(data_image)
     post_sql_dir_abs = get_absdir_for_docker_volume(post_sql_dir)
     scripts_dir_abs = get_absdir_for_docker_volume(scripts_dir)
+
+    if external_db_url and not dhis_conf:
+        logger.info("External DB URL provided, updating dhis.conf")
+        db_config = parse_postgres_url(external_db_url)
+        if not db_config:
+            raise D2DockerError("Invalid PostgreSQL URL format")
+
+        dhis_conf_file = build_dhis_conf_from_external_db(
+            jdbc_url=db_config['url'],
+            username=db_config['user'],
+            password=db_config['password']
+        )
+        dhis_conf = dhis_conf_file.name
 
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
@@ -299,7 +339,10 @@ def run_docker_compose(
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
-        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port))
+        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port)),
+        ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
+        ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
+        ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 
@@ -310,6 +353,21 @@ def run_docker_compose(
         for env_port in env_ports:
             if env_port not in env:
                 core["ports"] = [port for port in core["ports"] if env_port not in port]
+        if "EXTERNAL_DB_VOLUME" in env:
+            data["volumes"]["pgdata"] = {
+                'driver': 'local',
+                'driver_opts': {
+                    'type': 'none',
+                    'o': 'bind',
+                    'device': external_db_volume
+                }
+            }
+        if "EXTERNAL_DB_URL" in env:
+            del data["services"]["db"]
+            del data["volumes"]["pgdata"]
+            core = data["services"]["core"]
+            core["depends_on"] = [dep for dep in core["depends_on"] if dep != "db"]
+            core["extra_hosts"] = ["host.docker.internal:host-gateway"]
 
         return data
 
@@ -334,6 +392,92 @@ def build_docker_compose(process_yaml):
     logger.debug("Docker compose file: {}".format(temp_compose.name))
 
     return temp_compose
+
+
+def validate_external_db_connection(db_url):
+    """Validate connection to external PostgreSQL database."""
+    logger.info("Validating external database connection...")
+    try:
+        psql_cmd = ["psql", "-d", db_url, "-c", "SELECT now();"]
+        run(psql_cmd, capture_output=True)
+        logger.info("External database validation successful")
+    except Exception as e:
+        raise D2DockerError(f"External database validation failed: {e}")
+
+
+def parse_postgres_url(url: str) -> Optional[Dict[str, str]]:
+    """Parse PostgreSQL connection URL.
+
+    Args:
+        url (str): PostgreSQL connection URL in the format postgresql://user:pass@host:port/dbname
+
+    Raises:
+        D2DockerError: If the URL is invalid.
+
+    Returns:
+        Optional[Dict[str, str]]: Dictionary with keys 'url', 'user', 'password' or None if url is empty.
+    """
+    if not url:
+        return None
+
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['postgresql']:
+            raise D2DockerError(f"Invalid PostgreSQL URL scheme: {parsed.scheme}")
+
+        if None in [parsed.username, parsed.password, parsed.hostname, parsed.path]:
+            raise D2DockerError(f"Missing components in PostgreSQL URL: {url}")
+
+        hostname = "host.docker.internal" if parsed.hostname == "localhost" else parsed.hostname
+
+        port = ":"+str(parsed.port) if parsed.port else ""
+
+        return {
+            'url': "jdbc:"+parsed.scheme+"://"+str(hostname)+port+parsed.path,
+            'user': str(parsed.username),
+            'password': str(parsed.password),
+        }
+    except Exception as e:
+        raise D2DockerError(f"Failed to parse PostgreSQL URL: {e}")
+
+
+def build_dhis_conf_from_external_db(jdbc_url, username, password):
+    base_config_path = os.path.join(ROOT_PATH, "config", "DHIS2_home", "dhis.conf")
+    with open(base_config_path, 'r') as file:
+        config = file.read()
+
+    # Update connection URL
+    config = re.sub(
+        r'^connection\.url\s*=.*$',
+        f'connection.url = {jdbc_url}',
+        config,
+        flags=re.MULTILINE
+    )
+
+    if username:
+        config = re.sub(
+            r'^connection\.username\s*=.*$',
+            f'connection.username = {username}',
+            config,
+            flags=re.MULTILINE
+        )
+
+    if password:
+        config = re.sub(
+            r'^connection\.password\s*=.*$',
+            f'connection.password = {password}',
+            config,
+            flags=re.MULTILINE
+        )
+
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.conf') as temp_conf:
+        temp_conf.write(config)
+
+    os.chmod(temp_conf.name, 0o644)
+
+    atexit.register(lambda: os.remove(temp_conf.name))
+    return temp_conf
+
 
 def get_config_path(default_filename, path):
     return os.path.abspath(path) if path else get_config_file(default_filename)
@@ -470,6 +614,7 @@ def export_data_from_image(source_image, dest_path):
 
 # https://github.com/dhis2/dhis2-core/blob/master/dhis-2/dhis-api/src/main/java/org/hisp/dhis/fileresource/FileResourceDomain.java#L35
 
+
 default_folders = [
     "apps",
     "dataValue",
@@ -481,6 +626,7 @@ default_folders = [
     "icon",
     "jobData"
 ]
+
 
 def export_data_from_running_containers(image_name, containers, destination, folders=None):
     """Export data (db + apps + documents) from a running Docker container to some folder."""
@@ -603,6 +749,9 @@ def wait_for_server(port):
     url = "http://localhost:{}".format(port)
 
     while True:
+        # This functions is called right after a "docker up", which takes a little to be able to start the nginx (and way longer for the tomcat to be ready),
+        # so to avoid calling before nginx can accept connections (and raising an exception) just move the sleep to be the first step
+        time.sleep(5)
         try:
             logger.debug("wait_for_server:url={}".format(url))
             urllib.request.urlopen(url)  # nosec
@@ -616,7 +765,6 @@ def wait_for_server(port):
         except urllib.request.URLError as exc:
             logger.debug("wait_for_server:url-error: {}".format(exc.reason))
 
-        time.sleep(5)
 
 
 def create_core(

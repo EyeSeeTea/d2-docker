@@ -11,7 +11,7 @@ DESCRIPTION = "Migrate the DB of a running instance to another PostgreSQL major 
 NAME = "migrate-db"
 
 DEFAULT_JAVA_OPTS = "-Xmx7500m -Xms4000m"
-WAIT_TIMEOUT_SECONDS = 30 * 60
+DEFAULT_WAIT_TIMEOUT_MINUTES = 30
 
 # Tables that DHIS2 may legitimately clean up on startup
 VOLATILE_TABLES_RE = r"^(spring_session.*|.*session.*|oauth2_.*|audit.*|deletedobject|jobconfiguration)$"
@@ -65,6 +65,15 @@ def setup(parser):
         help='Extra "d2-docker start" options for the migrated instance, as one string. '
         "Options of the running instance (bind IP, java opts, auth, dhis.conf, server.xml, "
         "debug/db ports, deploy path) are reused automatically",
+    )
+    parser.add_argument(
+        "--wait-timeout",
+        type=int,
+        default=DEFAULT_WAIT_TIMEOUT_MINUTES,
+        metavar="MINUTES",
+        help="Max time for the migrated instance to load the dump and start (default: {})".format(
+            DEFAULT_WAIT_TIMEOUT_MINUTES
+        ),
     )
     parser.add_argument(
         "--dry-run", action="store_true", help="Only check the instance and show what would be done"
@@ -142,7 +151,7 @@ def run(args):
         start_parser = argparse.ArgumentParser(prog="d2-docker start")
         start.setup(start_parser)
         start.run(start_parser.parse_args(start_argv))
-        if not utils.wait_for_server(port, timeout=WAIT_TIMEOUT_SECONDS, path=deploy_path):
+        if not utils.wait_for_server(port, timeout=args.wait_timeout * 60, path=deploy_path):
             raise utils.D2DockerError("Error waiting for DHIS2 instance {}".format(dest))
     except BaseException:
         logger.error("Migration failed. Rollback: {}".format(rollback))

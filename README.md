@@ -306,10 +306,10 @@ A DB volume can only be opened by its own PostgreSQL major, so an existing insta
 
 ```console
 $ d2-docker migrate-db eyeseetea/dhis2-data:2.41-sierra --dry-run
-$ d2-docker migrate-db eyeseetea/dhis2-data:2.41-sierra [--dest IMAGE] [--start-args "--java-opts=-Xmx4g"]
+$ d2-docker migrate-db eyeseetea/dhis2-data:2.41-sierra [--dest IMAGE] [--start-args "--java-opts=-Xmx4g"] [--wait-timeout MINUTES]
 ```
 
-It dumps the DB and files of the running instance into a new image (`IMAGE-pg16` by default; the source image is not modified), stops the source (its containers and volumes are kept), starts the new image on the same port with the new PostGIS image and compares row counts and files. Rollback: `d2-docker stop IMAGE-pg16 && d2-docker start IMAGE -k`. Analytics tables are not dumped, regenerate them after the migration.
+It dumps the DB and files of the running instance into a new image (`IMAGE-pg16` by default; the source image is not modified), stops the source (its containers and volumes are kept), starts the new image on the same port with the new PostGIS image and compares row counts and files. Rollback: `d2-docker stop IMAGE-pg16 && d2-docker start IMAGE -k`. Analytics tables are not dumped, regenerate them after the migration. The new DB is loaded before Tomcat starts: for big DBs increase `--wait-timeout` (default: 30 minutes).
 
 ## Clean-up
 

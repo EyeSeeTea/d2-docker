@@ -713,8 +713,8 @@ def get_default_postgis_version(image_name):
 
 
 def get_pg_major_from_postgis_version(postgis_version):
-    """Return PostgreSQL major from a postgis/postgis tag. Ex: "14-3.5-alpine" -> "14"."""
-    match = re.match(r"^(\d+)", postgis_version or "")
+    """Return PostgreSQL major from a postgis/postgis tag. Ex: "14-3.5-alpine" -> "14", "9.6-2.5" -> "9.6"."""
+    match = re.match(r"^(\d+(?:\.\d+)?)-", postgis_version or "")
     return match.group(1) if match else None
 
 
@@ -749,20 +749,22 @@ def get_db_volume_pg_major(image_name, external_db_volume=None):
     if not volumes:
         return None
 
-    # The data image is alpine-based and available locally, use it to read the file
+    # The data image is alpine-based and available locally, use it to read the file.
+    # No PG_VERSION means a volume that was never initialized (a new DB).
     result = run(
         [
-            "docker", "run", "--rm", "--entrypoint", "cat",
-            "-v", volumes[0] + ":/pgdata:ro", image_name, "/pgdata/PG_VERSION",
+            "docker", "run", "--rm", "--entrypoint", "sh",
+            "-v", volumes[0] + ":/pgdata:ro", image_name,
+            "-c", "cat /pgdata/PG_VERSION 2>/dev/null || true",
         ],
         capture_output=True,
         raise_on_error=False,
     )
-    pg_major = result.stdout.decode("utf-8").strip()
-    if result.returncode != 0 or not pg_major:
-        logger.warning("Cannot read PG_VERSION from volume {}".format(volumes[0]))
-        return None
-    return pg_major
+    if result.returncode != 0:
+        # Do not guess: a wrong major would make the DB fail to start
+        msg = "Volume {} exists but its PG_VERSION could not be read ({}), use --postgis-version"
+        raise D2DockerError(msg.format(volumes[0], result.stderr.decode("utf-8").strip()))
+    return result.stdout.decode("utf-8").strip() or None
 
 
 def load_images_file(input_file):

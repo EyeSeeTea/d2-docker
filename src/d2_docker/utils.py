@@ -686,6 +686,19 @@ POSTGIS_VERSION_BY_PG_MAJOR = {
 }
 
 
+def get_default_postgis_version(image_name):
+    """Return PostGIS image for a new DB: PostgreSQL 16 for DHIS2 >= 2.41, 14 otherwise."""
+    try:
+        version = ImageName.from_string(image_name).version
+    except ValueError:
+        version = None
+    major_version = get_major_version(version or "")
+    pg_major = "16" if major_version and major_version >= 41 else "14"
+    postgis_version = POSTGIS_VERSION_BY_PG_MAJOR[pg_major]
+    logger.info("New DB for DHIS2 {}: postgis/postgis:{}".format(version, postgis_version))
+    return postgis_version
+
+
 def get_pg_major_from_postgis_version(postgis_version):
     """Return PostgreSQL major from a postgis/postgis tag. Ex: "14-3.5-alpine" -> "14"."""
     match = re.match(r"^(\d+)", postgis_version or "")

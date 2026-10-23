@@ -190,7 +190,7 @@ def get_postgis_version(args, image_name):
     )
 
     if not pg_major:
-        return args.postgis_version
+        return args.postgis_version or utils.get_default_postgis_version(image_name)
     elif args.postgis_version:
         requested_pg_major = utils.get_pg_major_from_postgis_version(args.postgis_version)
         if requested_pg_major != pg_major:

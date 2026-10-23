@@ -284,6 +284,8 @@ def run_docker_compose(
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
+    nginx_conf=None,
+    postgres_conf=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
     glowroot_port=None,
@@ -334,17 +336,22 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
+        ("NGINX_CONF", os.path.abspath(nginx_conf) if nginx_conf
+            else os.path.join(ROOT_PATH, "config", "nginx.conf")),
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
-        ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
         ("GLOWROOT_PORT", get_port_glowroot(glowroot_port)),
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
         ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
+
+    postgres_command = get_postgres_command(
+        postgres_conf, enable_postgres_queries_logging, log=(args[:1] == ["up"])
+    )
 
     def process_yaml(data):
         # Removes ports for "core" service in docker-compose if the environmental variables are not established
@@ -362,6 +369,8 @@ def run_docker_compose(
                     'device': external_db_volume
                 }
             }
+        if "db" in data["services"]:
+            data["services"]["db"]["command"] = postgres_command
         if "EXTERNAL_DB_URL" in env:
             del data["services"]["db"]
             del data["volumes"]["pgdata"]
@@ -439,6 +448,52 @@ def parse_postgres_url(url: str) -> Optional[Dict[str, str]]:
         }
     except Exception as e:
         raise D2DockerError(f"Failed to parse PostgreSQL URL: {e}")
+
+
+POSTGRES_QUERY_LOGS_SETTINGS = [
+    ("logging_collector", "on"),
+    ("log_statement", "all"),
+    ("log_filename", "queries-%a.log"),
+]
+
+
+def get_postgres_command(postgres_conf=None, enable_queries_logging=False, log=False):
+    """Return the command for the db service: postgres -c name=value ..."""
+    conf_path = postgres_conf or get_config_file("postgresql.conf")
+    settings = read_postgres_conf(conf_path)
+    if enable_queries_logging:
+        settings += POSTGRES_QUERY_LOGS_SETTINGS
+    if log:
+        logger.info("Postgres config: {}".format(conf_path))
+        for name, value in settings:
+            logger.info("  {} = {}".format(name, value))
+
+    command = ["postgres"]
+    for name, value in settings:
+        # Escape $ so docker compose does not interpolate it
+        command += ["-c", "{}={}".format(name, value.replace("$", "$$"))]
+    return command
+
+
+def read_postgres_conf(path):
+    """Parse a postgresql.conf-like file into a list of (name, value) pairs."""
+    line_re = re.compile(r"^\s*([\w.]+)\s*=?\s*('(?:[^']|'')*'|[^\s#']*)\s*(#.*)?$")
+    settings = []
+    with open(path, encoding="utf-8") as conf_file:
+        for line_number, line in enumerate(conf_file, 1):
+            if not line.strip() or line.strip().startswith("#"):
+                continue
+            match = line_re.match(line)
+            if not match:
+                msg = "Invalid line {} in postgres config {}: {}".format(line_number, path, line.strip())
+                raise D2DockerError(msg)
+            name, value = match.group(1), match.group(2)
+            if name in ["include", "include_if_exists", "include_dir"]:
+                raise D2DockerError("Directive not supported in postgres config: {}".format(name))
+            if value.startswith("'"):
+                value = value[1:-1].replace("''", "'")
+            settings.append((name, value))
+    return settings
 
 
 def build_dhis_conf_from_external_db(jdbc_url, username, password):

@@ -11,6 +11,10 @@ def setup(parser):
     server_xml_help = "Use a custom Tomcat server.xml file. Template: {0}".format(server_xml_path)
     dhis_conf_path = utils.get_config_file("DHIS2_home/dhis.conf")
     dhis_conf_help = "Use a custom dhis.conf file. Template: {0}".format(dhis_conf_path)
+    nginx_conf_path = utils.get_config_file("nginx.conf")
+    nginx_conf_help = "Use a custom Nginx nginx.conf file. Template: {0}".format(nginx_conf_path)
+    postgres_conf_path = utils.get_config_file("postgresql.conf")
+    postgres_conf_help = "Use a custom Postgres settings file. Template: {0}".format(postgres_conf_path)
 
     parser.add_argument(
         "image", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
@@ -25,6 +29,8 @@ def setup(parser):
     )
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
+    parser.add_argument("--nginx-conf", metavar="FILE", help=nginx_conf_help)
+    parser.add_argument("--postgres-conf", metavar="FILE", help=postgres_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
@@ -61,15 +67,6 @@ def setup(parser):
 
 
 def run(args):
-    image_or_file = args.image
-
-    if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
-        image2 = import_from_file(image_or_file)
-    else:
-        image2 = args.image
-
-    args.image = image2
-
     check_conflicting_external_params(args)
 
     if args.external_db_volume:
@@ -78,12 +75,22 @@ def run(args):
     if args.external_db_url:
         utils.validate_external_db_connection(args.external_db_url)
 
+    check_config_files(args)
+    check_config_dirs(args)
+
+    image_or_file = args.image
+    if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
+        args.image = import_from_file(image_or_file)
+
     start(args)
 
 
 def check_conflicting_external_params(args):
     if args.external_db_volume and args.external_db_url:
         msg = "--external-db-volume and --external-db-url are mutually exclusive"
+        raise utils.D2DockerError(msg)
+    if args.postgres_conf and args.external_db_url:
+        msg = "--postgres-conf cannot be used with --external-db-url (no db container)"
         raise utils.D2DockerError(msg)
     if args.load_dump_from_data and not args.external_db_url:
         msg = "--load-dump-from-data can only be used with --external-db-url"
@@ -97,6 +104,45 @@ def check_db_volume_path(external_db_volume):
     if not os.path.exists(external_db_volume):
         msg = "--external-db-volume path does not exist: {}".format(external_db_volume)
         raise utils.D2DockerError(msg)
+
+
+def check_config_files(args):
+    # A missing path would be bind-mounted by docker as an empty directory
+    config_files = [
+        ("--dhis-conf", args.dhis_conf),
+        ("--tomcat-server-xml", args.tomcat_server_xml),
+        ("--nginx-conf", args.nginx_conf),
+        ("--postgres-conf", args.postgres_conf),
+    ]
+    for option, path in config_files:
+        if not path:
+            continue
+        if not os.path.exists(path):
+            msg = "{} file does not exist: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+        if not os.path.isfile(path):
+            msg = "{} must be a file, not a directory: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+
+    if args.postgres_conf:
+        utils.read_postgres_conf(args.postgres_conf)
+
+
+def check_config_dirs(args):
+    # Validate early: otherwise the error is only raised after "down --volumes"
+    config_dirs = [
+        ("--run-sql", args.run_sql),
+        ("--run-scripts", args.run_scripts),
+    ]
+    for option, path in config_dirs:
+        if not path:
+            continue
+        if not os.path.exists(path):
+            msg = "{} directory does not exist: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+        if not os.path.isdir(path):
+            msg = "{} must be a directory, not a file: {}".format(option, path)
+            raise utils.D2DockerError(msg)
 
 
 def import_from_file(images_path):
@@ -157,6 +203,8 @@ def start(args):
             dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
+            nginx_conf=args.nginx_conf,
+            postgres_conf=args.postgres_conf,
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,

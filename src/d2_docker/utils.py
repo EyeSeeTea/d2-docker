@@ -675,6 +675,70 @@ def get_pg_dump_command(exclude_table=True, compress=True):
     return cmd
 
 
+# postgis/postgis image for each PostgreSQL major, used when an existing DB volume is reused
+POSTGIS_VERSION_BY_PG_MAJOR = {
+    "12": "12-3.5-alpine",
+    "13": "13-3.5-alpine",
+    "14": "14-3.5-alpine",
+    "15": "15-3.5-alpine",
+    "16": "16-3.5-alpine",
+    "17": "17-3.5-alpine",
+}
+
+
+def get_pg_major_from_postgis_version(postgis_version):
+    """Return PostgreSQL major from a postgis/postgis tag. Ex: "14-3.5-alpine" -> "14"."""
+    match = re.match(r"^(\d+)", postgis_version or "")
+    return match.group(1) if match else None
+
+
+def get_postgis_version_for_pg_major(pg_major):
+    postgis_version = POSTGIS_VERSION_BY_PG_MAJOR.get(pg_major)
+    if not postgis_version:
+        msg = "No default PostGIS image for PostgreSQL {}, use --postgis-version".format(pg_major)
+        raise D2DockerError(msg)
+    return postgis_version
+
+
+def get_db_volume_pg_major(image_name, external_db_volume=None):
+    """Return the PostgreSQL major (PG_VERSION) of the existing DB volume, None if there is none."""
+    if external_db_volume:
+        pg_version_path = os.path.join(external_db_volume, "PG_VERSION")
+        if not os.path.isfile(pg_version_path):
+            return None
+        with open(pg_version_path) as pg_version_file:
+            return pg_version_file.read().strip()
+
+    project_name = get_project_name(image_name)
+    # Check that the volume exists first: "docker run -v" would create an empty one
+    result = run(
+        [
+            "docker", "volume", "ls", "-q",
+            "--filter", "label=com.docker.compose.project=" + project_name,
+            "--filter", "label=com.docker.compose.volume=pgdata",
+        ],
+        capture_output=True,
+    )
+    volumes = result.stdout.decode("utf-8").split()
+    if not volumes:
+        return None
+
+    # The data image is alpine-based and available locally, use it to read the file
+    result = run(
+        [
+            "docker", "run", "--rm", "--entrypoint", "cat",
+            "-v", volumes[0] + ":/pgdata:ro", image_name, "/pgdata/PG_VERSION",
+        ],
+        capture_output=True,
+        raise_on_error=False,
+    )
+    pg_major = result.stdout.decode("utf-8").strip()
+    if result.returncode != 0 or not pg_major:
+        logger.warning("Cannot read PG_VERSION from volume {}".format(volumes[0]))
+        return None
+    return pg_major
+
+
 def load_images_file(input_file):
     """Load docker images from local file."""
     return run(["docker", "load", "-i", input_file], capture_output=True)

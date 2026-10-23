@@ -125,9 +125,11 @@ def start(args):
     utils.logger.info("Port: {}".format(port))
     core_image = args.core_image
     override_containers = not args.keep_containers
+    postgis_version = get_postgis_version(args, image_name)
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name, core_image=core_image,
+                                 postgis_version=postgis_version,
                                  external_db_volume=args.external_db_volume)
 
     if override_containers:
@@ -158,7 +160,7 @@ def start(args):
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
             java_opts=args.java_opts,
-            postgis_version=args.postgis_version,
+            postgis_version=postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,
             glowroot_port=args.glowroot_port,
             external_db_volume=args.external_db_volume,
@@ -168,3 +170,39 @@ def start(args):
 
     if args.detach:
         utils.logger.info("Detaching... run d2-docker logs to see logs")
+
+
+def get_postgis_version(args, image_name):
+    """
+    Return the PostGIS image version to use.
+
+    An existing DB volume can only be opened by its own PostgreSQL major, so, when it is
+    reused (-k or --external-db-volume), use the image for that major unless one is given.
+    """
+    if args.external_db_url:
+        return args.postgis_version
+
+    reuses_db_volume = args.keep_containers or args.external_db_volume
+    pg_major = (
+        utils.get_db_volume_pg_major(image_name, args.external_db_volume)
+        if reuses_db_volume
+        else None
+    )
+
+    if not pg_major:
+        return args.postgis_version
+    elif args.postgis_version:
+        requested_pg_major = utils.get_pg_major_from_postgis_version(args.postgis_version)
+        if requested_pg_major != pg_major:
+            msg = (
+                "The DB volume is PostgreSQL {} and --postgis-version is {}: PostgreSQL {} "
+                "cannot open it. To change the major version use: d2-docker migrate-db"
+            ).format(pg_major, args.postgis_version, requested_pg_major)
+            raise utils.D2DockerError(msg)
+        return args.postgis_version
+    else:
+        postgis_version = utils.get_postgis_version_for_pg_major(pg_major)
+        utils.logger.info(
+            "DB volume is PostgreSQL {}, using postgis/postgis:{}".format(pg_major, postgis_version)
+        )
+        return postgis_version

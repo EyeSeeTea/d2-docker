@@ -147,6 +147,30 @@ $ d2-docker start --nginx-conf=nginx.conf ...
 
 The file is mounted (read-only) in the gateway container, so you can edit it in the host and reload nginx with `docker exec <gateway-container> nginx -s reload`. Keep the upstream pointing to `core:8080`.
 
+#### Custom Postgres settings
+
+Copy the default [postgresql.conf](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/postgresql.conf) and use it as a template to create your own configuration. Then pass it to the `start` command:
+
+```
+$ d2-docker start --postgres-conf=postgresql.conf ...
+```
+
+The settings in the file (`name = value`) are passed to postgres as command-line options (`-c name=value`), so they override the image's postgresql.conf and any setting not listed keeps the image default. They are printed on start. To check the active values and where they come from:
+
+```
+$ echo "SELECT name, setting, unit, source FROM pg_settings WHERE source <> 'default';" > settings.sql
+$ d2-docker run-sql settings.sql
+```
+
+Note that `jit` is not available in Postgres < 11; remove it from the file when using an older `--postgis-version`.
+
+#### Note on custom configuration
+
+d2-docker does not store the options an instance was started with. The custom files (`--dhis-conf`, `--tomcat-server-xml`, `--nginx-conf`, `--postgres-conf`) and options like `--enable-postgres-queries-logging` only apply to the containers created by that `start`. If the containers are recreated without them, they use the defaults again:
+
+- `d2-docker start -k` without the options: pass them again on every start.
+- `d2-docker run-sql` on a stopped instance: it starts the `db` container with the default Postgres settings.
+
 ### Run terminal shell in DHIS2 core container
 
 ```

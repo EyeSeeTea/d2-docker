@@ -13,6 +13,8 @@ def setup(parser):
     dhis_conf_help = "Use a custom dhis.conf file. Template: {0}".format(dhis_conf_path)
     nginx_conf_path = utils.get_config_file("nginx.conf")
     nginx_conf_help = "Use a custom Nginx nginx.conf file. Template: {0}".format(nginx_conf_path)
+    postgres_conf_path = utils.get_config_file("postgresql.conf")
+    postgres_conf_help = "Use a custom Postgres settings file. Template: {0}".format(postgres_conf_path)
 
     parser.add_argument(
         "image", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
@@ -28,6 +30,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--nginx-conf", metavar="FILE", help=nginx_conf_help)
+    parser.add_argument("--postgres-conf", metavar="FILE", help=postgres_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
@@ -86,6 +89,9 @@ def check_conflicting_external_params(args):
     if args.external_db_volume and args.external_db_url:
         msg = "--external-db-volume and --external-db-url are mutually exclusive"
         raise utils.D2DockerError(msg)
+    if args.postgres_conf and args.external_db_url:
+        msg = "--postgres-conf cannot be used with --external-db-url (no db container)"
+        raise utils.D2DockerError(msg)
     if args.load_dump_from_data and not args.external_db_url:
         msg = "--load-dump-from-data can only be used with --external-db-url"
         raise utils.D2DockerError(msg)
@@ -106,6 +112,7 @@ def check_config_files(args):
         ("--dhis-conf", args.dhis_conf),
         ("--tomcat-server-xml", args.tomcat_server_xml),
         ("--nginx-conf", args.nginx_conf),
+        ("--postgres-conf", args.postgres_conf),
     ]
     for option, path in config_files:
         if not path:
@@ -116,6 +123,9 @@ def check_config_files(args):
         if not os.path.isfile(path):
             msg = "{} must be a file, not a directory: {}".format(option, path)
             raise utils.D2DockerError(msg)
+
+    if args.postgres_conf:
+        utils.read_postgres_conf(args.postgres_conf)
 
 
 def check_config_dirs(args):
@@ -194,6 +204,7 @@ def start(args):
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
             nginx_conf=args.nginx_conf,
+            postgres_conf=args.postgres_conf,
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,

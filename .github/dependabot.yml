@@ -1,0 +1,37 @@
+# Dependabot version updates for the Docker base images (FROM lines).
+#
+# Policy: only patch (and Tomcat minor-compatible) updates are proposed. Major
+# updates of Tomcat, Java, Ubuntu, etc. are planned migrations and are ignored
+# here. Dependabot keeps the tag suffix (e.g. -jre21-temurin), so the Java major
+# of each core image never changes through these PRs.
+#
+# Not covered by this file:
+#   - docker-compose.yml images: postgis uses ${POSTGIS_VERSION:-...} and the
+#     gateway uses a non-versioned tag (:alpine), which Dependabot cannot bump.
+#   - images rebuilt in place under the same tag (e.g. a Java fix in the
+#     current tomcat tag): Dependabot opens no PR; they are picked up by
+#     rebuilding the core with --pull.
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/src/d2_docker/images/dhis2-core/*"
+      - "/src/d2_docker/images/dhis2-data"
+    target-branch: "development"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Keep Tomcat on its current minor line (9.0.x / 10.1.x)
+      - dependency-name: "tomcat"
+        update-types: ["version-update:semver-minor"]
+    groups:
+      docker-base-images:
+        patterns: ["*"]

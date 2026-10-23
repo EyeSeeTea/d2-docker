@@ -58,7 +58,7 @@ services:
         ports:
             - "${DHIS2_CORE_IP:-}${DHIS2_CORE_PORT:-8080}:80"
         volumes:
-            - ${ROOT_PATH}/config/nginx.conf:/etc/nginx/nginx.conf:ro
+            - "${NGINX_CONF}:/etc/nginx/nginx.conf:ro"
             - ${ROOT_PATH}/config/50x.html:/usr/share/nginx/html/50x.html:ro
             - /var/run/docker.sock:/tmp/docker.sock:ro
             - "/etc/timezone:/etc/timezone:ro"

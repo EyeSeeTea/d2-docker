@@ -137,6 +137,16 @@ Note that you should not change the catalina connector port (8080, by default). 
 />
 ```
 
+#### Custom Nginx nginx.conf
+
+Copy the default [nginx.conf](https://github.com/EyeSeeTea/d2-docker/blob/master/src/d2_docker/config/nginx.conf) and use it as a template to create your own configuration. Then pass it to the `start` command:
+
+```
+$ d2-docker start --nginx-conf=nginx.conf ...
+```
+
+The file is mounted (read-only) in the gateway container, so you can edit it in the host and reload nginx with `docker exec <gateway-container> nginx -s reload`. Keep the upstream pointing to `core:8080`.
+
 ### Run terminal shell in DHIS2 core container
 
 ```

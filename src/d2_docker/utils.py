@@ -284,6 +284,7 @@ def run_docker_compose(
     java_opts=None,
     dhis2_auth=None,
     tomcat_server=None,
+    nginx_conf=None,
     postgis_version=None,
     enable_postgres_queries_logging=False,
     glowroot_port=None,
@@ -334,6 +335,8 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
+        ("NGINX_CONF", os.path.abspath(nginx_conf) if nginx_conf
+            else os.path.join(ROOT_PATH, "config", "nginx.conf")),
         ("POSTGIS_VERSION", postgis_version),
         ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
         # Add ROOT_PATH from environment (required when run inside a docker)

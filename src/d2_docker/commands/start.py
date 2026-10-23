@@ -11,6 +11,8 @@ def setup(parser):
     server_xml_help = "Use a custom Tomcat server.xml file. Template: {0}".format(server_xml_path)
     dhis_conf_path = utils.get_config_file("DHIS2_home/dhis.conf")
     dhis_conf_help = "Use a custom dhis.conf file. Template: {0}".format(dhis_conf_path)
+    nginx_conf_path = utils.get_config_file("nginx.conf")
+    nginx_conf_help = "Use a custom Nginx nginx.conf file. Template: {0}".format(nginx_conf_path)
 
     parser.add_argument(
         "image", metavar="IMAGE_OR_EXPORT_FILE", help="Docker image or exported file"
@@ -25,6 +27,7 @@ def setup(parser):
     )
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
+    parser.add_argument("--nginx-conf", metavar="FILE", help=nginx_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
     parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
@@ -157,6 +160,7 @@ def start(args):
             dhis2_auth=args.auth,
             tomcat_server=args.tomcat_server_xml,
             dhis_conf=args.dhis_conf,
+            nginx_conf=args.nginx_conf,
             java_opts=args.java_opts,
             postgis_version=args.postgis_version,
             enable_postgres_queries_logging=args.enable_postgres_queries_logging,

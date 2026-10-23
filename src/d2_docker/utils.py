@@ -25,6 +25,7 @@ IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_PATH = os.environ.get("ROOT_PATH") or PROJECT_DIR
+JDWP_OPTS = "-Xdebug -Xrunjdwp:transport=dt_socket,address=0.0.0.0:8000,server=y,suspend=n"
 
 
 def get_dhis2_war_url(version):
@@ -324,6 +325,8 @@ def run_docker_compose(
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
         ("DHIS2_CORE_DEBUG_PORT", "{}:8000".format(debug_port)) if debug_port else None,
+        # The JDWP agent has no authentication, only enable it when the debug port is requested
+        ("DHIS2_CORE_DEBUG_OPTS", JDWP_OPTS if debug_port else ""),
         ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),

@@ -339,7 +339,7 @@ def run_docker_compose(
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
         ("POSTGIS_VERSION", postgis_version),
-        ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
+        ("DB_PORT", get_db_port_mapping(db_port)),
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
@@ -378,6 +378,16 @@ def run_docker_compose(
     temp_compose = build_docker_compose(process_yaml)
 
     return run(["docker", "compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+
+
+def get_db_port_mapping(db_port):
+    """Publish the DB port on localhost only, unless an IP is given (Ex: 0.0.0.0:5432)."""
+    if not db_port:
+        return "0:1000"
+    elif ":" in str(db_port):
+        return "{}:5432".format(db_port)
+    else:
+        return "127.0.0.1:{}:5432".format(db_port)
 
 
 def build_docker_compose(process_yaml):

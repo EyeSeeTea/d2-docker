@@ -64,15 +64,6 @@ def setup(parser):
 
 
 def run(args):
-    image_or_file = args.image
-
-    if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
-        image2 = import_from_file(image_or_file)
-    else:
-        image2 = args.image
-
-    args.image = image2
-
     check_conflicting_external_params(args)
 
     if args.external_db_volume:
@@ -80,6 +71,13 @@ def run(args):
 
     if args.external_db_url:
         utils.validate_external_db_connection(args.external_db_url)
+
+    check_config_files(args)
+    check_config_dirs(args)
+
+    image_or_file = args.image
+    if os.path.exists(image_or_file) and os.path.isfile(image_or_file):
+        args.image = import_from_file(image_or_file)
 
     start(args)
 
@@ -100,6 +98,41 @@ def check_db_volume_path(external_db_volume):
     if not os.path.exists(external_db_volume):
         msg = "--external-db-volume path does not exist: {}".format(external_db_volume)
         raise utils.D2DockerError(msg)
+
+
+def check_config_files(args):
+    # A missing path would be bind-mounted by docker as an empty directory
+    config_files = [
+        ("--dhis-conf", args.dhis_conf),
+        ("--tomcat-server-xml", args.tomcat_server_xml),
+        ("--nginx-conf", args.nginx_conf),
+    ]
+    for option, path in config_files:
+        if not path:
+            continue
+        if not os.path.exists(path):
+            msg = "{} file does not exist: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+        if not os.path.isfile(path):
+            msg = "{} must be a file, not a directory: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+
+
+def check_config_dirs(args):
+    # Validate early: otherwise the error is only raised after "down --volumes"
+    config_dirs = [
+        ("--run-sql", args.run_sql),
+        ("--run-scripts", args.run_scripts),
+    ]
+    for option, path in config_dirs:
+        if not path:
+            continue
+        if not os.path.exists(path):
+            msg = "{} directory does not exist: {}".format(option, path)
+            raise utils.D2DockerError(msg)
+        if not os.path.isdir(path):
+            msg = "{} must be a directory, not a file: {}".format(option, path)
+            raise utils.D2DockerError(msg)
 
 
 def import_from_file(images_path):

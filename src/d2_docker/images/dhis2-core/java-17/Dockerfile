@@ -1,4 +1,4 @@
-FROM tomcat:9.0.123-jre17-temurin-jammy
+FROM tomcat:9.0.123-jre17-temurin-noble
 
 ENV DHIS2_HOME=/DHIS2_home
 ENV DATA_DIR=/data
@@ -10,7 +10,7 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     mkdir $DHIS2_HOME && \
     mkdir $DATA_DIR && \
     addgroup --system tomcat && \
-    addgroup root tomcat && \
+    usermod -aG tomcat root && \
     useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
 
 

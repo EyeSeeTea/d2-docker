@@ -619,10 +619,10 @@ def export_data_from_image(source_image, dest_path):
     mkdir_p(dest_path)
     try:
         run(["docker", "cp", container_id + ":" + "/data/db", dest_path])
-        with possible_errors():
-            run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
-            run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
-            run(["docker", "cp", container_id + ":" + "/data/dataValue", dest_path])
+        # Old images may not have all the folders
+        for folder in default_folders:
+            with possible_errors():
+                run(["docker", "cp", container_id + ":" + "/data/" + folder, dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 

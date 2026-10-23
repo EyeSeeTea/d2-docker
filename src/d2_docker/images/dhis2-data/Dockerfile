@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.24
 
 RUN mkdir /data/
 RUN mkdir /data/db

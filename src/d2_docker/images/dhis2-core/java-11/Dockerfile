@@ -1,4 +1,4 @@
-FROM tomcat:9.0.64-jre11-openjdk-slim-bullseye
+FROM tomcat:9.0.123-jre11-temurin-jammy
 
 ENV DHIS2_HOME=/DHIS2_home
 ENV DATA_DIR=/data

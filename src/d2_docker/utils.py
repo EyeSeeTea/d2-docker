@@ -43,8 +43,9 @@ def get_dhis2_war_url(version):
     return releases_base_url + "/" + path
 
 
-def docker_build(directory, tag):
-    return run(["docker", "build", "--platform", "linux/amd64", "--tag", tag, directory])
+def docker_build(directory, tag, pull=False):
+    pull_args = ["--pull"] if pull else []
+    return run(["docker", "build", "--platform", "linux/amd64", *pull_args, "--tag", tag, directory])
 
 
 def get_logger():
@@ -796,7 +797,8 @@ def create_core(
             logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
             shutil.copy(source_home_file, dhis2_home_path)
 
-        docker_build(build_dir, image)
+        # Always refresh the base image so rebuilt tags (e.g. Java fixes) are picked up
+        docker_build(build_dir, image, pull=True)
 
 
 def get_config_file(filename):

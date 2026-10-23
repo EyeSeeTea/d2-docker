@@ -51,7 +51,7 @@ services:
         ports:
             - "${DB_PORT}"
     gateway:
-        image: "jwilder/nginx-proxy:alpine"
+        image: "nginxproxy/nginx-proxy:1.11.6-alpine"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
             - "com.eyeseetea.deploy-path=${DEPLOY_PATH}"

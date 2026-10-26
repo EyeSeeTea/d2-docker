@@ -21,7 +21,6 @@ from d2_docker.commands import (
     upgrade,
     version,
     shell,
-    migrate_db,
 )
 
 COMMAND_MODULES = [
@@ -42,7 +41,6 @@ COMMAND_MODULES = [
     run_sql,
     create,
     upgrade,
-    migrate_db,
     shell,
     api,
 ]

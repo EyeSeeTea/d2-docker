@@ -92,7 +92,7 @@ Some notes:
 - Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized. SQL files containing "strict" in their name will cause `d2-docker start` to stop if an error occurs.
 - Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
-- Use option `--postgis-version=16-3.5-alpine` to specify the PostGIS version to use. By default, a new DB uses `16-3.5-alpine` for DHIS2 >= 2.41 and `14-3.5-alpine` for older versions. When an existing DB volume is reused (`-k` or `--external-db-volume`), the image of its PostgreSQL major (read from `PG_VERSION`) is used instead; to change the major version of an existing instance use `d2-docker migrate-db`.
+- Use option `--postgis-version=16-3.5-alpine` to specify the PostGIS version to use. By default, a new DB uses `16-3.5-alpine` for DHIS2 >= 2.41 and `14-3.5-alpine` for older versions. When an existing DB volume is reused (`-k` or `--external-db-volume`), the image of its PostgreSQL major (read from `PG_VERSION`) is used instead; to change the major version of an existing instance see [Change the PostgreSQL major of an instance](#change-the-postgresql-major-of-an-instance).
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
 - Use option `--external-db-volume=VOLUME_ABSOLUTE_PATH` to create or use a persistent volume for the database located at `VOLUME_ABSOLUTE_PATH`.
 - Use option `--external-db-url=POSTGRES_URL` to connect to an external PostgreSQL database instead of using the DB container. The URL should be in the format `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`. Note that you have to configure the DB to accept connections from the docker internal network.
@@ -300,16 +300,17 @@ upgrade-sierra/2.31/some-metadata-used-by-the-script.json
 upgrade-sierra/2.32/fix-org-units-geometry.sql
 ```
 
-### Migrate the DB of an instance to another PostgreSQL major
+### Change the PostgreSQL major of an instance
 
-A DB volume can only be opened by its own PostgreSQL major, so an existing instance keeps it on `start -k`. To move a running instance to another major (default: `16-3.5-alpine`):
+A DB volume can only be opened by its own PostgreSQL major, so an existing instance keeps it on `start -k`. To move an instance to another major, recreate its DB from a dump:
 
 ```console
-$ d2-docker migrate-db eyeseetea/dhis2-data:2.41-sierra --dry-run
-$ d2-docker migrate-db eyeseetea/dhis2-data:2.41-sierra [--dest IMAGE] [--start-args "--java-opts=-Xmx4g"] [--wait-timeout MINUTES]
+$ d2-docker commit eyeseetea/dhis2-data:2.41-sierra
+$ d2-docker stop eyeseetea/dhis2-data:2.41-sierra
+$ d2-docker start eyeseetea/dhis2-data:2.41-sierra [--postgis-version=16-3.5-alpine]
 ```
 
-It dumps the DB and files of the running instance into a new image (`IMAGE-pg16` by default; the source image is not modified), stops the source (its containers and volumes are kept), starts the new image on the same port with the new PostGIS image and compares row counts and files. Rollback: `d2-docker stop IMAGE-pg16 && d2-docker start IMAGE -k`. Analytics tables are not dumped, regenerate them after the migration. The new DB is loaded before Tomcat starts: for big DBs increase `--wait-timeout` (default: 30 minutes).
+`commit` saves the DB and files into the image, and `start` without `-k` removes the old volumes and loads that dump with the default PostGIS image for the DHIS2 version (or `--postgis-version`). Check that `commit` finished without errors before starting without `-k`, or keep a copy first (`d2-docker copy IMAGE IMAGE-backup`). Analytics tables are not included in the dump: regenerate them after the start.
 
 ## Clean-up
 

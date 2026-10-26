@@ -196,7 +196,8 @@ def get_postgis_version(args, image_name):
         if requested_pg_major != pg_major:
             msg = (
                 "The DB volume is PostgreSQL {} and --postgis-version is {}: PostgreSQL {} "
-                "cannot open it. To change the major version use: d2-docker migrate-db"
+                "cannot open it. To change the major version: d2-docker commit, d2-docker stop "
+                "and d2-docker start without -k (the DB is recreated from the committed dump)"
             ).format(pg_major, args.postgis_version, requested_pg_major)
             raise utils.D2DockerError(msg)
         return args.postgis_version

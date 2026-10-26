@@ -838,11 +838,10 @@ def temporal_build_directory(source_dir, temp_dir: Optional[str] = None):
         yield build_dir
 
 
-def wait_for_server(port, timeout=None, path=""):
-    url = "http://localhost:{}{}".format(port, path)
-    deadline = time.time() + timeout if timeout else None
+def wait_for_server(port):
+    url = "http://localhost:{}".format(port)
 
-    while not deadline or time.time() < deadline:
+    while True:
         # This functions is called right after a "docker up", which takes a little to be able to start the nginx (and way longer for the tomcat to be ready),
         # so to avoid calling before nginx can accept connections (and raising an exception) just move the sleep to be the first step
         time.sleep(5)
@@ -859,8 +858,6 @@ def wait_for_server(port, timeout=None, path=""):
         except urllib.request.URLError as exc:
             logger.debug("wait_for_server:url-error: {}".format(exc.reason))
 
-    logger.error("Timeout waiting for {}".format(url))
-    return False
 
 
 def create_core(

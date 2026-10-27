@@ -1,0 +1,124 @@
+{
+    "comment": "Request logs rules cases, shared by test_rules.lua (gateway) and test_rules.py (d2-docker start). See spec/request-logs.md",
+    "matching": [
+        {
+            "comment": "Shorthand value is an exact match",
+            "config": { "rules": [{ "method": "POST" }] },
+            "requests": [
+                { "method": "POST", "url": "/api/x", "status": "200", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "200", "expected": false },
+                { "method": "post", "url": "/api/x", "status": "200", "expected": false }
+            ]
+        },
+        {
+            "comment": "equal and notEqual operators",
+            "config": { "rules": [{ "method": { "notEqual": "GET" }, "url": { "equal": "/api/x" } }] },
+            "requests": [
+                { "method": "PUT", "url": "/api/x", "status": "200", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "200", "expected": false },
+                { "method": "PUT", "url": "/api/x?a=1", "status": "200", "expected": false }
+            ]
+        },
+        {
+            "comment": "match is a PCRE regex search (\\d, alternation, \\b)",
+            "config": { "rules": [{ "url": { "match": "^/api/(\\d+/)?(metadata|dataValueSets)\\b" } }] },
+            "requests": [
+                { "method": "POST", "url": "/api/metadata", "status": "200", "expected": true },
+                { "method": "POST", "url": "/api/42/dataValueSets?dryRun=true", "status": "200", "expected": true },
+                { "method": "POST", "url": "/api/metadataVersion", "status": "200", "expected": false },
+                { "method": "POST", "url": "/dhis2/api/metadata", "status": "200", "expected": false },
+                { "method": "POST", "url": "/API/metadata", "status": "200", "expected": false }
+            ]
+        },
+        {
+            "comment": "notMatch",
+            "config": { "rules": [{ "url": { "notMatch": "^/api/me\\b" } }] },
+            "requests": [
+                { "method": "GET", "url": "/api/me", "status": "200", "expected": false },
+                { "method": "GET", "url": "/api/me/dashboard", "status": "200", "expected": false },
+                { "method": "GET", "url": "/api/messageConversations", "status": "200", "expected": true }
+            ]
+        },
+        {
+            "comment": "Fields of a rule are combined with AND",
+            "config": { "rules": [{ "status": { "match": "^[45]" }, "url": { "match": "^/api/" } }] },
+            "requests": [
+                { "method": "GET", "url": "/api/x", "status": "404", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "503", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "200", "expected": false },
+                { "method": "GET", "url": "/dhis-web-x/", "status": "404", "expected": false }
+            ]
+        },
+        {
+            "comment": "Rules are combined with OR",
+            "config": {
+                "rules": [
+                    { "status": "500" },
+                    { "method": "DELETE" }
+                ]
+            },
+            "requests": [
+                { "method": "GET", "url": "/api/x", "status": "500", "expected": true },
+                { "method": "DELETE", "url": "/api/x", "status": "200", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "200", "expected": false }
+            ]
+        },
+        {
+            "comment": "Status also accepts integers",
+            "config": { "rules": [{ "status": 404 }, { "method": "POST", "status": { "notEqual": 200 } }] },
+            "requests": [
+                { "method": "GET", "url": "/api/x", "status": "404", "expected": true },
+                { "method": "GET", "url": "/api/x", "status": "405", "expected": false },
+                { "method": "POST", "url": "/api/x", "status": "409", "expected": true },
+                { "method": "POST", "url": "/api/x", "status": "200", "expected": false }
+            ]
+        },
+        {
+            "comment": "Status not known yet (access phase): only method/url can discard a rule",
+            "config": { "rules": [{ "status": { "match": "^[45]" }, "url": { "match": "^/api/" } }] },
+            "requests": [
+                { "method": "GET", "url": "/api/x", "expected": true },
+                { "method": "GET", "url": "/dhis-web-x/", "expected": false }
+            ]
+        },
+        {
+            "comment": "A rule with no fields matches every request; comment keys are ignored",
+            "config": { "comment": "top-level comment", "rules": [{ "comment": "everything" }] },
+            "requests": [
+                { "method": "GET", "url": "/", "status": "200", "expected": true },
+                { "method": "POST", "url": "/api/x", "status": "500", "expected": true }
+            ]
+        },
+        {
+            "comment": "Empty rules list logs nothing",
+            "config": { "rules": [] },
+            "requests": [{ "method": "GET", "url": "/api/x", "status": "500", "expected": false }]
+        },
+        {
+            "comment": "Missing rules list logs nothing",
+            "config": { "maxAgeDays": 3, "maxBodyBytes": 1024 },
+            "requests": [{ "method": "GET", "url": "/api/x", "status": "500", "expected": false }]
+        }
+    ],
+    "invalid": [
+        { "comment": "Not JSON (the parser details after the prefix differ)", "configText": "{broken", "error": "invalid JSON: " },
+        { "comment": "Not an object", "configText": "[]", "error": "expected an object" },
+        { "comment": "Unknown top-level key", "config": { "rule": [] }, "error": "unknown keys: rule" },
+        { "comment": "maxAgeDays: boolean", "config": { "maxAgeDays": true }, "error": "maxAgeDays must be a positive integer" },
+        { "comment": "maxAgeDays: zero", "config": { "maxAgeDays": 0 }, "error": "maxAgeDays must be a positive integer" },
+        { "comment": "maxAgeDays: not an integer", "config": { "maxAgeDays": 1.5 }, "error": "maxAgeDays must be a positive integer" },
+        { "comment": "maxBodyBytes: string", "config": { "maxBodyBytes": "1024" }, "error": "maxBodyBytes must be a positive integer" },
+        { "comment": "rules: object", "config": { "rules": {} }, "error": "rules must be a list of objects" },
+        { "comment": "rules: list of strings", "config": { "rules": ["x"] }, "error": "rules must be a list of objects" },
+        { "comment": "rules: list of lists", "config": { "rules": [["x"]] }, "error": "rules must be a list of objects" },
+        { "comment": "Unknown field", "config": { "rules": [{ "uri": "/api" }] }, "error": "unknown field: uri" },
+        { "comment": "Unknown operator", "config": { "rules": [{ "url": { "regex": "x" } }] }, "error": "field url: expected a string or an object with one operator (equal, match, notEqual, notMatch)" },
+        { "comment": "Two operators", "config": { "rules": [{ "url": { "match": "a", "equal": "b" } }] }, "error": "field url: expected a string or an object with one operator" },
+        { "comment": "Empty operator object", "config": { "rules": [{ "url": {} }] }, "error": "field url: expected a string or an object with one operator" },
+        { "comment": "Number for a non-status field", "config": { "rules": [{ "method": 404 }] }, "error": "field method: expected a string or an object with one operator" },
+        { "comment": "Status: boolean", "config": { "rules": [{ "status": true }] }, "error": "field status: expected a string or an object with one operator" },
+        { "comment": "Status: not an integer", "config": { "rules": [{ "status": 4.5 }] }, "error": "field status: expected a string or an object with one operator" },
+        { "comment": "Operand: number for url", "config": { "rules": [{ "url": { "match": 1 } }] }, "error": "field url: expected a string or an object with one operator" },
+        { "comment": "Invalid regex (only the gateway compiles regexes)", "gatewayOnly": true, "config": { "rules": [{ "url": { "match": "(" } }] }, "error": "field url: invalid regex (" }
+    ]
+}

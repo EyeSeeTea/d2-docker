@@ -51,18 +51,27 @@ services:
         ports:
             - "${DB_PORT}"
     gateway:
-        image: "jwilder/nginx-proxy:alpine"
+        image: "openresty/openresty:1.27.1.2-alpine"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
             - "com.eyeseetea.deploy-path=${DEPLOY_PATH}"
         ports:
             - "${DHIS2_CORE_IP:-}${DHIS2_CORE_PORT:-8080}:80"
         volumes:
-            - ${ROOT_PATH}/config/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ${ROOT_PATH}/config/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+            - ${ROOT_PATH}/config/gateway:/etc/d2-docker/gateway:ro
             - ${ROOT_PATH}/config/50x.html:/usr/share/nginx/html/50x.html:ro
-            - /var/run/docker.sock:/tmp/docker.sock:ro
+            # Request logs mount targets, also in config/gateway/request_logs.lua (RULES_PATH, LOGS_DIR)
+            # and d2_docker/request_logs.py (GATEWAY_LOGS_DIR); keep in sync
+            - "${REQUEST_LOGS_RULES}:/etc/d2-docker/request-logs.json:ro"
+            - "${REQUEST_LOGS_DIR}:/var/log/d2-docker/requests"
             - "/etc/timezone:/etc/timezone:ro"
             - "/etc/localtime:/etc/localtime:ro"
+        environment:
+            DEPLOY_PATH: "${DEPLOY_PATH}"
+            GATEWAY_UID: "${GATEWAY_UID}"
+            GATEWAY_GID: "${GATEWAY_GID}"
+        command: sh /etc/d2-docker/gateway/start.sh
         restart: unless-stopped
         depends_on:
             - "core"

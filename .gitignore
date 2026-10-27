@@ -110,3 +110,9 @@ venv.bak/
 
 .flaskenv.secret
 bom.json
+
+# local
+/bak/
+/db/
+/request-logs/
+/src/d2_docker/config/override/

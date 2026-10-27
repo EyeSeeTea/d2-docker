@@ -21,6 +21,7 @@ from d2_docker.commands import (
     upgrade,
     version,
     shell,
+    request_logs,
 )
 
 COMMAND_MODULES = [
@@ -42,6 +43,7 @@ COMMAND_MODULES = [
     create,
     upgrade,
     shell,
+    request_logs,
     api,
 ]
 

@@ -290,6 +290,8 @@ def run_docker_compose(
     external_db_volume=None,
     external_db_url=None,
     load_dump_from_data=False,
+    request_logs_rules=None,
+    request_logs_dir=None,
     **kwargs,
 ):
     """
@@ -343,6 +345,11 @@ def run_docker_compose(
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
         ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
+        ("REQUEST_LOGS_RULES", get_absfile_for_docker_volume(request_logs_rules)),
+        ("REQUEST_LOGS_DIR", get_absdir_for_docker_volume(request_logs_dir)),
+        # Gateway workers run as the current user, so request logs are owned by it
+        ("GATEWAY_UID", str(os.getuid()) if hasattr(os, "getuid") else ""),
+        ("GATEWAY_GID", str(os.getgid()) if hasattr(os, "getgid") else ""),
     ]
     env = dict((k, v) for (k, v) in [pair for pair in env_pairs if pair] if v is not None)
 

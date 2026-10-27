@@ -34,7 +34,7 @@ services:
             - "${GLOWROOT_PORT}"
         dns_search: .
     db:
-        image: "postgis/postgis:${POSTGIS_VERSION:-16-3.5-alpine}"
+        image: "postgis/postgis:${POSTGIS_VERSION:-16-3.6-alpine}"
         shm_size: 1gb
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"

@@ -98,6 +98,7 @@ Some notes:
 - Use option `--external-db-url=POSTGRES_URL` to connect to an external PostgreSQL database instead of using the DB container. The URL should be in the format `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`. Note that you have to configure the DB to accept connections from the docker internal network.
 - The previous `--external-db-volume` and `--external-db-url` options are mutually exclusive.
 - Use option `--load-dump-from-data` with `--external-db-url` to import the SQL dump to the external database. Equivalent to running without `-k`/`--keep-containers`. The receiving DB should have the appropriate config (DB owner, user permissions, postgis extension).
+- Use options `--request-logs-rules=FILE --request-logs-dir=DIRECTORY` to log selected requests as HAR files. See [Request logs](#request-logs).
 
 #### Custom DHIS2 dhis.conf
 
@@ -136,6 +137,59 @@ Note that you should not change the catalina connector port (8080, by default). 
     ...
 />
 ```
+
+#### Request logs
+
+The gateway (nginx) can record selected requests (request + response) as [HAR](https://en.wikipedia.org/wiki/HAR_(file_format)) files, one per request. Open them in the browser devtools (Network tab -> Import HAR file).
+
+```
+$ d2-docker start --request-logs-rules=rules.json --request-logs-dir=./request-logs ...
+```
+
+Example `rules.json`:
+
+```json
+{
+    "maxAgeDays": 7,
+    "maxBodyBytes": 1048576,
+    "rules": [
+        {
+            "comment": "API errors",
+            "status": { "match": "^[45]" },
+            "url": { "match": "^/api/" }
+        },
+        {
+            "comment": "Metadata imports, whatever the status",
+            "method": "POST",
+            "url": { "match": "^/api/(\\d+/)?metadata\\b" }
+        }
+    ]
+}
+```
+
+- A request is logged if it matches any rule. Inside a rule, all fields must match.
+- Fields: `method`, `url` (path + query string, including the deploy path, if any) and `status`.
+- A field value is a string (exact match) or an object with one operator: `equal`, `notEqual`, `match` (PCRE regex) or `notMatch`. For `status`, integers are also accepted (`"status": 404`).
+- `comment` keys are ignored.
+- `maxAgeDays` (default 7): older files are deleted. `maxBodyBytes` (default 1 MiB): longer bodies are truncated.
+- Secrets are redacted: `Authorization`, `Cookie` and `Set-Cookie` headers, and `password` fields in JSON/form bodies.
+- The entry `comment` contains the user that made the request (`user=NAME`), when known.
+- The rules are read when the gateway starts. After editing them, restart it: `docker restart <gateway-container>`.
+- Gateway workers run as the host user that ran `d2-docker start` (not root: they handle untrusted HTTP), so they can write into the logs directory and the HAR files belong to that user. If d2-docker itself runs as root, workers run as root.
+
+List, filter and merge the logged requests (without `DIRECTORY`, it uses the directory of the running instance):
+
+```
+$ d2-docker request-logs [DIRECTORY] [--since "2026-10-27 08:00"] [--until 2026-10-27] \
+    [--method POST] [--status 5] [--url REGEX] [--user admin] [--files | --merge out.har]
+2026-10-27 08:57:51  409  POST    admin            /api/metadata?importMode=VALIDATE
+2026-10-27 08:57:51  401  GET     -                /api/me
+```
+
+- `--status` is a regex on the start of the status (`4`, `40[13]`), `--url` a regex search on path + query string.
+- `--files` prints only the paths of the matching HAR files (i.e. to copy them with `rsync --files-from`).
+- `--merge FILE` writes the matching entries into a single HAR file, so the browser devtools show them in sequence.
+- On a remote server, run it there and copy the merged file: `ssh server d2-docker request-logs --user john --merge /tmp/john.har && scp server:/tmp/john.har .`
 
 ### Run terminal shell in DHIS2 core container
 
@@ -342,6 +396,14 @@ Create a dockerized d2-docker:
 
 ```
 $ bash build-docker-container.sh
+```
+
+### Request logs unit tests
+
+Rules matching and redaction (gateway Lua module, run in an OpenResty container) and rules validation (Python). Both use the cases in `test/request-logs/rules-cases.json`:
+
+```
+$ test/request-logs/run.sh
 ```
 
 ## Debug SQL queries

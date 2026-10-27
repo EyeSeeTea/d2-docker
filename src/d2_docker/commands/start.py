@@ -1,7 +1,7 @@
 import os
 import re
 
-from d2_docker import utils
+from d2_docker import request_logs, utils
 
 DESCRIPTION = "Start a container from an existing dhis2-data Docker image or from an exported file"
 
@@ -58,6 +58,16 @@ def setup(parser):
         action="store_true",
         help="Load database dump from data container (only with --external-db-url)",
     )
+    parser.add_argument(
+        "--request-logs-rules",
+        metavar="FILE",
+        help="Log requests matching the rules in this JSON file (see README)",
+    )
+    parser.add_argument(
+        "--request-logs-dir",
+        metavar="DIRECTORY",
+        help="Directory where request logs (HAR files) are written",
+    )
 
 
 def run(args):
@@ -77,6 +87,8 @@ def run(args):
 
     if args.external_db_url:
         utils.validate_external_db_connection(args.external_db_url)
+
+    request_logs.prepare_start(args)
 
     start(args)
 
@@ -164,6 +176,8 @@ def start(args):
             external_db_volume=args.external_db_volume,
             external_db_url=args.external_db_url,
             load_dump_from_data=args.load_dump_from_data,
+            request_logs_rules=args.request_logs_rules,
+            request_logs_dir=args.request_logs_dir,
         )
 
     if args.detach:

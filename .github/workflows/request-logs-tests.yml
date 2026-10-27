@@ -1,0 +1,33 @@
+name: Request logs tests
+
+# Unit tests of the request logs rules (gateway Lua + Python validation, shared cases).
+# See test/request-logs/run.sh
+
+on:
+  push:
+    branches: [ "development", "master" ]
+    paths:
+      - "src/d2_docker/request_logs.py"
+      - "src/d2_docker/config/gateway/**"
+      - "test/request-logs/**"
+      - ".github/workflows/request-logs-tests.yml"
+  pull_request:
+    branches: [ "development", "master" ]
+    paths:
+      - "src/d2_docker/request_logs.py"
+      - "src/d2_docker/config/gateway/**"
+      - "test/request-logs/**"
+      - ".github/workflows/request-logs-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install d2-docker dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: test/request-logs/run.sh

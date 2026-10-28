@@ -357,6 +357,9 @@ def run_docker_compose(
         for env_port in env_ports:
             if env_port not in env:
                 core["ports"] = [port for port in core["ports"] if env_port not in port]
+        # Same for the "db" service: only publish the DB port with --db-port
+        if "DB_PORT" not in env:
+            data["services"]["db"].pop("ports", None)
         if "EXTERNAL_DB_VOLUME" in env:
             data["volumes"]["pgdata"] = {
                 'driver': 'local',
@@ -383,7 +386,7 @@ def run_docker_compose(
 def get_db_port_mapping(db_port):
     """Publish the DB port on localhost only, unless an IP is given (Ex: 0.0.0.0:5432)."""
     if not db_port:
-        return "0:1000"
+        return None
     elif ":" in str(db_port):
         return "{}:5432".format(db_port)
     else:

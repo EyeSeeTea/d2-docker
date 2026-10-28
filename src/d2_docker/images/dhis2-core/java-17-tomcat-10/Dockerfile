@@ -7,11 +7,10 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN rm -rf /usr/local/tomcat/webapps/* && \
     mkdir -p /usr/local/tomcat/webapps/ROOT && \
     chmod +rx /usr/local/bin/docker-entrypoint.sh && \
-    mkdir $DHIS2_HOME && \
-    mkdir $DATA_DIR && \
-    addgroup --system tomcat && \
+    mkdir -p "$DHIS2_HOME" "$DATA_DIR" && \
+    (getent group tomcat || groupadd -r tomcat) && \
     usermod -aG tomcat root && \
-    useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
+    (id -u tomcat || useradd --shell /bin/bash --uid 101 --gid tomcat tomcat)
 
 
 RUN apt-get update

@@ -1,7 +1,7 @@
 ## Requirements
 
 - Operating System: GNU/Linux or Windows 10.
-- Python >= 3.5 (with setuptools)
+- Python >= 3.10 (with setuptools)
 - Docker >= 20.10.13
 - Docker compose >= 2.0
 - RAM memory: At least 4Gb for instance, preferably 8Gb.

@@ -1,15 +1,21 @@
 ## Requirements
 
 - Operating System: GNU/Linux or Windows 10.
-- Python >= 3.10 (with setuptools)
+- Python >= 3.10 (3.12 recommended)
 - Docker >= 20.10.13
 - Docker compose >= 2.0
 - RAM memory: At least 4Gb for instance, preferably 8Gb.
 
-On Ubuntu 22.04:
+On Ubuntu 22.04 / 24.04:
 
 ```
-$ sudo apt install docker.io docker-compose-v2 python3 python3-setuptools
+$ sudo apt install docker.io docker-compose-v2 python3 python3-venv
+```
+
+On Red Hat 9 (its `python3` is 3.9, too old), install Python 3.12:
+
+```
+$ sudo dnf install python3.12
 ```
 
 On Windows 10:
@@ -21,22 +27,32 @@ On Windows 10:
 
 ## Install
 
-On GNU/Linux:
+On GNU/Linux, d2-docker is installed in its own virtual environment (`/opt/d2-docker`), so it does not mix with the system Python packages, and the `d2-docker` command is linked in `/usr/local/bin`. From the d2-docker folder:
 
 ```
-$ sudo python3 setup.py install
+$ sudo python3 -m venv /opt/d2-docker        # Red Hat 9: sudo python3.12 -m venv /opt/d2-docker
+$ sudo /opt/d2-docker/bin/pip install .
+$ sudo ln -sf /opt/d2-docker/bin/d2-docker /usr/local/bin/d2-docker
 ```
 
-If you are behind a proxy you must execute the following line to make proxy running installing pip packages:
+To upgrade, after updating the d2-docker folder (Ex: `git pull`), pip replaces the installed version:
 
 ```
-sudo -E python3 setup.py install
+$ sudo /opt/d2-docker/bin/pip install --upgrade .
 ```
+
+If you are behind a proxy, pass it to pip (or keep your `https_proxy` variable with `sudo -E`):
+
+```
+$ sudo /opt/d2-docker/bin/pip install --proxy http://PROXY:PORT .
+```
+
+If d2-docker was installed before with `python3 setup.py install`, the `ln -sf` above replaces its command. The old files in `/usr/local/lib/python3.*/dist-packages/` (`d2_docker-*.egg` and its dependencies) are not used anymore.
 
 For Windows, open a terminal as an Administrator and run:
 
 ```
-$ python setup.py install
+$ python -m pip install .
 ```
 
 ## Usage

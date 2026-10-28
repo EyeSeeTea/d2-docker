@@ -338,7 +338,7 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
-        ("POSTGIS_VERSION", postgis_version),
+        ("POSTGIS_VERSION", postgis_version or get_default_postgis_version()),
         ("DB_PORT", get_db_port_mapping(db_port)),
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
@@ -381,6 +381,16 @@ def run_docker_compose(
     temp_compose = build_docker_compose(process_yaml)
 
     return run(["docker", "compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+
+
+def get_default_postgis_version():
+    """Return the tag of the default DB image (FROM line of images/dhis2-db/Dockerfile)."""
+    dockerfile = os.path.join(PROJECT_DIR, "images", "dhis2-db", "Dockerfile")
+    with open(dockerfile) as dockerfile_fd:
+        match = re.search(r"^FROM postgis/postgis:(\S+)", dockerfile_fd.read(), re.MULTILINE)
+    if not match:
+        raise D2DockerError("Cannot get the default postgis image from {}".format(dockerfile))
+    return match.group(1)
 
 
 def get_db_port_mapping(db_port):

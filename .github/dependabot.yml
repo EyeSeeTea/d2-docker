@@ -5,12 +5,12 @@
 # here. Dependabot keeps the tag suffix (e.g. -jre21-temurin), so the Java major
 # of each core image never changes through these PRs.
 #
-# Not covered by this file:
-#   - docker-compose.yml images: postgis uses ${POSTGIS_VERSION:-...} and the
-#     gateway uses a non-versioned tag (:alpine), which Dependabot cannot bump.
-#   - images rebuilt in place under the same tag (e.g. a Java fix in the
-#     current tomcat tag): Dependabot opens no PR; they are picked up by
-#     rebuilding the core with --pull.
+# The default DB image is in src/d2_docker/images/dhis2-db/Dockerfile (not built,
+# it only holds the tag) and the gateway image in src/d2_docker/docker-compose.yml.
+#
+# Not covered by this file: images rebuilt in place under the same tag (e.g. a
+# Java fix in the current tomcat tag): Dependabot opens no PR; they are picked
+# up by rebuilding the core with --pull.
 version: 2
 updates:
   - package-ecosystem: "docker"
@@ -18,6 +18,7 @@ updates:
       - "/"
       - "/src/d2_docker/images/dhis2-core/*"
       - "/src/d2_docker/images/dhis2-data"
+      - "/src/d2_docker/images/dhis2-db"
     target-branch: "development"
     schedule:
       interval: "weekly"
@@ -34,4 +35,21 @@ updates:
         update-types: ["version-update:semver-minor"]
     groups:
       docker-base-images:
+        patterns: ["*"]
+
+  - package-ecosystem: "docker-compose"
+    directory: "/src/d2_docker"
+    target-branch: "development"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-compose-images:
         patterns: ["*"]

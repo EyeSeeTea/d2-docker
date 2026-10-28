@@ -14,7 +14,7 @@ services:
             - "/etc/timezone:/etc/timezone:ro"
             - "/etc/localtime:/etc/localtime:ro"
         environment:
-            CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH} -Xdebug -Xrunjdwp:transport=dt_socket,address=0.0.0.0:8000,server=y,suspend=n"
+            CATALINA_OPTS: "-Dcontext.path=${DEPLOY_PATH} ${DHIS2_CORE_DEBUG_OPTS}"
             JAVA_OPTS: "-Xmx7500m -Xms4000m ${JAVA_OPTS}"
             LOAD_FROM_DATA: "${LOAD_FROM_DATA}"
             EXTERNAL_DB_URL: "${EXTERNAL_DB_URL}"
@@ -34,7 +34,7 @@ services:
             - "${GLOWROOT_PORT}"
         dns_search: .
     db:
-        image: "postgis/postgis:${POSTGIS_VERSION:-14-3.2-alpine}"
+        image: "postgis/postgis:${POSTGIS_VERSION}"
         shm_size: 1gb
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
@@ -51,7 +51,7 @@ services:
         ports:
             - "${DB_PORT}"
     gateway:
-        image: "jwilder/nginx-proxy:alpine"
+        image: "nginxproxy/nginx-proxy:1.11.6-alpine"
         labels:
             - "com.eyeseetea.image-name=${DHIS2_DATA_IMAGE}"
             - "com.eyeseetea.deploy-path=${DEPLOY_PATH}"

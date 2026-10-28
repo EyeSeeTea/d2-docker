@@ -1,15 +1,21 @@
 ## Requirements
 
 - Operating System: GNU/Linux or Windows 10.
-- Python >= 3.5 (with setuptools)
+- Python >= 3.10 (3.12 recommended)
 - Docker >= 20.10.13
 - Docker compose >= 2.0
 - RAM memory: At least 4Gb for instance, preferably 8Gb.
 
-On Ubuntu 22.04:
+On Ubuntu 22.04 / 24.04:
 
 ```
-$ sudo apt install docker.io docker-compose-v2 python3 python3-setuptools
+$ sudo apt install docker.io docker-compose-v2 python3 python3-venv
+```
+
+On Red Hat 9 (its `python3` is 3.9, too old), install Python 3.12:
+
+```
+$ sudo dnf install python3.12
 ```
 
 On Windows 10:
@@ -21,22 +27,32 @@ On Windows 10:
 
 ## Install
 
-On GNU/Linux:
+On GNU/Linux, d2-docker is installed in its own virtual environment (`/opt/d2-docker`), so it does not mix with the system Python packages, and the `d2-docker` command is linked in `/usr/local/bin`. From the d2-docker folder:
 
 ```
-$ sudo python3 setup.py install
+$ sudo python3 -m venv /opt/d2-docker        # Red Hat 9: sudo python3.12 -m venv /opt/d2-docker
+$ sudo /opt/d2-docker/bin/pip install .
+$ sudo ln -sf /opt/d2-docker/bin/d2-docker /usr/local/bin/d2-docker
 ```
 
-If you are behind a proxy you must execute the following line to make proxy running installing pip packages:
+To upgrade, after updating the d2-docker folder (Ex: `git pull`), pip replaces the installed version:
 
 ```
-sudo -E python3 setup.py install
+$ sudo /opt/d2-docker/bin/pip install --upgrade .
 ```
+
+If you are behind a proxy, pass it to pip (or keep your `https_proxy` variable with `sudo -E`):
+
+```
+$ sudo /opt/d2-docker/bin/pip install --proxy http://PROXY:PORT .
+```
+
+If d2-docker was installed before with `python3 setup.py install`, the `ln -sf` above replaces its command. The old files in `/usr/local/lib/python3.*/dist-packages/` (`d2_docker-*.egg` and its dependencies) are not used anymore.
 
 For Windows, open a terminal as an Administrator and run:
 
 ```
-$ python setup.py install
+$ python -m pip install .
 ```
 
 ## Usage
@@ -92,7 +108,7 @@ Some notes:
 - Use option `--run-sql=DIRECTORY` to run SQL files (.sql, .sql.gz or .dump files) after the DB has been initialized. SQL files containing "strict" in their name will cause `d2-docker start` to stop if an error occurs.
 - Use option `--run-scripts=DIRECTORY` to run shell scripts (.sh) from a directory within the `dhis2-core` container. By default, a script is run **after** postgres starts (`host=db`, `port=5432`) but **before** Tomcat starts; if its filename starts with prefix "post", it will be run **after** Tomcat is available. `curl` and typical shell tools are available on that Alpine Linux environment. Note that the Dhis2 endpoint is always `http://localhost:8080/${deployPath}`, regardless of the public port that the instance is exposed to.
 - Use option `--java-opts="JAVA_OPTS"` to override the default JAVA_OPTS for the Tomcat process. That's tipically used to set the maximum/initial Heap Memory size (for example: `--java-opts="-Xmx3500m -Xms2500m"`)
-- Use option `--postgis-version=13-3.1-alpine` to specify the PostGIS version to use. By default, 10-2.5-alpine is used.
+- Use option `--postgis-version=14-3.6-alpine` to specify the PostGIS version to use. By default, the tag of `src/d2_docker/images/dhis2-db/Dockerfile` is used (`16-3.6-alpine`). A DB volume can only be opened by its own PostgreSQL major: an existing instance with another major needs this option with `-k`, see [Change the PostgreSQL major of an instance](#change-the-postgresql-major-of-an-instance).
 - Use option `--debug-port=PORT` to specify the debug port of the Tomcat process.
 - Use option `--external-db-volume=VOLUME_ABSOLUTE_PATH` to create or use a persistent volume for the database located at `VOLUME_ABSOLUTE_PATH`.
 - Use option `--external-db-url=POSTGRES_URL` to connect to an external PostgreSQL database instead of using the DB container. The URL should be in the format `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`. Note that you have to configure the DB to accept connections from the docker internal network.
@@ -299,6 +315,20 @@ upgrade-sierra/2.31/some-metadata-used-by-the-script.json
 
 upgrade-sierra/2.32/fix-org-units-geometry.sql
 ```
+
+### Change the PostgreSQL major of an instance
+
+A DB volume can only be opened by its own PostgreSQL major. To move an instance to the default major (`16-3.6-alpine`), recreate its DB from a dump:
+
+```console
+$ d2-docker commit eyeseetea/dhis2-data:2.41-sierra
+$ d2-docker stop eyeseetea/dhis2-data:2.41-sierra
+$ d2-docker start eyeseetea/dhis2-data:2.41-sierra
+```
+
+`commit` saves the DB and files of the running instance into the image, and `start` without `-k` removes the old volumes and loads that dump. Check that `commit` finished without errors before starting without `-k`, or keep a copy first (`d2-docker copy IMAGE IMAGE-backup`). Analytics tables are not included in the dump: regenerate them after the start.
+
+If the instance is stopped, start it first with its current major: `d2-docker start -k --postgis-version=14-3.6-alpine IMAGE`. To keep an instance on PostgreSQL 14, always start it with that option.
 
 ## Clean-up
 

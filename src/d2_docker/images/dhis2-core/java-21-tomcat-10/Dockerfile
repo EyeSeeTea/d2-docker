@@ -1,4 +1,4 @@
-FROM tomcat:10.1.36-jre21-temurin
+FROM tomcat:10.1.61-jre21-temurin-noble
 
 ENV DHIS2_HOME=/DHIS2_home
 ENV DATA_DIR=/data
@@ -7,11 +7,10 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN rm -rf /usr/local/tomcat/webapps/* && \
     mkdir -p /usr/local/tomcat/webapps/ROOT && \
     chmod +rx /usr/local/bin/docker-entrypoint.sh && \
-    mkdir $DHIS2_HOME && \
-    mkdir $DATA_DIR && \
-    addgroup --system tomcat && \
+    mkdir -p "$DHIS2_HOME" "$DATA_DIR" && \
+    (getent group tomcat || groupadd -r tomcat) && \
     usermod -aG tomcat root && \
-    useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
+    (id -u tomcat || useradd --shell /bin/bash --uid 101 --gid tomcat tomcat)
 
 
 RUN apt-get update

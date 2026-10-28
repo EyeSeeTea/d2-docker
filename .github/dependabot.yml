@@ -33,6 +33,9 @@ updates:
       # Keep Tomcat on its current minor line (9.0.x / 10.1.x)
       - dependency-name: "tomcat"
         update-types: ["version-update:semver-minor"]
+      # Keep Ubuntu on its LTS (24.04): 24.10 is a minor update of a non-LTS release
+      - dependency-name: "ubuntu"
+        update-types: ["version-update:semver-minor"]
     groups:
       docker-base-images:
         patterns: ["*"]

@@ -1,0 +1,58 @@
+# Dependabot version updates for the Docker base images (FROM lines).
+#
+# Policy: only patch (and Tomcat minor-compatible) updates are proposed. Major
+# updates of Tomcat, Java, Ubuntu, etc. are planned migrations and are ignored
+# here. Dependabot keeps the tag suffix (e.g. -jre21-temurin), so the Java major
+# of each core image never changes through these PRs.
+#
+# The default DB image is in src/d2_docker/images/dhis2-db/Dockerfile (not built,
+# it only holds the tag) and the gateway image in src/d2_docker/docker-compose.yml.
+#
+# Not covered by this file: images rebuilt in place under the same tag (e.g. a
+# Java fix in the current tomcat tag): Dependabot opens no PR; they are picked
+# up by rebuilding the core with --pull.
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/src/d2_docker/images/dhis2-core/*"
+      - "/src/d2_docker/images/dhis2-data"
+      - "/src/d2_docker/images/dhis2-db"
+    target-branch: "development"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Keep Tomcat on its current minor line (9.0.x / 10.1.x)
+      - dependency-name: "tomcat"
+        update-types: ["version-update:semver-minor"]
+      # Keep Ubuntu on its LTS (24.04): 24.10 is a minor update of a non-LTS release
+      - dependency-name: "ubuntu"
+        update-types: ["version-update:semver-minor"]
+    groups:
+      docker-base-images:
+        patterns: ["*"]
+
+  - package-ecosystem: "docker-compose"
+    directory: "/src/d2_docker"
+    target-branch: "development"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-compose-images:
+        patterns: ["*"]

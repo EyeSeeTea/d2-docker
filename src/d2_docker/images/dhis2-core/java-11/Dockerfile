@@ -13,10 +13,11 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
     addgroup root tomcat && \
     useradd --shell /bin/bash --uid 101 --gid tomcat tomcat
 
-RUN apt-get update
 RUN echo 'You can disregard the warning in noninteractive installations:' \
          '"debconf: delaying package configuration, since apt-utils is not installed"'
-RUN apt-get install --no-install-recommends -y \
+RUN sed -i 's@http://deb.debian.org/debian-security@http://archive.debian.org/debian-security@g' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y \
         unzip curl postgresql-client fonts-dejavu fontconfig util-linux
 
 COPY dhis.war /usr/local/tomcat/webapps/ROOT.war

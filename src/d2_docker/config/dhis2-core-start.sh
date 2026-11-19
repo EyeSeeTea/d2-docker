@@ -192,6 +192,21 @@ wait_for_postgres() {
     done
 }
 
+upgrade_postgis_extensions() {
+    # A new postgis image only replaces the library, the extensions of an existing DB keep their version
+    if [ -n "$db_url" ]; then
+        return 0
+    fi
+    wait_for_postgres
+    local version
+    version=$(echo "select postgis_full_version();" | $psql_base_cmd -tA 2>/dev/null) || return 0
+    if [[ "$version" == *"need upgrade"* ]]; then
+        debug "Upgrade PostGIS extensions: $version"
+        echo "select postgis_extensions_upgrade();" | $psql_strict_cmd ||
+            debug "PostGIS extensions upgrade failed"
+    fi
+}
+
 start_tomcat() {
     debug "Start Tomcat catalina"
     catalina.sh run
@@ -283,6 +298,8 @@ run() {
         run_pre_scripts || true
         init_done
     fi
+
+    upgrade_postgis_extensions
 
     post_start_actions() {
         wait_for_tomcat

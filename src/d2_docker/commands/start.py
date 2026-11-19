@@ -26,7 +26,7 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
+    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port on localhost ([IP:]PORT, Ex: 0.0.0.0:8000 for all interfaces)")
     parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port on localhost ([IP:]PORT, Ex: 0.0.0.0:5432 for all interfaces)")
     parser.add_argument(
         "--run-scripts",
@@ -41,7 +41,7 @@ def setup(parser):
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
-    parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")
+    parser.add_argument("--glowroot-port", metavar="PORT", help="Expose glowroot port on localhost ([IP:]PORT, Ex: 0.0.0.0:4000 for all interfaces)")
     parser.add_argument(
         "--external-db-volume",
         metavar="DIRECTORY",

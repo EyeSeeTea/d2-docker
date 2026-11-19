@@ -393,6 +393,19 @@ def get_default_postgis_version():
     return match.group(1)
 
 
+def get_db_volume_pg_major(image_name):
+    """Return the PostgreSQL major of the instance DB volume (its PG_VERSION file), None if there is no volume."""
+    volume = get_project_name(image_name) + "_pgdata"
+    if run(["docker", "volume", "inspect", volume], capture_output=True, raise_on_error=False).returncode != 0:
+        return None
+    # The data image is alpine-based and already local
+    result = run(
+        ["docker", "run", "--rm", "-v", volume + ":/pgdata:ro", "--entrypoint", "cat", image_name, "/pgdata/PG_VERSION"],
+        capture_output=True,
+    )
+    return result.stdout.decode("utf-8").strip()
+
+
 def get_db_port_mapping(db_port):
     """Publish the DB port on localhost only, unless an IP is given (Ex: 0.0.0.0:5432)."""
     if not db_port:

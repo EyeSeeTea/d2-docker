@@ -14,6 +14,7 @@ setuptools.setup(
     package_dir={"": "src"},
     include_package_data=True,
     install_requires=open("requirements.txt").readlines(),
+    python_requires=">=3.10",
     zip_safe=False,
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -21,9 +22,9 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     entry_points={"console_scripts": [
         "d2-docker=d2_docker.cli:main",

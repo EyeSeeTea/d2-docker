@@ -156,6 +156,19 @@ copy_datavalues() {
     fi
 }
 
+# Other DHIS2_home/files folders saved by "d2-docker commit" (utils.default_folders)
+extra_files_folders="pushAnalysis messageAttachment userAvatar organisationUnit icon jobData"
+
+copy_extra_files_folders() {
+    local folder
+    for folder in $extra_files_folders; do
+        if test -e "/data/$folder"; then
+            debug "Copy Dhis2 $folder: /data/$folder -> $files_path"
+            cp -Rv "/data/$folder" "$files_path"
+        fi
+    done
+}
+
 copy_non_empty_files() {
     local from=$1 to=$2
     find "$from" -maxdepth 1 -type f -size +0 -exec cp -v {} "$to" \;
@@ -177,6 +190,21 @@ wait_for_postgres() {
     while ! echo "select 1;" | $psql_cmd; do
         sleep 1
     done
+}
+
+upgrade_postgis_extensions() {
+    # A new postgis image only replaces the library, the extensions of an existing DB keep their version
+    if [ -n "$db_url" ]; then
+        return 0
+    fi
+    wait_for_postgres
+    local version
+    version=$(echo "select postgis_full_version();" | $psql_base_cmd -tA 2>/dev/null) || return 0
+    if [[ "$version" == *"need upgrade"* ]]; then
+        debug "Upgrade PostGIS extensions: $version"
+        echo "select postgis_extensions_upgrade();" | $psql_strict_cmd ||
+            debug "PostGIS extensions upgrade failed"
+    fi
 }
 
 start_tomcat() {
@@ -258,6 +286,7 @@ run() {
         copy_apps
         copy_documents
         copy_datavalues
+        copy_extra_files_folders
         debug "Container: clean. Load DB"
         wait_for_postgres
         if ! run_sql_files; then
@@ -269,6 +298,8 @@ run() {
         run_pre_scripts || true
         init_done
     fi
+
+    upgrade_postgis_extensions
 
     post_start_actions() {
         wait_for_tomcat

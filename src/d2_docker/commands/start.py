@@ -26,8 +26,8 @@ def setup(parser):
     parser.add_argument("--tomcat-server-xml", metavar="FILE", help=server_xml_help)
     parser.add_argument("--dhis-conf", metavar="FILE", help=dhis_conf_help)
     parser.add_argument("--run-sql", metavar="DIRECTORY", help="Run .sql[.gz] files in directory")
-    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port")
-    parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port")
+    parser.add_argument("--debug-port", metavar="PORT", help="Expose DHIS2 core debug port on localhost ([IP:]PORT, Ex: 0.0.0.0:8000 for all interfaces)")
+    parser.add_argument("--db-port", metavar="PORT", help="Expose DB Postgres port on localhost ([IP:]PORT, Ex: 0.0.0.0:5432 for all interfaces)")
     parser.add_argument(
         "--run-scripts",
         metavar="DIRECTORY",
@@ -41,7 +41,7 @@ def setup(parser):
     parser.add_argument("--postgis-version", type=str, help="Set PostGIS database version")
     parser.add_argument("--enable-postgres-queries-logging", action="store_true",
                         help="Enable Postgres queries logging")
-    parser.add_argument("--glowroot-port", metavar="PORT", help="Set glowroot port")
+    parser.add_argument("--glowroot-port", metavar="PORT", help="Expose glowroot port on localhost ([IP:]PORT, Ex: 0.0.0.0:4000 for all interfaces)")
     parser.add_argument(
         "--external-db-volume",
         metavar="DIRECTORY",
@@ -99,6 +99,20 @@ def check_db_volume_path(external_db_volume):
         raise utils.D2DockerError(msg)
 
 
+def check_db_volume_pg_major(image_name, postgis_version):
+    """Fail if the existing DB volume is from another PostgreSQL major (the DB would not start)."""
+    volume_pg_major = utils.get_db_volume_pg_major(image_name)
+    pg_major = postgis_version.split("-")[0]  # Ex: "16-3.6-alpine" -> "16"
+    if volume_pg_major and volume_pg_major != pg_major:
+        same_major_postgis_version = postgis_version.replace(pg_major, volume_pg_major, 1)
+        msg = (
+            "The DB volume is PostgreSQL {0}, but the postgis image {1} is PostgreSQL {2}.\n"
+            "  Keep PostgreSQL {0}: d2-docker start -k --postgis-version={3} {4}\n"
+            '  Move to PostgreSQL {2}: see README "Change the PostgreSQL major of an instance"'
+        ).format(volume_pg_major, postgis_version, pg_major, same_major_postgis_version, image_name)
+        raise utils.D2DockerError(msg)
+
+
 def import_from_file(images_path):
     dhis2_data_image_re = "/{}:".format(utils.DHIS2_DATA_IMAGE)
     result = utils.load_images_file(images_path)
@@ -125,6 +139,9 @@ def start(args):
     utils.logger.info("Port: {}".format(port))
     core_image = args.core_image
     override_containers = not args.keep_containers
+
+    if args.keep_containers and not args.external_db_url:
+        check_db_volume_pg_major(image_name, args.postgis_version or utils.get_default_postgis_version())
 
     if args.pull:
         utils.run_docker_compose(["pull"], image_name, core_image=core_image,

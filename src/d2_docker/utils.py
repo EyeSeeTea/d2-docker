@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import d2_docker
-from d2_docker.glowroot import get_port_glowroot
+from d2_docker.glowroot import GLOWROOT_DEFAULT_PORT
 from .image_name import ImageName
 
 PROJECT_NAME_PREFIX = "d2-docker"
@@ -25,6 +25,7 @@ IMAGE_NAME_LABEL = "com.eyeseetea.image-name"
 DOCKER_COMPOSE_SERVICES = ["gateway", "core", "db"]
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_PATH = os.environ.get("ROOT_PATH") or PROJECT_DIR
+JDWP_OPTS = "-Xdebug -Xrunjdwp:transport=dt_socket,address=0.0.0.0:8000,server=y,suspend=n"
 
 
 def get_dhis2_war_url(version):
@@ -43,8 +44,9 @@ def get_dhis2_war_url(version):
     return releases_base_url + "/" + path
 
 
-def docker_build(directory, tag):
-    return run(["docker", "build", "--platform", "linux/amd64", "--tag", tag, directory])
+def docker_build(directory, tag, pull=False):
+    pull_args = ["--pull"] if pull else []
+    return run(["docker", "build", "--platform", "linux/amd64", *pull_args, "--tag", tag, directory])
 
 
 def get_logger():
@@ -77,7 +79,7 @@ def get_core_java_dir(base_dir, major_version):
         raise D2DockerError("Cannot get version from --version or --war")
     else:
         if major_version >= 42:
-            return os.path.join(base_dir, "java-17-tomcat-10")
+            return os.path.join(base_dir, "java-21-tomcat-10")
         elif major_version >= 41:
             return os.path.join(base_dir, "java-17")
         else:
@@ -322,7 +324,9 @@ def run_docker_compose(
     env_pairs = [
         ("DHIS2_DATA_IMAGE", final_image_name),
         ("DHIS2_CORE_PORT", str(port)) if port else None,
-        ("DHIS2_CORE_DEBUG_PORT", "{}:8000".format(debug_port)) if debug_port else None,
+        ("DHIS2_CORE_DEBUG_PORT", get_port_mapping(debug_port, 8000)),
+        # The JDWP agent has no authentication, only enable it when the debug port is requested
+        ("DHIS2_CORE_DEBUG_OPTS", JDWP_OPTS if debug_port else ""),
         ("DHIS2_CORE_IP", bind_ip + ":") if bind_ip else "",
         ("DHIS2_CORE_IMAGE", core_image_name),
         ("LOAD_FROM_DATA", "yes" if load_from_data else "no"),
@@ -334,12 +338,12 @@ def run_docker_compose(
         ("DHIS2_AUTH", dhis2_auth or ""),
         ("TOMCAT_SERVER", get_absfile_for_docker_volume(tomcat_server)),
         ("DHIS_CONF", get_absfile_for_docker_volume(dhis_conf)),
-        ("POSTGIS_VERSION", postgis_version),
-        ("DB_PORT", ("{}:5432".format(db_port) if db_port else "0:1000")),
+        ("POSTGIS_VERSION", postgis_version or get_default_postgis_version()),
+        ("DB_PORT", get_port_mapping(db_port, 5432)),
         # Add ROOT_PATH from environment (required when run inside a docker)
         ("ROOT_PATH", ROOT_PATH),
         ("PSQL_ENABLE_QUERY_LOGS", "") if not enable_postgres_queries_logging else None,
-        ("GLOWROOT_PORT", get_port_glowroot(glowroot_port)),
+        ("GLOWROOT_PORT", get_port_mapping(glowroot_port, GLOWROOT_DEFAULT_PORT)),
         ("EXTERNAL_DB_VOLUME", external_db_volume) if external_db_volume else None,
         ("EXTERNAL_DB_URL", external_db_url) if external_db_url else None,
         ("LOAD_DUMP_FROM_DATA", "yes" if load_dump_from_data else "no"),
@@ -353,6 +357,9 @@ def run_docker_compose(
         for env_port in env_ports:
             if env_port not in env:
                 core["ports"] = [port for port in core["ports"] if env_port not in port]
+        # Same for the "db" service: only publish the DB port with --db-port
+        if "DB_PORT" not in env:
+            data["services"]["db"].pop("ports", None)
         if "EXTERNAL_DB_VOLUME" in env:
             data["volumes"]["pgdata"] = {
                 'driver': 'local',
@@ -374,6 +381,39 @@ def run_docker_compose(
     temp_compose = build_docker_compose(process_yaml)
 
     return run(["docker", "compose", "-f", temp_compose.name, "-p", project_name, *args], env=env, **kwargs)
+
+
+def get_default_postgis_version():
+    """Return the tag of the default DB image (FROM line of images/dhis2-db/Dockerfile)."""
+    dockerfile = os.path.join(PROJECT_DIR, "images", "dhis2-db", "Dockerfile")
+    with open(dockerfile) as dockerfile_fd:
+        match = re.search(r"^FROM postgis/postgis:(\S+)", dockerfile_fd.read(), re.MULTILINE)
+    if not match:
+        raise D2DockerError("Cannot get the default postgis image from {}".format(dockerfile))
+    return match.group(1)
+
+
+def get_db_volume_pg_major(image_name):
+    """Return the PostgreSQL major of the instance DB volume (its PG_VERSION file), None if there is no volume."""
+    volume = get_project_name(image_name) + "_pgdata"
+    if run(["docker", "volume", "inspect", volume], capture_output=True, raise_on_error=False).returncode != 0:
+        return None
+    # The data image is alpine-based and already local
+    result = run(
+        ["docker", "run", "--rm", "-v", volume + ":/pgdata:ro", "--entrypoint", "cat", image_name, "/pgdata/PG_VERSION"],
+        capture_output=True,
+    )
+    return result.stdout.decode("utf-8").strip()
+
+
+def get_port_mapping(port, container_port):
+    """Publish the port on localhost only, unless an IP is given (Ex: 0.0.0.0:8000)."""
+    if not port:
+        return None
+    elif ":" in str(port):
+        return "{}:{}".format(port, container_port)
+    else:
+        return "127.0.0.1:{}:{}".format(port, container_port)
 
 
 def build_docker_compose(process_yaml):
@@ -605,10 +645,10 @@ def export_data_from_image(source_image, dest_path):
     mkdir_p(dest_path)
     try:
         run(["docker", "cp", container_id + ":" + "/data/db", dest_path])
-        with possible_errors():
-            run(["docker", "cp", container_id + ":" + "/data/apps", dest_path])
-            run(["docker", "cp", container_id + ":" + "/data/document", dest_path])
-            run(["docker", "cp", container_id + ":" + "/data/dataValue", dest_path])
+        # Old images may not have all the folders
+        for folder in default_folders:
+            with possible_errors():
+                run(["docker", "cp", container_id + ":" + "/data/" + folder, dest_path])
     finally:
         run(["docker", "rm", "-v", container_id])
 
@@ -796,7 +836,8 @@ def create_core(
             logger.debug("Copy home file: {} -> {}".format(source_home_file, dhis2_home_path))
             shutil.copy(source_home_file, dhis2_home_path)
 
-        docker_build(build_dir, image)
+        # Always refresh the base image so rebuilt tags (e.g. Java fixes) are picked up
+        docker_build(build_dir, image, pull=True)
 
 
 def get_config_file(filename):

@@ -41,7 +41,3 @@ def get_glowroot_zip(command, glowroot_zip, glowroot):
         glowroot_path = None
 
     return utils.get_absfile_for_docker_volume(glowroot_path)
-
-def get_port_glowroot(glowroot_port):
-    port = glowroot_port if glowroot_port else GLOWROOT_DEFAULT_PORT
-    return "{}:{}".format(port, GLOWROOT_DEFAULT_PORT) if glowroot_port else None

@@ -1,4 +1,4 @@
-FROM tomcat:9.0.123-jre11-temurin-noble
+FROM tomcat:9.0.124-jre11-temurin-noble
 
 ENV DHIS2_HOME=/DHIS2_home
 ENV DATA_DIR=/data
